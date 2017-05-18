@@ -14,7 +14,7 @@ const uint32_t ExtRateIn = 0; // External clock input not used.
 // Delays execution by a few ticks.
 static inline void WaitTicks(uint32_t ticks) {
   uint32_t num_iters = ticks / 3; // ASM code takes 3 ticks for each iteration.
-  asm volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
+  __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
 }
 
 void InitSwichMatrix(void)
