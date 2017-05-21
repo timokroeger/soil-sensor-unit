@@ -57,11 +57,14 @@ void InitSystemClock(void)
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSOSC_PD);
 
   // Crystal oscillator needs up to 500us to start.
-  // Wait for 7500/12Mhz=625us to be sure it is stable before continuing.
-  WaitTicks(7500);
+  // Wait for 12000/12Mhz=1ms to be sure it is stable before continuing.
+  WaitTicks(12000);
 
   // Select crystal oscillator for main clock.
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLIN);
+
+  // Disable internal RC oscillator.
+  Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_IRCOUT_PD | SYSCTL_SLPWAKE_IRC_PD);
 }
 
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.
