@@ -10,13 +10,49 @@
 #define UART_BAUDRATE 19200u
 #define PWM_FREQ 200000u
 
+#define ISR_PRIO_UART 0
+
 const uint32_t OscRateIn = OSC_FREQ;
 const uint32_t ExtRateIn = 0; // External clock input not used.
+
+// Increased when no stop bits were received.
+static uint32_t uart_frame_error_counter = 0;
+
+// No parity bit is used in the GaMoSy Communication Protocol so this should
+// always stay at 0.
+static uint32_t uart_parity_error_counter = 0;
+
+// Increased when only 2 of 3 samples of a UART bit reading were stable.
+static uint32_t uart_noise_error_counter = 0;
 
 // Delays execution by a few ticks.
 static inline void WaitTicks(uint32_t ticks) {
   uint32_t num_iters = ticks / 3; // ASM code takes 3 ticks for each iteration.
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
+}
+
+void UART0_IRQHandler(void)
+{
+  uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
+  Expect((interrupt_status & (UART_STAT_RXRDY | UART_STAT_OVERRUNINT)) ==
+         UART_STAT_RXRDY);
+
+  if (interrupt_status & UART_STAT_FRM_ERRINT) {
+    uart_frame_error_counter++;
+  }
+  if (interrupt_status & UART_STAT_PAR_ERRINT) {
+    uart_parity_error_counter++;
+  }
+  if (interrupt_status & UART_STAT_RXNOISEINT) {
+    uart_noise_error_counter++;
+  }
+
+  uint8_t rxdata = Chip_UART_ReadByte(LPC_USART0);
+  // TODO: Do something with received byte.
+
+  Chip_UART_ClearStatus(LPC_USART0,
+                        UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
+                            UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
 }
 
 void InitSwichMatrix(void)
@@ -85,12 +121,14 @@ static void SetupUART(void)
   Chip_Clock_SetUARTClockDiv(1);
 
   Chip_UART_Init(LPC_USART0);
-
-  // TODO: Enable interrupts.
-
   Chip_UART_SetBaud(LPC_USART0, UART_BAUDRATE);
   Chip_UART_ConfigData(LPC_USART0, UART_CFG_ENABLE | UART_CFG_DATALEN_8 |
       UART_CFG_PARITY_EVEN | UART_CFG_STOPLEN_1 | UART_CFG_OESEL | UART_CFG_OEPOL);
+
+  // Enable receive and overrun interrupt. No interrupts for frame, parity or
+  // noise errors are enabled because those are checked when reading a received
+  // byte.
+  Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_OVERRUN);
 }
 
 // Setup a PWM output with 50% duty cycle.
@@ -189,8 +227,12 @@ static uint16_t ReadADC(bool high)
   return ADC_DR_RESULT(adc_value_raw);
 }
 
+/// Enables interrupts.
 static void SetupNVIC(void)
 {
+  Expect(Chip_UART_GetIntsEnabled(LPC_USART0) != 0);
+  NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
+  NVIC_EnableIRQ(UART0_IRQn);
 }
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
