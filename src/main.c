@@ -7,6 +7,7 @@
 
 #define OSC_FREQ 12000000u
 #define UART_BAUDRATE 115200u
+#define PWM_FREQ 200000u
 
 const uint32_t OscRateIn = OSC_FREQ;
 const uint32_t ExtRateIn = 0; // External clock input not used.
@@ -30,6 +31,10 @@ void InitSwichMatrix(void)
   Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 10);
   Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 15);
   Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
+
+  // PWM output
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);  // FREQ_LO
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 14); // FREQ_HI
 
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();
@@ -82,11 +87,50 @@ void SetupUart(void)
       UART_CFG_STOPLEN_1 | UART_CFG_OESEL);
 }
 
+// Setup a PWM output with 50% duty cycle.
+void SetupPWM(void)
+{
+	Chip_SCT_Init(LPC_SCT);
+
+	// Set output frequency with the reload match 0 value. This value is loaded
+	// to the match register with each limit event.
+	// The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
+	// create complementary outputs with two timer states.
+	LPC_SCT->MATCHREL[0].L = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
+
+	// Link events to states.
+	LPC_SCT->EV[0].STATE = (1 << 0);
+	LPC_SCT->EV[1].STATE = (1 << 1);
+
+	// Add alternating states which are switched by each match event
+	LPC_SCT->EV[0].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
+	                      (1 << 14) | // STATELD[14] = STATEV is loaded into state
+	                      (1 << 15);  // STATEV[19:15] = New state is 1
+	LPC_SCT->EV[1].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
+	                      (1 << 14) | // STATELD[14] = STATEV is loaded into state
+	                      (0 << 15);  // STATEV[19:15] = New state is 0
+
+	// FREQ_LO: LOW during first half of period, HIGH for the second half.
+	LPC_SCT->OUT[0].SET = (1 << 1); // State 1 sets
+	LPC_SCT->OUT[0].CLR = (1 << 0); // State 0 clears
+
+	// FREQ_HI: HIGH during first half of period, LOW for the second half.
+	LPC_SCT->OUT[1].SET = (1 << 0); // State 0 sets
+	LPC_SCT->OUT[1].CLR = (1 << 1); // State 1 clears
+
+	// Restart counter on event 0 and 1 (match occurred)
+	LPC_SCT->LIMIT_L = 3;
+
+	// Start timer.
+	LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
+}
+
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 int main(void)
 {
   SetupUart();
+  SetupPWM();
 
   // Main loop.
   for (;;) {
