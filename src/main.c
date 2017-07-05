@@ -27,10 +27,12 @@ void InitSwichMatrix(void)
   Chip_SWM_EnableFixedPin(SWM_FIXED_XTALIN);
   Chip_SWM_EnableFixedPin(SWM_FIXED_XTALOUT);
 
+  /*
   // UART0
   Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 10);
   Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 15);
   Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
+  */
 
   // PWM output
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);  // FREQ_LO
@@ -129,7 +131,7 @@ void SetupPWM(void)
 // configured by SystemInit() before main was called.
 int main(void)
 {
-  SetupUart();
+  //SetupUart();
   SetupPWM();
 
   // Main loop.
