@@ -38,6 +38,9 @@ void InitSwichMatrix(void)
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);  // FREQ_LO
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 14); // FREQ_HI
 
+  // ADC input
+  Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
+
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();
 }
@@ -120,11 +123,55 @@ void SetupPWM(void)
 	LPC_SCT->OUT[1].SET = (1 << 0); // State 0 sets
 	LPC_SCT->OUT[1].CLR = (1 << 1); // State 1 clears
 
+	// TODO: Add output 3 as ADC trigger.
+
 	// Restart counter on event 0 and 1 (match occurred)
 	LPC_SCT->LIMIT_L = 3;
 
 	// Start timer.
 	LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
+}
+
+void SetupADC(void)
+{
+	Chip_ADC_Init(LPC_ADC, 0);
+
+	// Wait for ADC to be calibrated.
+	Chip_ADC_StartCalibration(LPC_ADC);
+	while (!Chip_ADC_IsCalibrationDone(LPC_ADC));
+
+	// Set ADC clock: A value of 0 divides the system clock by 1.
+	Chip_ADC_SetDivider(LPC_ADC, 0);
+
+	// Only scan channel 3 when timer triggers the ADC.
+	// A conversation takes 25 cycles. Ideally the sampling phase ends right
+	// before the PWM output state changes.
+	Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
+	                        ADC_SEQ_CTRL_CHANSEL(3) |
+	                        (3 << 12) | // SCT Output 3 as trigger source.
+	                        ADC_SEQ_CTRL_HWTRIG_POLPOS |
+	                        ADC_SEQ_CTRL_HWTRIG_SYNCBYPASS);
+    Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
+
+	Chip_ADC_EnableInt(LPC_ADC, ADC_INTEN_SEQA_ENABLE);
+}
+
+static void SetupNVIC(void)
+{
+  NVIC_SetPriority(ADC_SEQA_IRQn, 0);
+  NVIC_EnableIRQ(ADC_SEQA_IRQn);
+}
+
+void ADC_SEQA_IRQHandler(void)
+{
+  Expect(Chip_ADC_GetFlags(LPC_ADC) == ADC_FLAGS_SEQA_INT_MASK);
+  Chip_ADC_ClearFlags(LPC_ADC, ADC_FLAGS_SEQA_INT_MASK);
+
+  uint32_t adc_value_raw = Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX);
+  Expect(adc_value_raw & ADC_SEQ_GDAT_DATAVALID);
+
+  uint32_t adc_value = ADC_DR_RESULT(adc_value_raw);
+  // TODO: Check value
 }
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
@@ -133,6 +180,8 @@ int main(void)
 {
   //SetupUart();
   SetupPWM();
+  SetupADC();
+  SetupNVIC();
 
   // Main loop.
   for (;;) {
