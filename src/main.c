@@ -95,65 +95,65 @@ void SetupUart(void)
 // Setup a PWM output with 50% duty cycle.
 void SetupPWM(void)
 {
-	Chip_SCT_Init(LPC_SCT);
+  Chip_SCT_Init(LPC_SCT);
 
-	// Set output frequency with the reload match 0 value. This value is loaded
-	// to the match register with each limit event.
-	// The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
-	// create complementary outputs with two timer states.
-	LPC_SCT->MATCHREL[0].L = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
+  // Set output frequency with the reload match 0 value. This value is loaded
+  // to the match register with each limit event.
+  // The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
+  // create complementary outputs with two timer states.
+  LPC_SCT->MATCHREL[0].L = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
 
-	// Link events to states.
-	LPC_SCT->EV[0].STATE = (1 << 0);
-	LPC_SCT->EV[1].STATE = (1 << 1);
+  // Link events to states.
+  LPC_SCT->EV[0].STATE = (1 << 0);
+  LPC_SCT->EV[1].STATE = (1 << 1);
 
-	// Add alternating states which are switched by each match event
-	LPC_SCT->EV[0].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
-	                      (1 << 14) | // STATELD[14] = STATEV is loaded into state
-	                      (1 << 15);  // STATEV[19:15] = New state is 1
-	LPC_SCT->EV[1].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
-	                      (1 << 14) | // STATELD[14] = STATEV is loaded into state
-	                      (0 << 15);  // STATEV[19:15] = New state is 0
+  // Add alternating states which are switched by each match event
+  LPC_SCT->EV[0].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
+                        (1 << 14) | // STATELD[14] = STATEV is loaded into state
+                        (1 << 15);  // STATEV[19:15] = New state is 1
+  LPC_SCT->EV[1].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
+                        (1 << 14) | // STATELD[14] = STATEV is loaded into state
+                        (0 << 15);  // STATEV[19:15] = New state is 0
 
-	// FREQ_LO: LOW during first half of period, HIGH for the second half.
-	LPC_SCT->OUT[0].SET = (1 << 1); // State 1 sets
-	LPC_SCT->OUT[0].CLR = (1 << 0); // State 0 clears
+  // FREQ_LO: LOW during first half of period, HIGH for the second half.
+  LPC_SCT->OUT[0].SET = (1 << 1); // State 1 sets
+  LPC_SCT->OUT[0].CLR = (1 << 0); // State 0 clears
 
-	// FREQ_HI: HIGH during first half of period, LOW for the second half.
-	LPC_SCT->OUT[1].SET = (1 << 0); // State 0 sets
-	LPC_SCT->OUT[1].CLR = (1 << 1); // State 1 clears
+  // FREQ_HI: HIGH during first half of period, LOW for the second half.
+  LPC_SCT->OUT[1].SET = (1 << 0); // State 0 sets
+  LPC_SCT->OUT[1].CLR = (1 << 1); // State 1 clears
 
-	// TODO: Add output 3 as ADC trigger.
+  // TODO: Add output 3 as ADC trigger.
 
-	// Restart counter on event 0 and 1 (match occurred)
-	LPC_SCT->LIMIT_L = 3;
+  // Restart counter on event 0 and 1 (match occurred)
+  LPC_SCT->LIMIT_L = 3;
 
-	// Start timer.
-	LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
+  // Start timer.
+  LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
 }
 
 void SetupADC(void)
 {
-	Chip_ADC_Init(LPC_ADC, 0);
+  Chip_ADC_Init(LPC_ADC, 0);
 
-	// Wait for ADC to be calibrated.
-	Chip_ADC_StartCalibration(LPC_ADC);
-	while (!Chip_ADC_IsCalibrationDone(LPC_ADC));
+  // Wait for ADC to be calibrated.
+  Chip_ADC_StartCalibration(LPC_ADC);
+  while (!Chip_ADC_IsCalibrationDone(LPC_ADC));
 
-	// Set ADC clock: A value of 0 divides the system clock by 1.
-	Chip_ADC_SetDivider(LPC_ADC, 0);
+  // Set ADC clock: A value of 0 divides the system clock by 1.
+  Chip_ADC_SetDivider(LPC_ADC, 0);
 
-	// Only scan channel 3 when timer triggers the ADC.
-	// A conversation takes 25 cycles. Ideally the sampling phase ends right
-	// before the PWM output state changes.
-	Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
-	                        ADC_SEQ_CTRL_CHANSEL(3) |
-	                        (3 << 12) | // SCT Output 3 as trigger source.
-	                        ADC_SEQ_CTRL_HWTRIG_POLPOS |
-	                        ADC_SEQ_CTRL_HWTRIG_SYNCBYPASS);
-    Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
+  // Only scan channel 3 when timer triggers the ADC.
+  // A conversation takes 25 cycles. Ideally the sampling phase ends right
+  // before the PWM output state changes.
+  Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
+                          ADC_SEQ_CTRL_CHANSEL(3) |
+                          (3 << 12) | // SCT Output 3 as trigger source.
+                          ADC_SEQ_CTRL_HWTRIG_POLPOS |
+                          ADC_SEQ_CTRL_HWTRIG_SYNCBYPASS);
+  Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
 
-	Chip_ADC_EnableInt(LPC_ADC, ADC_INTEN_SEQA_ENABLE);
+  Chip_ADC_EnableInt(LPC_ADC, ADC_INTEN_SEQA_ENABLE);
 }
 
 static void SetupNVIC(void)
