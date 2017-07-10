@@ -101,11 +101,17 @@ void SetupPWM(void)
   // to the match register with each limit event.
   // The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
   // create complementary outputs with two timer states.
-  LPC_SCT->MATCHREL[0].L = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
+  uint16_t timer_counts = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
+  LPC_SCT->MATCHREL[0].L = timer_counts;
+
+  // Set ADC trigger 12 cycles (approximate sampling time) before PWM output switches
+  Expect(timer_counts > 12);
+  LPC_SCT->MATCHREL[1].L = timer_counts - 12;
 
   // Link events to states.
-  LPC_SCT->EV[0].STATE = (1 << 0);
-  LPC_SCT->EV[1].STATE = (1 << 1);
+  LPC_SCT->EV[0].STATE = 1; // Event 0 only happens in state 0
+  LPC_SCT->EV[1].STATE = 2; // Event 1 only happens in state 1
+  LPC_SCT->EV[3].STATE = 3; // Event 3 happens in state 0 and 1
 
   // Add alternating states which are switched by each match event
   LPC_SCT->EV[0].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
@@ -115,19 +121,28 @@ void SetupPWM(void)
                         (1 << 14) | // STATELD[14] = STATEV is loaded into state
                         (0 << 15);  // STATEV[19:15] = New state is 0
 
+  // Generate ADC trigger event for each match
+  LPC_SCT->EV[3].CTRL = (1 << 0) | // Use match register 1 for comparison
+                        (1 << 12); // COMBMODE[13:12] = Use only match
+
   // FREQ_LO: LOW during first half of period, HIGH for the second half.
-  LPC_SCT->OUT[0].SET = (1 << 1); // State 1 sets
-  LPC_SCT->OUT[0].CLR = (1 << 0); // State 0 clears
+  LPC_SCT->OUT[0].SET = (1 << 1); // Event 1 sets
+  LPC_SCT->OUT[0].CLR = (1 << 0); // Event 0 clears
 
   // FREQ_HI: HIGH during first half of period, LOW for the second half.
-  LPC_SCT->OUT[1].SET = (1 << 0); // State 0 sets
-  LPC_SCT->OUT[1].CLR = (1 << 1); // State 1 clears
+  LPC_SCT->OUT[1].SET = (1 << 0); // Event 0 sets
+  LPC_SCT->OUT[1].CLR = (1 << 1); // Event 1 clears
 
-  // TODO: Add output 3 as ADC trigger.
+  // ADC_TRIGGER
+  LPC_SCT->OUT[3].SET = (1 << 3);            // Event 3 sets
+  LPC_SCT->OUT[3].CLR = (1 << 0) | (1 << 1); // Event 0 and 1 clears
 
   // Restart counter on event 0 and 1 (match occurred)
   LPC_SCT->LIMIT_L = 3;
+}
 
+void StartPWM(void)
+{
   // Start timer.
   LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
 }
@@ -182,6 +197,8 @@ int main(void)
   SetupPWM();
   SetupADC();
   SetupNVIC();
+
+  StartPWM();
 
   // Main loop.
   for (;;) {
