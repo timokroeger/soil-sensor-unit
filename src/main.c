@@ -74,7 +74,7 @@ void SystemInit(void)
 }
 
 // Setup UART0 with RTS pin as drive enable for the RS485 receiver.
-void SetupUart(void)
+static void SetupUart(void)
 {
   Chip_UART_Init(LPC_USART0);
 
@@ -93,7 +93,7 @@ void SetupUart(void)
 }
 
 // Setup a PWM output with 50% duty cycle.
-void SetupPWM(void)
+static void SetupPWM(void)
 {
   Chip_SCT_Init(LPC_SCT);
 
@@ -141,13 +141,13 @@ void SetupPWM(void)
   LPC_SCT->LIMIT_L = 3;
 }
 
-void StartPWM(void)
+static void StartPWM(void)
 {
   // Start timer.
   LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
 }
 
-void SetupADC(void)
+static void SetupADC(void)
 {
   Chip_ADC_Init(LPC_ADC, 0);
 
