@@ -19,6 +19,7 @@ add_subdirectory(lib)
 
 add_executable(firmware
   src/startup_LPC82x.s
+  src/log.c
   src/main.c
 )
 
