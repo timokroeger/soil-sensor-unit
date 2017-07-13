@@ -13,6 +13,8 @@ set(C_FLAGS "-std=c11 -Wall -Wextra -Wstrict-prototypes -Wconversion -fno-common
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORTEX_M0_FLAGS} ${C_FLAGS} -DCORE_M0PLUS")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections,-T${CMAKE_SOURCE_DIR}/src/config/lpc_flash1.ld")
 
+set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
+
 add_subdirectory(lib)
 
 add_executable(firmware
@@ -20,5 +22,5 @@ add_executable(firmware
   src/main.c
 )
 
-target_link_libraries(firmware LPC8xx)
+target_link_libraries(firmware LPC8xx SEGGER_RTT)
 set_target_properties(firmware PROPERTIES OUTPUT_NAME firmware.elf)

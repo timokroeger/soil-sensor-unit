@@ -34,3 +34,12 @@ target_include_directories(LPC8xx SYSTEM
 )
 
 target_compile_options(LPC8xx PRIVATE -Wno-conversion -Wno-sign-compare -Wno-sign-conversion -Wno-unused-parameter)
+
+add_library(SEGGER_RTT
+  SEGGER/SEGGER_RTT.c
+  SEGGER/SEGGER_RTT_printf.c
+)
+
+target_include_directories(SEGGER_RTT
+  PUBLIC SEGGER ${CONFIG_INCLUDE}
+)
