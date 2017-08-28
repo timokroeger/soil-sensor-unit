@@ -22,10 +22,15 @@ void InitSwichMatrix(void)
 {
   // Enable switch matrix.
   Chip_SWM_Init();
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
 
   // Select XTAL functionality for PIO0_8 and PIO0_9.
   Chip_SWM_EnableFixedPin(SWM_FIXED_XTALIN);
   Chip_SWM_EnableFixedPin(SWM_FIXED_XTALOUT);
+
+  // Disable Pull-Ups on crystal pins.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO8, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO9, PIN_MODE_INACTIVE);
 
   /*
   // UART0
@@ -40,6 +45,7 @@ void InitSwichMatrix(void)
 
   // ADC input
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
 
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();
@@ -49,10 +55,6 @@ void InitSwichMatrix(void)
 // PLL.
 void InitSystemClock(void)
 {
-  // Disable Pull-Ups on crystal pins.
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO8, PIN_MODE_INACTIVE);
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO9, PIN_MODE_INACTIVE);
-
   // Start crystal oscillator.
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSOSC_PD);
 
@@ -64,7 +66,8 @@ void InitSystemClock(void)
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLIN);
 
   // Disable internal RC oscillator.
-  Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_IRCOUT_PD | SYSCTL_SLPWAKE_IRC_PD);
+  // TODO: Uncomment when sure that crystal oscillator is working.
+  //Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_IRCOUT_PD | SYSCTL_SLPWAKE_IRC_PD);
 }
 
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.
