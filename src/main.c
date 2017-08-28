@@ -4,6 +4,7 @@
 #include "chip.h"
 
 #include "expect.h"
+#include "log.h"
 
 #define OSC_FREQ 12000000u
 #define UART_BAUDRATE 115200u
@@ -16,7 +17,7 @@ const uint32_t ExtRateIn = 0; // External clock input not used.
 static inline void WaitTicks(uint32_t ticks) {
   uint32_t num_iters = ticks / 3; // ASM code takes 3 ticks for each iteration.
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
-}
+};
 
 void InitSwichMatrix(void)
 {
@@ -115,9 +116,8 @@ static void SetupPWM(void)
   LPC_SCT->MATCHREL[1].L = timer_counts - 12;
 
   // Link events to states.
-  LPC_SCT->EV[0].STATE = 1; // Event 0 only happens in state 0
-  LPC_SCT->EV[1].STATE = 2; // Event 1 only happens in state 1
-  LPC_SCT->EV[3].STATE = 3; // Event 3 happens in state 0 and 1
+  LPC_SCT->EV[0].STATE = (1 << 0); // Event 0 only happens in state 0
+  LPC_SCT->EV[1].STATE = (1 << 1); // Event 1 only happens in state 1
 
   // Add alternating states which are switched by each match event
   LPC_SCT->EV[0].CTRL = (1 << 12) | // COMBMODE[13:12] = Change state on match
@@ -173,26 +173,29 @@ static void SetupADC(void)
                           ADC_SEQ_CTRL_HWTRIG_POLPOS |
                           ADC_SEQ_CTRL_HWTRIG_SYNCBYPASS);
   Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
+}
 
-  Chip_ADC_EnableInt(LPC_ADC, ADC_INTEN_SEQA_ENABLE);
+static uint16_t ReadADC(bool high)
+{
+  // ADC Trigger is event 3 of the timer. Select state the event occurs.
+  LPC_SCT->EV[3].STATE = high
+                       ? (1 << 0)  // Sample on HI level: State 0
+                       : (1 << 1); // Sample on LO level: State 1
+
+  // Wait for ADC conversion to finish.
+  uint32_t adc_value_raw;
+  do {
+    adc_value_raw = Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX);
+  } while ((adc_value_raw & ADC_SEQ_GDAT_DATAVALID) == 0);
+
+  // Disable ADC Trigger again.
+  LPC_SCT->EV[3].STATE = 0;
+
+  return ADC_DR_RESULT(adc_value_raw);
 }
 
 static void SetupNVIC(void)
 {
-  NVIC_SetPriority(ADC_SEQA_IRQn, 0);
-  NVIC_EnableIRQ(ADC_SEQA_IRQn);
-}
-
-void ADC_SEQA_IRQHandler(void)
-{
-  Expect(Chip_ADC_GetFlags(LPC_ADC) == ADC_FLAGS_SEQA_INT_MASK);
-  Chip_ADC_ClearFlags(LPC_ADC, ADC_FLAGS_SEQA_INT_MASK);
-
-  uint32_t adc_value_raw = Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX);
-  Expect(adc_value_raw & ADC_SEQ_GDAT_DATAVALID);
-
-  uint32_t adc_value = ADC_DR_RESULT(adc_value_raw);
-  // TODO: Check value
 }
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
@@ -208,7 +211,10 @@ int main(void)
 
   // Main loop.
   for (;;) {
-    // TODO
+    WaitTicks(12000000);
+    uint32_t low = ReadADC(false);
+    uint32_t high = ReadADC(true);
+    LOG_DEBUG("%d\n", high - low);
   }
 
   // Never reached.
