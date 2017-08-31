@@ -133,12 +133,12 @@ static void SetupPWM(void)
                         (1 << 12); // COMBMODE[13:12] = Use only match
 
   // FREQ_LO: LOW during first half of period, HIGH for the second half.
-  LPC_SCT->OUT[0].SET = (1 << 1); // Event 1 sets
-  LPC_SCT->OUT[0].CLR = (1 << 0); // Event 0 clears
+  LPC_SCT->OUT[0].SET = (1 << 0); // Event 0 sets
+  LPC_SCT->OUT[0].CLR = (1 << 1); // Event 1 clears
 
   // FREQ_HI: HIGH during first half of period, LOW for the second half.
-  LPC_SCT->OUT[1].SET = (1 << 0); // Event 0 sets
-  LPC_SCT->OUT[1].CLR = (1 << 1); // Event 1 clears
+  LPC_SCT->OUT[1].SET = (1 << 1); // Event 1 sets
+  LPC_SCT->OUT[1].CLR = (1 << 0); // Event 0 clears
 
   // ADC_TRIGGER
   LPC_SCT->OUT[3].SET = (1 << 3);            // Event 3 sets
