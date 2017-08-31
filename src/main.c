@@ -111,9 +111,10 @@ static void SetupPWM(void)
   uint16_t timer_counts = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
   LPC_SCT->MATCHREL[0].L = timer_counts;
 
-  // Set ADC trigger 12 cycles (approximate sampling time) before PWM output switches
-  Expect(timer_counts > 12);
-  LPC_SCT->MATCHREL[1].L = timer_counts - 12;
+  // Set ADC trigger 8 cycles (approximate sampling time) before PWM output switches
+  // Found by experimenting with different values.
+  Expect(timer_counts > 8);
+  LPC_SCT->MATCHREL[1].L = timer_counts - 8;
 
   // Link events to states.
   LPC_SCT->EV[0].STATE = (1 << 0); // Event 0 only happens in state 0
