@@ -19,7 +19,6 @@
 #define LOG_WARNING(...) LogFormat(kLogLevelWarning, __VA_ARGS__)
 #define LOG_INFO(...)    LogFormat(kLogLevelInfo, __VA_ARGS__)
 #define LOG_DEBUG(...)   LogFormat(kLogLevelDebug, __VA_ARGS__)
-//#define LOG_DEBUG(...)
 
 /// Log levels.
 typedef enum {
