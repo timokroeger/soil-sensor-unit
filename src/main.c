@@ -17,7 +17,7 @@ const uint32_t ExtRateIn = 0; // External clock input not used.
 static inline void WaitTicks(uint32_t ticks) {
   uint32_t num_iters = ticks / 3; // ASM code takes 3 ticks for each iteration.
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
-};
+}
 
 void InitSwichMatrix(void)
 {
@@ -211,10 +211,14 @@ int main(void)
 
   // Main loop.
   for (;;) {
-    WaitTicks(12000000);
-    uint32_t low = ReadADC(false);
-    uint32_t high = ReadADC(true);
-    LOG_DEBUG("%d\n", high - low);
+    uint32_t tmp = 0;
+    for (int i = 0; i < (1 << 16); i++) {
+      uint32_t low = ReadADC(false);
+      uint32_t high = ReadADC(true);
+      tmp += high - low;
+    }
+    tmp >>= 16;
+    LOG_DEBUG("%d\n", tmp);
   }
 
   // Never reached.
