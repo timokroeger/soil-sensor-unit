@@ -21,6 +21,7 @@ add_executable(firmware
   src/startup_LPC82x.s
   src/log.c
   src/main.c
+  src/modbus.c
 )
 
 target_link_libraries(firmware LPC8xx SEGGER_RTT)
