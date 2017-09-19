@@ -10,7 +10,10 @@
 #define UART_BAUDRATE 19200u
 #define PWM_FREQ 200000u
 
-#define ISR_PRIO_UART 0
+#define ISR_PRIO_UART 1
+
+// Must have highest priority so that the ADC trigger can be reset in time.
+#define ISR_PRIO_SCT  0
 
 const uint32_t OscRateIn = OSC_FREQ;
 const uint32_t ExtRateIn = 0; // External clock input not used.
@@ -53,6 +56,15 @@ void UART0_IRQHandler(void)
   Chip_UART_ClearStatus(LPC_USART0,
                         UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
                             UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
+}
+
+void SCT_IRQHandler(void)
+{
+  // Disable ADC trigger immediately so it is not re-triggered accidentally.
+  LPC_SCT->EV[3].STATE = 0;
+
+  // Clear interrupt flag.
+  LPC_SCT->EVFLAG = (1 << 3);
 }
 
 void InitSwichMatrix(void)
@@ -176,8 +188,11 @@ static void SetupPWM(void)
   LPC_SCT->OUT[3].SET = (1 << 3);            // Event 3 sets
   LPC_SCT->OUT[3].CLR = (1 << 0) | (1 << 1); // Event 0 and 1 clears
 
+  // Enable interrupt for event 3 (ADC trigger) to reset disable the trigger again.
+  LPC_SCT->EVEN = (1 << 3);
+
   // Restart counter on event 0 and 1 (match occurred)
-  LPC_SCT->LIMIT_L = 3;
+  LPC_SCT->LIMIT_L = (1 << 0) | (1 << 1);
 }
 
 static void StartPWM(void)
@@ -221,9 +236,6 @@ static uint16_t ReadADC(bool high)
     adc_value_raw = Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX);
   } while ((adc_value_raw & ADC_SEQ_GDAT_DATAVALID) == 0);
 
-  // Disable ADC Trigger again.
-  LPC_SCT->EV[3].STATE = 0;
-
   return ADC_DR_RESULT(adc_value_raw);
 }
 
@@ -233,6 +245,9 @@ static void SetupNVIC(void)
   Expect(Chip_UART_GetIntsEnabled(LPC_USART0) != 0);
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
   NVIC_EnableIRQ(UART0_IRQn);
+
+  NVIC_SetPriority(SCT_IRQn, ISR_PRIO_SCT);
+  NVIC_EnableIRQ(SCT_IRQn);
 }
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
