@@ -7,7 +7,7 @@
 #include "log.h"
 
 #define OSC_FREQ 12000000u
-#define UART_BAUDRATE 115200u
+#define UART_BAUDRATE 19200u
 #define PWM_FREQ 200000u
 
 const uint32_t OscRateIn = OSC_FREQ;
@@ -33,12 +33,10 @@ void InitSwichMatrix(void)
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO8, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO9, PIN_MODE_INACTIVE);
 
-  /*
   // UART0
-  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 10);
+  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 4);
   Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 15);
   Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
-  */
 
   // PWM output
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);  // FREQ_LO
@@ -81,22 +79,18 @@ void SystemInit(void)
 }
 
 // Setup UART0 with RTS pin as drive enable for the RS485 receiver.
-static void SetupUart(void)
+static void SetupUART(void)
 {
+  // Enable global UART clock.
+  Chip_Clock_SetUARTClockDiv(1);
+
   Chip_UART_Init(LPC_USART0);
 
   // TODO: Enable interrupts.
 
-  // Use fractional divider to create a UART base frequency of
-  // 12MHz / (1 + 161/256) = 7366906.475Hz which is approximately gives us a
-  // baud rate of 7366906.475Hz/16/4 = 115108Hz (<0.1% error of 115200Hz)
-  Chip_Clock_SetUARTClockDiv(1);
-  Chip_SYSCTL_SetUSARTFRGDivider(0xFF);
-  Chip_SYSCTL_SetUSARTFRGMultiplier(161);
-
   Chip_UART_SetBaud(LPC_USART0, UART_BAUDRATE);
-  Chip_UART_ConfigData(LPC_USART0, UART_CFG_DATALEN_8 | UART_CFG_PARITY_NONE |
-      UART_CFG_STOPLEN_1 | UART_CFG_OESEL);
+  Chip_UART_ConfigData(LPC_USART0, UART_CFG_ENABLE | UART_CFG_DATALEN_8 |
+      UART_CFG_PARITY_EVEN | UART_CFG_STOPLEN_1 | UART_CFG_OESEL | UART_CFG_OEPOL);
 }
 
 // Setup a PWM output with 50% duty cycle.
@@ -203,7 +197,7 @@ static void SetupNVIC(void)
 // configured by SystemInit() before main was called.
 int main(void)
 {
-  //SetupUart();
+  SetupUART();
   SetupPWM();
   SetupADC();
   SetupNVIC();
