@@ -15,10 +15,11 @@
 #ifndef MODBUS_CALLBACKS_H_
 #define MODBUS_CALLBACKS_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // TODO
-void ModbusSend(uint8_t *data, uint32_t length);
+void ModbusSerialSend(uint8_t *data, uint32_t length);
 
 // This function shall start a one-shot timer which calls ModbusTimeout() first
 // kModbusTimeoutInterCharacterDelay after typically 750us and then
@@ -27,5 +28,9 @@ void ModbusStartTimer(void);
 
 // TODO
 uint16_t ModbusCrc(uint8_t *data, uint32_t length);
+
+// Reads the contents of a register at address and writes it to data_out.
+// Returns true on success or false when the register is not available.
+bool ModbusReadRegister(uint16_t address, uint16_t *data_out);
 
 #endif  // MODBUS_CALLBACKS_H_

@@ -12,12 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// TODO: What do when multiple requests?
+
 #include "modbus.h"
 
 #include <stdbool.h>
 
 #include "expect.h"
 #include "modbus_callbacks.h"
+
+typedef enum {
+  kModbusOk = 0,
+  kModbusIllegalFunction,
+  kModbusIllegalDataAddress,
+  kModbusIllegalDataValue,
+  kModbusServerDeviceFailure,
+  kModbusAcknowledge,
+  kModbusDeviceBusy,
+  kModbusMemoryParityError,
+  kModbusGatewayPathUnavailable,
+  kModbusGatewayTargetDeviceFailedToRespond,
+} ModbusException;
 
 typedef enum {
   kTransmissionInital = 0,
@@ -33,13 +48,62 @@ static uint8_t buffer[256];
 static uint32_t buffer_idx;
 static bool frame_valid;
 
-static uint16_t BufferToWord(const uint8_t *buffer)
-{
+static uint16_t BufferToWord(const uint8_t *buffer) {
   return (uint16_t)((buffer[0] << 8) | buffer[1]);
 }
 
-// TODO
-static void ProcessFrame(void);
+static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
+  if (length != 4) {
+    return kModbusIllegalDataValue;
+  }
+
+  uint16_t starting_addr = BufferToWord(&data[0]);
+  uint16_t quantity_regs = BufferToWord(&data[2]);
+
+  if (quantity_regs >= 1 && quantity_regs <= 0x7D) {
+    return kModbusIllegalDataValue;
+  }
+
+  for (uint16_t i = 0; i < quantity_regs; i++) {
+    uint16_t reg_content = 0;
+    bool ok = ModbusReadRegister(starting_addr + i, &reg_content);
+    if (ok) {
+      ResponseAddWord(reg_content);
+    } else {
+      return kModbusIllegalDataAddress;
+    }
+  }
+
+  return kModbusOk;
+}
+
+static void HandleRequest(const uint8_t *data, uint32_t length) {
+  if (length == 0) {
+    SendException(kModbusIllegalFunction);
+    return;
+  }
+
+  bool exception = kModbusOk;
+
+  uint8_t fn_code = data[0];
+  switch (fn_code) {
+    case 0x04:
+      exception = ReadInputRegister(&data[1], length)
+                      ? kModbusOk
+                      : kModbusIllegalDataAddress;
+      break;
+
+    default:
+      exception = kModbusIllegalFunction;
+      break;
+  }
+
+  if (exception == kModbusOk) {
+    SendResponse();
+  } else {
+    SendException(exception);
+  }
+}
 
 void ModbusSetAddress(uint8_t addr) { address = addr; }
 
@@ -54,6 +118,7 @@ void ModbusByteReceived(uint8_t byte) {
       ModbusStartTimer();
 
       // Immediately check if address matches.
+      // TODO: Allow broadcasts.
       frame_valid = (byte == address);
 
       // Reset buffer and fill first byte.
@@ -102,11 +167,12 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
 
     case kTransmissionControlAndWaiting:
       if (timeout_type == kModbusTimeoutInterFrameDelay) {
-        if (buffer_idx >= 4) {
+        // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
+        if (buffer_idx >= 3) {
           uint16_t received_crc = BufferToWord(&buffer[buffer_idx - 2]);
           uint16_t calculated_crc = ModbusCrc(&buffer[0], buffer_idx - 2);
           if (frame_valid && received_crc == calculated_crc) {
-            ProcessFrame();
+            HandleRequest(&buffer[1], buffer_idx - 3);
           }
         }
 
