@@ -104,7 +104,7 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
       if (timeout_type == kModbusTimeoutInterFrameDelay) {
         if (buffer_idx >= 4) {
           uint16_t received_crc = BufferToWord(&buffer[buffer_idx - 2]);
-          uint16_t calculated_crc = ModbusCrc(&buffer[1], buffer_idx - 3);
+          uint16_t calculated_crc = ModbusCrc(&buffer[0], buffer_idx - 2);
           if (frame_valid && received_crc == calculated_crc) {
             ProcessFrame();
           }
