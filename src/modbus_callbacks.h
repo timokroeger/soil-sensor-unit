@@ -26,9 +26,6 @@ void ModbusSerialSend(uint8_t *data, int length);
 // kModbusTimeoutInterFrameDelay after typically 1750us.
 void ModbusStartTimer(void);
 
-// TODO
-uint16_t ModbusCrc(uint8_t *data, uint32_t length);
-
 // Reads the contents of a register at address and writes it to data_out.
 // Returns true on success or false when the register is not available.
 bool ModbusReadRegister(uint16_t address, uint16_t *data_out);
