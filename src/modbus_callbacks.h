@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 // TODO
-void ModbusSerialSend(uint8_t *data, uint32_t length);
+void ModbusSerialSend(uint8_t *data, int length);
 
 // This function shall start a one-shot timer which calls ModbusTimeout() first
 // kModbusTimeoutInterCharacterDelay after typically 750us and then

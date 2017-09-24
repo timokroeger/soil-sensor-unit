@@ -60,12 +60,21 @@ static void WordToBuffer(uint16_t word, uint8_t *buffer) {
   buffer[1] = (uint8_t)word;
 }
 
+static void ResponseAddByte(uint8_t b) {
+  if (resp_buffer_idx + 1 > sizeof(resp_buffer)) {
+    return;
+  }
+
+  resp_buffer[resp_buffer_idx] = b;
+  resp_buffer_idx++;
+}
+
 static void ResponseAddWord(uint16_t word) {
   if (resp_buffer_idx + 2 > sizeof(resp_buffer)) {
     return;
   }
 
-  WordToBuffer(word, &resp_buffer[resp_buffer_idx]);
+  WordToBufferBE(word, &resp_buffer[resp_buffer_idx]);
   resp_buffer_idx += 2;
 }
 
@@ -87,7 +96,7 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   uint16_t starting_addr = BufferToWord(&data[0]);
   uint16_t quantity_regs = BufferToWord(&data[2]);
 
-  if (quantity_regs < 1 && quantity_regs > 0x7D) {
+  if (quantity_regs < 1 || quantity_regs > 0x7D) {
     return kModbusIllegalDataValue;
   }
 

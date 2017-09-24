@@ -295,6 +295,7 @@ int main(void)
   StartPWM();
 
   ModbusSetAddress(1);
+  ModbusStartTimer(); // TODO: Remove
 
   // Main loop.
   for (;;) {

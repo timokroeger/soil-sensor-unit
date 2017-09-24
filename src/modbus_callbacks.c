@@ -18,7 +18,7 @@
 
 #define OSC_FREQ 12000000u
 
-void ModbusSerialSend(uint8_t *data, uint32_t length)
+void ModbusSerialSend(uint8_t *data, int length)
 {
   Chip_UART_SendBlocking(LPC_USART0, data, length);
 }
