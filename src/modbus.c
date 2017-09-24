@@ -69,6 +69,12 @@ static void SendResponse(void) {
   ModbusSerialSend(resp_buffer, resp_buffer_idx);
 }
 
+static void SendException(uint8_t exception) {
+  resp_buffer[0] |= 0x80;  // Flag response as exception.
+  resp_buffer[1] = exception;
+  ModbusSerialSend(resp_buffer, 2);
+}
+
 static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   if (length != 4) {
     return kModbusIllegalDataValue;
