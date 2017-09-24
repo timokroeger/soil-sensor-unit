@@ -11,6 +11,7 @@
 #define PWM_FREQ 200000u
 
 #define ISR_PRIO_UART 1
+#define ISR_PRIO_TIMER 1
 
 // Must have highest priority so that the ADC trigger can be reset in time.
 #define ISR_PRIO_SCT  0
@@ -56,6 +57,19 @@ void UART0_IRQHandler(void)
   Chip_UART_ClearStatus(LPC_USART0,
                         UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
                             UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
+}
+
+void MRT_IRQHandler(void)
+{
+  if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
+    Chip_MRT_IntClear(LPC_MRT_CH0);
+    //ModbusTimeout(kModbusTimeoutInterCharacterDelay);
+  }
+
+  if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
+    Chip_MRT_IntClear(LPC_MRT_CH1);
+    //ModbusTimeout(kModbusTimeoutInterFrameDelay);
+  }
 }
 
 void SCT_IRQHandler(void)
@@ -141,6 +155,19 @@ static void SetupUART(void)
   // noise errors are enabled because those are checked when reading a received
   // byte.
   Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_OVERRUN);
+}
+
+static void SetupTimers(void)
+{
+  Chip_MRT_Init();
+
+  // Channel 0: MODBUS inter-character timeout
+  Chip_MRT_SetInterval(LPC_MRT_CH0, OSC_FREQ * 750 / 1000000);
+  Chip_MRT_SetMode(LPC_MRT_CH0, MRT_MODE_ONESHOT);
+
+  // Channel 1: MODBUS inter-frame timeout
+  Chip_MRT_SetInterval(LPC_MRT_CH1, OSC_FREQ * 1750 / 1000000);
+  Chip_MRT_SetMode(LPC_MRT_CH1, MRT_MODE_ONESHOT);
 }
 
 // Setup a PWM output with 50% duty cycle.
@@ -246,6 +273,9 @@ static void SetupNVIC(void)
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
   NVIC_EnableIRQ(UART0_IRQn);
 
+  NVIC_SetPriority(MRT_IRQn, ISR_PRIO_TIMER);
+  NVIC_EnableIRQ(MRT_IRQn);
+
   NVIC_SetPriority(SCT_IRQn, ISR_PRIO_SCT);
   NVIC_EnableIRQ(SCT_IRQn);
 }
@@ -255,6 +285,7 @@ static void SetupNVIC(void)
 int main(void)
 {
   SetupUART();
+  SetupTimers();
   SetupPWM();
   SetupADC();
   SetupNVIC();
