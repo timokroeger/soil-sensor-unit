@@ -48,8 +48,25 @@ static uint8_t req_buffer[256];
 static uint32_t req_buffer_idx;
 static bool frame_valid;
 
+static uint8_t resp_buffer[256];
+static uint32_t resp_buffer_idx;
+
 static uint16_t BufferToWord(const uint8_t *buffer) {
   return (uint16_t)((buffer[0] << 8) | buffer[1]);
+}
+
+static void ResponseAddWord(uint16_t word) {
+  if (resp_buffer_idx + 2 > sizeof(req_buffer_idx)) {
+    return;
+  }
+
+  req_buffer[resp_buffer_idx] = (uint8_t)(word >> 8);
+  req_buffer[resp_buffer_idx + 1] = (uint8_t)word;
+  resp_buffer_idx += 2;
+}
+
+static void SendResponse(void) {
+  ModbusSerialSend(resp_buffer, resp_buffer_idx);
 }
 
 static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
@@ -64,6 +81,10 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
     return kModbusIllegalDataValue;
   }
 
+  // Byte Count
+  ResponseAddWord(quantity_regs * 2);
+
+  // Add all requested registerts to the response.
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
     bool ok = ModbusReadRegister(starting_addr + i, &reg_content);
@@ -172,6 +193,12 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
           uint16_t received_crc = BufferToWord(&req_buffer[req_buffer_idx - 2]);
           uint16_t calculated_crc = ModbusCrc(&req_buffer[0], req_buffer_idx - 2);
           if (frame_valid && received_crc == calculated_crc) {
+            // Reset buffer for writing. The first two bytes are the same as in
+            // the request.
+            resp_buffer[0] = req_buffer[0];  // Address
+            resp_buffer[1] = req_buffer[1];  // Function Code
+            resp_buffer_idx = 2;
+
             HandleRequest(&req_buffer[1], req_buffer_idx - 3);
           }
         }
