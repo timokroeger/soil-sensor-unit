@@ -5,6 +5,7 @@
 
 #include "expect.h"
 #include "log.h"
+#include "modbus.h"
 
 #define OSC_FREQ 12000000u
 #define UART_BAUDRATE 19200u
@@ -52,7 +53,7 @@ void UART0_IRQHandler(void)
   }
 
   uint8_t rxdata = Chip_UART_ReadByte(LPC_USART0);
-  // TODO: Do something with received byte.
+  ModbusByteReceived(rxdata);
 
   Chip_UART_ClearStatus(LPC_USART0,
                         UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
@@ -63,12 +64,12 @@ void MRT_IRQHandler(void)
 {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
-    //ModbusTimeout(kModbusTimeoutInterCharacterDelay);
+    ModbusTimeout(kModbusTimeoutInterCharacterDelay);
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
     Chip_MRT_IntClear(LPC_MRT_CH1);
-    //ModbusTimeout(kModbusTimeoutInterFrameDelay);
+    ModbusTimeout(kModbusTimeoutInterFrameDelay);
   }
 }
 
@@ -286,11 +287,14 @@ int main(void)
 {
   SetupUART();
   SetupTimers();
+  Chip_CRC_Init();
   SetupPWM();
   SetupADC();
   SetupNVIC();
 
   StartPWM();
+
+  ModbusSetAddress(1);
 
   // Main loop.
   for (;;) {
