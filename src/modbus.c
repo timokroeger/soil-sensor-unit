@@ -44,8 +44,8 @@ typedef enum {
 static uint8_t address;
 
 static ModbusTransmissionState transmission_state;
-static uint8_t buffer[256];
-static uint32_t buffer_idx;
+static uint8_t req_buffer[256];
+static uint32_t req_buffer_idx;
 static bool frame_valid;
 
 static uint16_t BufferToWord(const uint8_t *buffer) {
@@ -122,8 +122,8 @@ void ModbusByteReceived(uint8_t byte) {
       frame_valid = (byte == address);
 
       // Reset buffer and fill first byte.
-      buffer[0] = byte;
-      buffer_idx = 1;
+      req_buffer[0] = byte;
+      req_buffer_idx = 1;
 
       transmission_state = kTransmissionReception;
       break;
@@ -132,8 +132,8 @@ void ModbusByteReceived(uint8_t byte) {
       ModbusStartTimer();
 
       // Save data as long as it fits into the buffer.
-      if (buffer_idx < sizeof(buffer)) {
-        buffer[buffer_idx++] = byte;
+      if (req_buffer_idx < sizeof(req_buffer)) {
+        req_buffer[req_buffer_idx++] = byte;
       }
 
       break;
@@ -168,11 +168,11 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
     case kTransmissionControlAndWaiting:
       if (timeout_type == kModbusTimeoutInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-        if (buffer_idx >= 3) {
-          uint16_t received_crc = BufferToWord(&buffer[buffer_idx - 2]);
-          uint16_t calculated_crc = ModbusCrc(&buffer[0], buffer_idx - 2);
+        if (req_buffer_idx >= 3) {
+          uint16_t received_crc = BufferToWord(&req_buffer[req_buffer_idx - 2]);
+          uint16_t calculated_crc = ModbusCrc(&req_buffer[0], req_buffer_idx - 2);
           if (frame_valid && received_crc == calculated_crc) {
-            HandleRequest(&buffer[1], buffer_idx - 3);
+            HandleRequest(&req_buffer[1], req_buffer_idx - 3);
           }
         }
 
