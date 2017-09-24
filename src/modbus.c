@@ -55,13 +55,17 @@ static uint16_t BufferToWord(const uint8_t *buffer) {
   return (uint16_t)((buffer[0] << 8) | buffer[1]);
 }
 
+static void WordToBuffer(uint16_t word, uint8_t *buffer) {
+  buffer[0] = (uint8_t)(word >> 8);
+  buffer[1] = (uint8_t)word;
+}
+
 static void ResponseAddWord(uint16_t word) {
-  if (resp_buffer_idx + 2 > sizeof(req_buffer_idx)) {
+  if (resp_buffer_idx + 2 > sizeof(resp_buffer)) {
     return;
   }
 
-  req_buffer[resp_buffer_idx] = (uint8_t)(word >> 8);
-  req_buffer[resp_buffer_idx + 1] = (uint8_t)word;
+  WordToBuffer(word, &resp_buffer[resp_buffer_idx]);
   resp_buffer_idx += 2;
 }
 
@@ -70,9 +74,9 @@ static void SendResponse(void) {
 }
 
 static void SendException(uint8_t exception) {
-  resp_buffer[0] |= 0x80;  // Flag response as exception.
-  resp_buffer[1] = exception;
-  ModbusSerialSend(resp_buffer, 2);
+  resp_buffer[1] |= 0x80;  // Flag response as exception.
+  resp_buffer[2] = exception;
+  ModbusSerialSend(resp_buffer, 5);
 }
 
 static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
@@ -83,7 +87,7 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   uint16_t starting_addr = BufferToWord(&data[0]);
   uint16_t quantity_regs = BufferToWord(&data[2]);
 
-  if (quantity_regs >= 1 && quantity_regs <= 0x7D) {
+  if (quantity_regs < 1 && quantity_regs > 0x7D) {
     return kModbusIllegalDataValue;
   }
 
@@ -110,14 +114,12 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
     return;
   }
 
-  bool exception = kModbusOk;
+  ModbusException exception = kModbusOk;
 
   uint8_t fn_code = data[0];
   switch (fn_code) {
     case 0x04:
-      exception = ReadInputRegister(&data[1], length)
-                      ? kModbusOk
-                      : kModbusIllegalDataAddress;
+      exception = ReadInputRegister(&data[1], length - 1);
       break;
 
     default:
@@ -138,6 +140,7 @@ void ModbusByteReceived(uint8_t byte) {
   switch (transmission_state) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
+      ModbusStartTimer();
       break;
 
     // First byte: Start of frame
@@ -211,6 +214,7 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
 
         transmission_state = kTransmissionIdle;
       }
+      break;
 
     default:
       Expect(false);
