@@ -16,6 +16,8 @@
 
 #include "chip.h"
 
+#define OSC_FREQ 12000000u
+
 void ModbusSerialSend(uint8_t *data, uint32_t length)
 {
   Chip_UART_SendBlocking(LPC_USART0, data, length);
@@ -23,13 +25,8 @@ void ModbusSerialSend(uint8_t *data, uint32_t length)
 
 void ModbusStartTimer(void)
 {
-  Chip_MRT_SetEnabled(LPC_MRT_CH0);
-  Chip_MRT_SetEnabled(LPC_MRT_CH1);
-}
-
-uint16_t ModbusCrc(uint8_t *data, uint32_t length)
-{
-  return Chip_CRC_CRC16((void *)data, length);
+  Chip_MRT_SetInterval(LPC_MRT_CH0, ((OSC_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
+  Chip_MRT_SetInterval(LPC_MRT_CH1, ((OSC_FREQ / 1000000) * 1750 ) | MRT_INTVAL_LOAD);
 }
 
 bool ModbusReadRegister(uint16_t address, uint16_t *data_out)

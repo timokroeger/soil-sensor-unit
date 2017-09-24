@@ -163,12 +163,12 @@ static void SetupTimers(void)
   Chip_MRT_Init();
 
   // Channel 0: MODBUS inter-character timeout
-  Chip_MRT_SetInterval(LPC_MRT_CH0, OSC_FREQ * 750 / 1000000);
   Chip_MRT_SetMode(LPC_MRT_CH0, MRT_MODE_ONESHOT);
+  Chip_MRT_SetEnabled(LPC_MRT_CH0);
 
   // Channel 1: MODBUS inter-frame timeout
-  Chip_MRT_SetInterval(LPC_MRT_CH1, OSC_FREQ * 1750 / 1000000);
   Chip_MRT_SetMode(LPC_MRT_CH1, MRT_MODE_ONESHOT);
+  Chip_MRT_SetEnabled(LPC_MRT_CH1);
 }
 
 // Setup a PWM output with 50% duty cycle.
