@@ -30,8 +30,8 @@ typedef enum {
   kModbusTimeoutNone
 } ModbusTimeoutType;
 
-// Asigns the stack a slave address.
-void ModbusSetAddress(uint8_t address);
+// Asigns the stack a slave address and starts operation.
+void ModbusStart(uint8_t slave_address);
 
 // Notify the MODBUS stack that a new byte was received.
 //

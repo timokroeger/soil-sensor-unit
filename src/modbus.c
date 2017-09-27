@@ -226,7 +226,13 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
   }
 }
 
-void ModbusSetAddress(uint8_t addr) { address = addr; }
+void ModbusStart(uint8_t slave_address) {
+  address = slave_address;
+
+  // Wait for a inter-frame timeout which then puts the stack in operational
+  // (idle) state.
+  ModbusStartTimer();
+}
 
 void ModbusByteReceived(uint8_t byte) {
   switch (transmission_state) {
