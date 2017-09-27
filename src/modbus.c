@@ -17,6 +17,7 @@
 #include "modbus.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "expect.h"
 #include "modbus_callbacks.h"
@@ -45,11 +46,11 @@ static uint8_t address;
 
 static ModbusTransmissionState transmission_state;
 static uint8_t req_buffer[256];
-static uint32_t req_buffer_idx;
+static size_t req_buffer_idx;
 static bool frame_valid;
 
 static uint8_t resp_buffer[256];
-static uint32_t resp_buffer_idx;
+static size_t resp_buffer_idx;
 
 static const uint8_t crc_lookup_hi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
@@ -158,9 +159,8 @@ static void SendResponse(void) {
 
   uint16_t crc = Crc(&resp_buffer[0], resp_buffer_idx);
   WordToBufferLE(crc, &resp_buffer[resp_buffer_idx]);
-  resp_buffer_idx += 2;
 
-  ModbusSerialSend(resp_buffer, resp_buffer_idx);
+  ModbusSerialSend(resp_buffer, (int)(resp_buffer_idx + 2));
 }
 
 static void SendException(uint8_t exception) {
@@ -184,12 +184,12 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   }
 
   // Byte Count
-  ResponseAddByte(quantity_regs * 2);
+  ResponseAddByte((uint8_t)(quantity_regs * 2));
 
   // Add all requested registers to the response.
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
-    bool ok = ModbusReadRegister(starting_addr + i, &reg_content);
+    bool ok = ModbusReadRegister((uint16_t)(starting_addr + i), &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {

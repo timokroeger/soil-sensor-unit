@@ -27,10 +27,6 @@
 extern int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat,
                               va_list * pParamList);
 
-static const char *log_level_color[kLogLevelMax] = {
-  RTT_CTRL_TEXT_RED, RTT_CTRL_TEXT_YELLOW, RTT_CTRL_RESET, RTT_CTRL_RESET,
-};
-
 static const char log_level_strings[kLogLevelMax][8] = {
   "ERROR  ", "WARNING", "INFO   ", "DEBUG  ",
 };
@@ -42,6 +38,8 @@ void LogFormat(LogLevel ll, const char *msg, ...)
   Expect(msg != NULL);
 
 #ifdef LOG_COLOR
+  static const char *log_level_color[kLogLevelMax] = {
+    RTT_CTRL_TEXT_RED, RTT_CTRL_TEXT_YELLOW, RTT_CTRL_RESET, RTT_CTRL_RESET };
   SEGGER_RTT_printf(0, "%s", log_level_color[ll]);
 #endif
 

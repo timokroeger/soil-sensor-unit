@@ -31,6 +31,7 @@ void ModbusStartTimer(void)
 
 bool ModbusReadRegister(uint16_t address, uint16_t *data_out)
 {
+  (void)address;
   *data_out = 0u;
   return true;
 }

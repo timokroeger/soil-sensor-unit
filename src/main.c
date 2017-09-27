@@ -52,7 +52,7 @@ void UART0_IRQHandler(void)
     uart_noise_error_counter++;
   }
 
-  uint8_t rxdata = Chip_UART_ReadByte(LPC_USART0);
+  uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
   ModbusByteReceived(rxdata);
 
   Chip_UART_ClearStatus(LPC_USART0,
@@ -186,7 +186,7 @@ static void SetupPWM(void)
   // Set ADC trigger 8 cycles (approximate sampling time) before PWM output switches
   // Found by experimenting with different values.
   Expect(timer_counts > 8);
-  LPC_SCT->MATCHREL[1].L = timer_counts - 8;
+  LPC_SCT->MATCHREL[1].L = (uint16_t)(timer_counts - 8);
 
   // Link events to states.
   LPC_SCT->EV[0].STATE = (1 << 0); // Event 0 only happens in state 0
@@ -226,7 +226,7 @@ static void SetupPWM(void)
 static void StartPWM(void)
 {
   // Start timer.
-  LPC_SCT->CTRL_L &= ~SCT_CTRL_HALT_L;
+  LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
 static void SetupADC(void)
