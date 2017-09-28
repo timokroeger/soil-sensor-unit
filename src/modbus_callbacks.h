@@ -1,16 +1,4 @@
-// Copyright (c) 2016 somemetricprefix <somemetricprefix+code@gmail.com>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License
+// Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
 #ifndef MODBUS_CALLBACKS_H_
 #define MODBUS_CALLBACKS_H_
@@ -18,7 +6,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// TODO
+// Initalises the serial interface and the timers required by the modbus stack.
+//
+// The user must configure the serial interface with the desired baudrate,
+// parity and stop bits. As inter-character and inter-frame timeout values
+// depend on baudrate it is also up to the user to decide on those.
+void ModbusInitHw(void);
+
+// Sends a modbus response via serial interface.
 void ModbusSerialSend(uint8_t *data, int length);
 
 // This function shall start a one-shot timer which calls ModbusTimeout() first
