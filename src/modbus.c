@@ -9,6 +9,7 @@
 
 #include "expect.h"
 #include "modbus_callbacks.h"
+#include "modbus_hw.h"
 
 typedef enum {
   kModbusOk = 0,
@@ -216,6 +217,8 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
 
 void ModbusStart(uint8_t slave_address) {
   address = slave_address;
+
+  ModbusInitHw();
 
   // Wait for a inter-frame timeout which then puts the stack in operational
   // (idle) state.

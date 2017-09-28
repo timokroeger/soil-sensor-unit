@@ -18,7 +18,8 @@ typedef enum {
   kModbusTimeoutNone
 } ModbusTimeoutType;
 
-// Asigns the stack a slave address and starts operation.
+// Assigns the stack a slave address, configures the hardware and starts
+// operation.
 void ModbusStart(uint8_t slave_address);
 
 // Notify the MODBUS stack that a new byte was received.
@@ -26,13 +27,13 @@ void ModbusStart(uint8_t slave_address);
 // Typically called by the UART RX ISR.
 void ModbusByteReceived(uint8_t byte);
 
-// A modbus timeout occured.
+// A MODBUS timeout occurred.
 //
 // Typically called by a timer ISR. The MODBUS stack starts the timer with the
 // ModbusStartTimer() function defined in modbus_callbacks.c.
 void ModbusTimeout(ModbusTimeoutType timeout_type);
 
-// A parity error occured.
+// A parity error occurred.
 //
 // Typically called by the UART RX ISR. Make sure to call this function after
 // ModbusByteReceived().
