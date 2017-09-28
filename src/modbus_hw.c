@@ -4,11 +4,11 @@
 
 #include "chip.h"
 
+#include "common.h"
 #include "expect.h"
 #include "modbus.h"
 
 #define UART_BAUDRATE 19200u
-#define OSC_FREQ 12000000u
 
 // Increased when no stop bits were received.
 static uint32_t uart_frame_error_counter = 0;

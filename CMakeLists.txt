@@ -21,6 +21,7 @@ add_executable(firmware
   src/startup_LPC82x.s
   src/log.c
   src/main.c
+  src/measure.c
   src/modbus.c
   src/modbus_callbacks.c
   src/modbus_hw.c
