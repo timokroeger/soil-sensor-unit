@@ -66,7 +66,7 @@ void ModbusStartTimer(void) {
                        ((OSC_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }
 
-void UART0_IRQHandler(void) {
+extern "C" void UART0_IRQHandler(void) {
   uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
   Expect((interrupt_status & (UART_STAT_RXRDY | UART_STAT_OVERRUNINT)) ==
          UART_STAT_RXRDY);
@@ -89,7 +89,7 @@ void UART0_IRQHandler(void) {
                             UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
 }
 
-void MRT_IRQHandler(void) {
+extern "C" void MRT_IRQHandler(void) {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
     ModbusTimeout(kModbusTimeoutInterCharacterDelay);

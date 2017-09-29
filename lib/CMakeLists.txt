@@ -33,7 +33,7 @@ target_include_directories(LPC8xx SYSTEM
   PUBLIC lpc_chip_82x/inc
 )
 
-target_compile_options(LPC8xx PRIVATE -Wno-conversion -Wno-sign-compare -Wno-sign-conversion -Wno-unused-parameter)
+target_compile_options(LPC8xx PUBLIC -DCORE_M0PLUS)
 
 add_library(SEGGER_RTT
   SEGGER/SEGGER_RTT.c

@@ -12,8 +12,8 @@
 #include "expect.h"
 
 // Not exported in the "SEGGER_RTT.h" header file but perfectly usable.
-extern int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat,
-                              va_list * pParamList);
+extern "C" int SEGGER_RTT_vprintf(unsigned BufferIndex, const char *sFormat,
+                                  va_list *pParamList);
 
 static const char log_level_strings[kLogLevelMax][8] = {
   "ERROR  ", "WARNING", "INFO   ", "DEBUG  ",

@@ -26,7 +26,7 @@ static inline void WaitTicks(uint32_t ticks) {
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
 }
 
-void InitSwichMatrix(void)
+static void InitSwichMatrix(void)
 {
   // Enable switch matrix.
   Chip_SWM_Init();
@@ -59,7 +59,7 @@ void InitSwichMatrix(void)
 
 // Initializes the chip to use an external 12MHz crystal as system clock without
 // PLL.
-void InitSystemClock(void)
+static void InitSystemClock(void)
 {
   // Start crystal oscillator.
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSOSC_PD);
@@ -79,7 +79,7 @@ void InitSystemClock(void)
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.
 // Sets up the switch matrix (peripheral to pin connections) and the system
 // clock.
-void SystemInit(void)
+extern "C" void SystemInit(void)
 {
   InitSwichMatrix();
   InitSystemClock();
@@ -88,7 +88,6 @@ void SystemInit(void)
 /// Enables interrupts.
 static void SetupNVIC(void)
 {
-  Expect(Chip_UART_GetIntsEnabled(LPC_USART0) != 0);
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
   NVIC_EnableIRQ(UART0_IRQn);
 
@@ -101,7 +100,7 @@ static void SetupNVIC(void)
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
-int main(void)
+extern "C" int main(void)
 {
   SetupNVIC();
 
@@ -110,14 +109,20 @@ int main(void)
 
   // Main loop.
   for (;;) {
-    uint32_t tmp = 0;
+    //uint32_t tmp = 0;
+    uint32_t low_filter = 0;
+    uint32_t high_filter = 0;
     for (int i = 0; i < (1 << 16); i++) {
       uint32_t low = MeasureRaw(false);
       uint32_t high = MeasureRaw(true);
-      tmp += high - low;
+      low_filter += low;
+      high_filter += high;
+      //tmp += high - low;
     }
-    tmp >>= 16;
-    LOG_DEBUG("%d\n", tmp);
+    low_filter >>= 16;
+    high_filter >>= 16;
+    uint32_t tmp = high_filter - low_filter;
+    LOG_DEBUG("%d %d %d\n", tmp, high_filter, low_filter);
   }
 
   // Never reached.

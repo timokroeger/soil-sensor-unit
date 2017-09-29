@@ -107,7 +107,7 @@ uint16_t MeasureRaw(bool high) {
   return ADC_DR_RESULT(adc_value_raw);
 }
 
-void SCT_IRQHandler(void) {
+extern "C" void SCT_IRQHandler(void) {
   // Disable ADC trigger immediately so it is not re-triggered accidentally.
   LPC_SCT->EV[3].STATE = 0;
 
