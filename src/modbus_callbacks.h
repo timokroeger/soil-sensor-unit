@@ -3,7 +3,6 @@
 #ifndef MODBUS_CALLBACKS_H_
 #define MODBUS_CALLBACKS_H_
 
-#include <stdbool.h>
 #include <stdint.h>
 
 // Reads the contents of a register at address and writes it to data_out.

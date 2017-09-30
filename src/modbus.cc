@@ -4,8 +4,7 @@
 
 #include "modbus.h"
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // size_t
 
 #include "expect.h"
 #include "modbus_callbacks.h"

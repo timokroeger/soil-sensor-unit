@@ -1,6 +1,5 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "chip.h"

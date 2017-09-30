@@ -3,8 +3,6 @@
 #ifndef EXPECT_H_
 #define EXPECT_H_
 
-#include <stdbool.h>
-
 /// Checks expectations about the current state of execution.
 ///
 /// For debug builds a breakpoint is set and execution is halted when the

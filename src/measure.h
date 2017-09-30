@@ -3,7 +3,6 @@
 #ifndef MEASURE_H_
 #define MEASURE_H_
 
-#include <stdbool.h>
 #include <stdint.h>
 
 // Initializes hardware required for capacitance measurement (PWM and ADC).
