@@ -23,7 +23,7 @@ static const char log_level_strings[kLogLevelMax][8] = {
 void LogFormat(LogLevel ll, const char *msg, ...)
 {
   Expect(ll < kLogLevelMax);
-  Expect(msg != NULL);
+  Expect(msg != nullptr);
 
 #ifdef LOG_COLOR
   static const char *log_level_color[kLogLevelMax] = {
