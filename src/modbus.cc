@@ -7,7 +7,6 @@
 #include <stddef.h>  // size_t
 
 #include "expect.h"
-#include "modbus_callbacks.h"
 
 typedef enum {
   kModbusOk = 0,
@@ -30,6 +29,7 @@ typedef enum {
 } ModbusTransmissionState;
 
 static uint8_t address;
+static ModbusDataInterface *data_interface;
 static ModbusHwInterface *hw_interface;
 
 static ModbusTransmissionState transmission_state;
@@ -177,7 +177,8 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   // Add all requested registers to the response.
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
-    bool ok = ModbusReadRegister((uint16_t)(starting_addr + i), &reg_content);
+    bool ok = data_interface->ModbusReadRegister((uint16_t)(starting_addr + i),
+                                                 &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {
@@ -214,12 +215,17 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
   }
 }
 
-void ModbusSetup(uint8_t slave_address, ModbusHwInterface *hwif) {
+void ModbusSetup(uint8_t slave_address, ModbusDataInterface *data_if,
+                 ModbusHwInterface *hw_if) {
   address = slave_address;
-  hw_interface = hwif;
+  data_interface = data_if;
+  hw_interface = hw_if;
 }
 
 void ModbusStart() {
+  Expect(data_interface != nullptr);
+  Expect(hw_interface != nullptr);
+
   hw_interface->ModbusSerialEnable();
 
   // Wait for a inter-frame timeout which then puts the stack in operational

@@ -21,7 +21,7 @@ add_executable(firmware
   src/main.cc
   src/measure.cc
   src/modbus.cc
-  src/modbus_callbacks.cc
+  src/modbus_data.cc
   src/modbus_hw.cc
 )
 

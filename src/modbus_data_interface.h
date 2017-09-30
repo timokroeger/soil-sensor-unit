@@ -1,0 +1,15 @@
+// Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
+
+#ifndef MODBUS_DATA_INTERFACE_H_
+#define MODBUS_DATA_INTERFACE_H_
+
+#include <stdint.h>
+
+class ModbusDataInterface {
+ public:
+  // Reads the contents of a register at address and writes it to data_out.
+  // Returns true on success or false when the register is not available.
+  virtual bool ModbusReadRegister(uint16_t address, uint16_t *data_out) = 0;
+};
+
+#endif  // MODBUS_DATA_INTERFACE_H_

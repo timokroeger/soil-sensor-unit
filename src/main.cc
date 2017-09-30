@@ -9,6 +9,7 @@
 #include "log.h"
 #include "measure.h"
 #include "modbus.h"
+#include "modbus_data.h"
 #include "modbus_hw.h"
 
 #define ISR_PRIO_UART 1
@@ -102,8 +103,9 @@ static void SetupNVIC()
 // configured by SystemInit() before main was called.
 extern "C" int main()
 {
+  ModbusData modbus_data;
   ModbusHw modbus_hardware;
-  ModbusSetup(1, &modbus_hardware);
+  ModbusSetup(1, &modbus_data, &modbus_hardware);
 
   MeasureInit();
 
@@ -127,6 +129,7 @@ extern "C" int main()
     high_filter >>= 16;
     uint32_t tmp = high_filter - low_filter;
     LOG_DEBUG("%d %d %d\n", tmp, high_filter, low_filter);
+    modbus_data.set_raw_value((uint16_t)tmp);
   }
 
   // Never reached.
