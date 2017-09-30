@@ -1,0 +1,30 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"ecc_flags_sources":
+		[
+			{
+				"file": "CMakeLists.txt",
+				"flags": ["-G Ninja"],
+			},
+		],
+	},
+	"SublimeLinter":
+	{
+		"linters":
+		{
+			"clang": {
+				"extra_flags": "-Wall -Wextra",
+				"include_dirs": [
+					"${project_folder}\\lib\\lpc_chip_82x\\inc"
+				]
+			}
+		}
+	},
+}
