@@ -30,7 +30,7 @@ set_property(TARGET firmware PROPERTY COMPILE_FLAGS "${CORTEX_M0_FLAGS}\
     -fno-exceptions -fno-non-call-exceptions -fno-rtti\
     -Wall -Wextra -Wconversion -Woverloaded-virtual -Wreorder -Wsign-promo")
 set_property(TARGET firmware PROPERTY LINK_FLAGS "${CORTEX_M0_FLAGS}\
-    -specs=nosys.specs\
+    -specs=nosys.specs -specs=nano.specs\
     -Wl,--gc-sections,-T${CMAKE_SOURCE_DIR}/src/config/lpc_flash1.ld")
 set_property(TARGET firmware PROPERTY CXX_STANDARD 11)
 set_property(TARGET firmware PROPERTY CXX_STANDARD_REQUIRED ON)
