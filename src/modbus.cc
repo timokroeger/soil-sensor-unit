@@ -141,7 +141,7 @@ static void ResponseAddWord(uint16_t word) {
   resp_buffer_idx += 2;
 }
 
-static void SendResponse(void) {
+static void SendResponse() {
   if (resp_buffer_idx + 2 > sizeof(resp_buffer)) {
     return;
   }
@@ -314,4 +314,4 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
   }
 }
 
-void ModbusParityError(void) { frame_valid = false; }
+void ModbusParityError() { frame_valid = false; }

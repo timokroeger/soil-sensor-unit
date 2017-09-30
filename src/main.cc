@@ -27,7 +27,7 @@ static inline void WaitTicks(uint32_t ticks) {
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
 }
 
-static void InitSwichMatrix(void)
+static void InitSwichMatrix()
 {
   // Enable switch matrix.
   Chip_SWM_Init();
@@ -60,7 +60,7 @@ static void InitSwichMatrix(void)
 
 // Initializes the chip to use an external 12MHz crystal as system clock without
 // PLL.
-static void InitSystemClock(void)
+static void InitSystemClock()
 {
   // Start crystal oscillator.
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSOSC_PD);
@@ -80,14 +80,14 @@ static void InitSystemClock(void)
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.
 // Sets up the switch matrix (peripheral to pin connections) and the system
 // clock.
-extern "C" void SystemInit(void)
+extern "C" void SystemInit()
 {
   InitSwichMatrix();
   InitSystemClock();
 }
 
 /// Enables interrupts.
-static void SetupNVIC(void)
+static void SetupNVIC()
 {
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
   NVIC_EnableIRQ(UART0_IRQn);
@@ -101,7 +101,7 @@ static void SetupNVIC(void)
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
-extern "C" int main(void)
+extern "C" int main()
 {
   ModbusHw modbus_hardware;
   ModbusSetup(1, &modbus_hardware);

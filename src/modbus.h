@@ -41,6 +41,6 @@ void ModbusTimeout(ModbusTimeoutType timeout_type);
 //
 // Typically called by the UART RX ISR. Make sure to call this function after
 // ModbusByteReceived().
-void ModbusParityError(void);
+void ModbusParityError();
 
 #endif  // MODBUS_H_

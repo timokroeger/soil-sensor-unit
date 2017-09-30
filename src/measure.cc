@@ -9,7 +9,7 @@
 
 #define PWM_FREQ 200000u
 
-static void SetupAdc(void) {
+static void SetupAdc() {
   Chip_ADC_Init(LPC_ADC, 0);
 
   // Wait for ADC to be calibrated.
@@ -31,7 +31,7 @@ static void SetupAdc(void) {
 }
 
 // Setup a PWM output with 50% duty cycle.
-static void SetupPwm(void) {
+static void SetupPwm() {
   Chip_SCT_Init(LPC_SCT);
 
   // Set output frequency with the reload match 0 value. This value is loaded
@@ -88,7 +88,7 @@ static void SetupPwm(void) {
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
-void MeasureInit(void) {
+void MeasureInit() {
   SetupAdc();
   SetupPwm();
 }
@@ -107,7 +107,7 @@ uint16_t MeasureRaw(bool high) {
   return ADC_DR_RESULT(adc_value_raw);
 }
 
-extern "C" void SCT_IRQHandler(void) {
+extern "C" void SCT_IRQHandler() {
   // Disable ADC trigger immediately so it is not re-triggered accidentally.
   LPC_SCT->EV[3].STATE = 0;
 
