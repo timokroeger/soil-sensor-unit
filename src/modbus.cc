@@ -9,7 +9,6 @@
 
 #include "expect.h"
 #include "modbus_callbacks.h"
-#include "modbus_hw.h"
 
 typedef enum {
   kModbusOk = 0,
@@ -32,6 +31,7 @@ typedef enum {
 } ModbusTransmissionState;
 
 static uint8_t address;
+static ModbusHwInterface *hw_interface;
 
 static ModbusTransmissionState transmission_state;
 static uint8_t req_buffer[256];
@@ -149,7 +149,7 @@ static void SendResponse(void) {
   uint16_t crc = Crc(&resp_buffer[0], resp_buffer_idx);
   WordToBufferLE(crc, &resp_buffer[resp_buffer_idx]);
 
-  ModbusSerialSend(resp_buffer, (int)(resp_buffer_idx + 2));
+  hw_interface->ModbusSerialSend(resp_buffer, (int)(resp_buffer_idx + 2));
 }
 
 static void SendException(uint8_t exception) {
@@ -157,7 +157,7 @@ static void SendException(uint8_t exception) {
   resp_buffer[2] = exception;
   uint16_t crc = Crc(resp_buffer, 3);
   WordToBufferLE(crc, &resp_buffer[3]);
-  ModbusSerialSend(resp_buffer, 5);
+  hw_interface->ModbusSerialSend(resp_buffer, 5);
 }
 
 static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
@@ -215,26 +215,29 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
   }
 }
 
-void ModbusStart(uint8_t slave_address) {
+void ModbusSetup(uint8_t slave_address, ModbusHwInterface *hwif) {
   address = slave_address;
+  hw_interface = hwif;
+}
 
-  ModbusInitHw();
+void ModbusStart() {
+  hw_interface->ModbusSerialEnable();
 
   // Wait for a inter-frame timeout which then puts the stack in operational
   // (idle) state.
-  ModbusStartTimer();
+  hw_interface->ModbusStartTimer();
 }
 
 void ModbusByteReceived(uint8_t byte) {
   switch (transmission_state) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
-      ModbusStartTimer();
+      hw_interface->ModbusStartTimer();
       break;
 
     // First byte: Start of frame
     case kTransmissionIdle:
-      ModbusStartTimer();
+      hw_interface->ModbusStartTimer();
 
       // Immediately check if address matches.
       // TODO: Allow broadcasts.
@@ -248,7 +251,7 @@ void ModbusByteReceived(uint8_t byte) {
       break;
 
     case kTransmissionReception:
-      ModbusStartTimer();
+      hw_interface->ModbusStartTimer();
 
       // Save data as long as it fits into the buffer.
       if (req_buffer_idx < sizeof(req_buffer)) {

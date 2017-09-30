@@ -3,21 +3,20 @@
 #ifndef MODBUS_HW_H_
 #define MODBUS_HW_H_
 
-#include <stdint.h>
+#include "modbus_hw_interface.h"
 
-// Initalises the serial interface and the timers required by the modbus stack.
-//
-// The user must configure the serial interface with the desired baudrate,
-// parity and stop bits. As inter-character and inter-frame timeout values
-// depend on baudrate it is also up to the user to decide on those.
-void ModbusInitHw(void);
+class ModbusHw : public ModbusHwInterface {
+ public:
+  ModbusHw();
 
-// Sends a modbus response via serial interface.
-void ModbusSerialSend(uint8_t *data, int length);
+  void ModbusSerialEnable() override;
+  void ModbusSerialSend(uint8_t *data, int length) override;
+  void ModbusStartTimer() override;
 
-// This function shall start a one-shot timer which calls ModbusTimeout() first
-// kModbusTimeoutInterCharacterDelay after typically 750us and then
-// kModbusTimeoutInterFrameDelay after typically 1750us.
-void ModbusStartTimer(void);
+ private:
+  // Sets up UART0 with RTS pin as drive enable for the RS485 receiver.
+  static void SetupUart();
+  static void SetupTimers();
+};
 
 #endif  // MODBUS_HW_H_

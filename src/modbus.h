@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#include "modbus_hw_interface.h"
+
 // TODO: Think about RX ISR / Timer ISR priority and timing issues.
 
 typedef enum {
@@ -18,9 +20,11 @@ typedef enum {
   kModbusTimeoutNone
 } ModbusTimeoutType;
 
-// Assigns the stack a slave address, configures the hardware and starts
-// operation.
-void ModbusStart(uint8_t slave_address);
+// Assigns the stack a slave address and hardware inteface.
+void ModbusSetup(uint8_t slave_address, ModbusHwInterface *hwif);
+
+// Starts operation of the MODBUS stack.
+void ModbusStart();
 
 // Notify the MODBUS stack that a new byte was received.
 //

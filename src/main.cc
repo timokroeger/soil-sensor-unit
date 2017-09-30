@@ -10,6 +10,7 @@
 #include "log.h"
 #include "measure.h"
 #include "modbus.h"
+#include "modbus_hw.h"
 
 #define ISR_PRIO_UART 1
 #define ISR_PRIO_TIMER 1
@@ -102,10 +103,14 @@ static void SetupNVIC(void)
 // configured by SystemInit() before main was called.
 extern "C" int main(void)
 {
-  SetupNVIC();
+  ModbusHw modbus_hardware;
+  ModbusSetup(1, &modbus_hardware);
 
   MeasureInit();
-  ModbusStart(1);
+
+  SetupNVIC();
+
+  ModbusStart();
 
   // Main loop.
   for (;;) {
