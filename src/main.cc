@@ -105,13 +105,14 @@ extern "C" int main()
 {
   ModbusData modbus_data;
   ModbusHw modbus_hardware;
-  ModbusSetup(1, &modbus_data, &modbus_hardware);
+  Modbus modbus(&modbus_data, &modbus_hardware);
+  modbus_hardware.set_modbus(&modbus);
 
   MeasureInit();
 
   SetupNVIC();
 
-  ModbusStart();
+  modbus.StartOperation(1);
 
   // Main loop.
   for (;;) {

@@ -20,6 +20,8 @@ static uint32_t uart_parity_error_counter = 0;
 // Increased when only 2 of 3 samples of a UART bit reading were stable.
 static uint32_t uart_noise_error_counter = 0;
 
+Modbus* ModbusHw::modbus_ = nullptr;
+
 void ModbusHw::SetupUart() {
   // Enable global UART clock.
   Chip_Clock_SetUARTClockDiv(1);
@@ -85,7 +87,7 @@ extern "C" void UART0_IRQHandler() {
   }
 
   uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
-  ModbusByteReceived(rxdata);
+  ModbusHw::modbus()->ByteReceived(rxdata);
 
   Chip_UART_ClearStatus(LPC_USART0,
                         UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
@@ -95,11 +97,11 @@ extern "C" void UART0_IRQHandler() {
 extern "C" void MRT_IRQHandler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
-    ModbusTimeout(kModbusTimeoutInterCharacterDelay);
+    ModbusHw::modbus()->Timeout(Modbus::kInterCharacterDelay);
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
     Chip_MRT_IntClear(LPC_MRT_CH1);
-    ModbusTimeout(kModbusTimeoutInterFrameDelay);
+    ModbusHw::modbus()->Timeout(Modbus::kInterFrameDelay);
   }
 }

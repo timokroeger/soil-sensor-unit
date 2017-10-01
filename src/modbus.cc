@@ -4,41 +4,7 @@
 
 #include "modbus.h"
 
-#include <stddef.h>  // size_t
-
 #include "expect.h"
-
-typedef enum {
-  kModbusOk = 0,
-  kModbusIllegalFunction,
-  kModbusIllegalDataAddress,
-  kModbusIllegalDataValue,
-  kModbusServerDeviceFailure,
-  kModbusAcknowledge,
-  kModbusDeviceBusy,
-  kModbusMemoryParityError,
-  kModbusGatewayPathUnavailable,
-  kModbusGatewayTargetDeviceFailedToRespond,
-} ModbusException;
-
-typedef enum {
-  kTransmissionInital = 0,
-  kTransmissionIdle,
-  kTransmissionReception,
-  kTransmissionControlAndWaiting,
-} ModbusTransmissionState;
-
-static uint8_t address;
-static ModbusDataInterface *data_interface;
-static ModbusHwInterface *hw_interface;
-
-static ModbusTransmissionState transmission_state;
-static uint8_t req_buffer[256];
-static size_t req_buffer_idx;
-static bool frame_valid;
-
-static uint8_t resp_buffer[256];
-static size_t resp_buffer_idx;
 
 static const uint8_t crc_lookup_hi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
@@ -122,53 +88,64 @@ static uint16_t Crc(const uint8_t *data, uint32_t length)
   return (uint16_t)((crc_hi << 8) | crc_lo);
 }
 
-static void ResponseAddByte(uint8_t b) {
-  if (resp_buffer_idx + 1 > sizeof(resp_buffer)) {
+Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
+    : data_interface_(data_if),
+      hw_interface_(hw_if),
+      address_(0),
+      transmission_state_(kTransmissionInital),
+      frame_valid_(false),
+      req_buffer_{0},
+      req_buffer_idx_(0),
+      resp_buffer_{0},
+      resp_buffer_idx_(0) {}
+
+void Modbus::ResponseAddByte(uint8_t b) {
+  if (resp_buffer_idx_ + 1 > sizeof(resp_buffer_)) {
     return;
   }
 
-  resp_buffer[resp_buffer_idx] = b;
-  resp_buffer_idx++;
+  resp_buffer_[resp_buffer_idx_] = b;
+  resp_buffer_idx_++;
 }
 
-static void ResponseAddWord(uint16_t word) {
-  if (resp_buffer_idx + 2 > sizeof(resp_buffer)) {
+void Modbus::ResponseAddWord(uint16_t word) {
+  if (resp_buffer_idx_ + 2 > sizeof(resp_buffer_)) {
     return;
   }
 
-  WordToBufferBE(word, &resp_buffer[resp_buffer_idx]);
-  resp_buffer_idx += 2;
+  WordToBufferBE(word, &resp_buffer_[resp_buffer_idx_]);
+  resp_buffer_idx_ += 2;
 }
 
-static void SendResponse() {
-  if (resp_buffer_idx + 2 > sizeof(resp_buffer)) {
+void Modbus::SendResponse() {
+  if (resp_buffer_idx_ + 2 > sizeof(resp_buffer_)) {
     return;
   }
 
-  uint16_t crc = Crc(&resp_buffer[0], resp_buffer_idx);
-  WordToBufferLE(crc, &resp_buffer[resp_buffer_idx]);
+  uint16_t crc = Crc(&resp_buffer_[0], resp_buffer_idx_);
+  WordToBufferLE(crc, &resp_buffer_[resp_buffer_idx_]);
 
-  hw_interface->ModbusSerialSend(resp_buffer, (int)(resp_buffer_idx + 2));
+  hw_interface_->ModbusSerialSend(resp_buffer_, (int)(resp_buffer_idx_ + 2));
 }
 
-static void SendException(uint8_t exception) {
-  resp_buffer[1] |= 0x80;  // Flag response as exception.
-  resp_buffer[2] = exception;
-  uint16_t crc = Crc(resp_buffer, 3);
-  WordToBufferLE(crc, &resp_buffer[3]);
-  hw_interface->ModbusSerialSend(resp_buffer, 5);
+void Modbus::SendException(uint8_t exception) {
+  resp_buffer_[1] |= 0x80;  // Flag response as exception.
+  resp_buffer_[2] = exception;
+  uint16_t crc = Crc(resp_buffer_, 3);
+  WordToBufferLE(crc, &resp_buffer_[3]);
+  hw_interface_->ModbusSerialSend(resp_buffer_, 5);
 }
 
-static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
+Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data, uint32_t length) {
   if (length != 4) {
-    return kModbusIllegalDataValue;
+    return kIllegalDataValue;
   }
 
   uint16_t starting_addr = BufferToWordBE(&data[0]);
   uint16_t quantity_regs = BufferToWordBE(&data[2]);
 
   if (quantity_regs < 1 || quantity_regs > 0x7D) {
-    return kModbusIllegalDataValue;
+    return kIllegalDataValue;
   }
 
   // Byte Count
@@ -177,25 +154,25 @@ static ModbusException ReadInputRegister(const uint8_t *data, uint32_t length) {
   // Add all requested registers to the response.
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
-    bool ok = data_interface->ModbusReadRegister((uint16_t)(starting_addr + i),
-                                                 &reg_content);
+    bool ok = data_interface_->ModbusReadRegister((uint16_t)(starting_addr + i),
+                                                  &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {
-      return kModbusIllegalDataAddress;
+      return kIllegalDataAddress;
     }
   }
 
-  return kModbusOk;
+  return kOk;
 }
 
-static void HandleRequest(const uint8_t *data, uint32_t length) {
+void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
   if (length == 0) {
-    SendException(kModbusIllegalFunction);
+    SendException(kIllegalFunction);
     return;
   }
 
-  ModbusException exception = kModbusOk;
+  ExceptionType exception = kOk;
 
   uint8_t fn_code = data[0];
   switch (fn_code) {
@@ -204,69 +181,65 @@ static void HandleRequest(const uint8_t *data, uint32_t length) {
       break;
 
     default:
-      exception = kModbusIllegalFunction;
+      exception = kIllegalFunction;
       break;
   }
 
-  if (exception == kModbusOk) {
+  if (exception == kOk) {
     SendResponse();
   } else {
     SendException(exception);
   }
 }
 
-void ModbusSetup(uint8_t slave_address, ModbusDataInterface *data_if,
-                 ModbusHwInterface *hw_if) {
-  address = slave_address;
-  data_interface = data_if;
-  hw_interface = hw_if;
-}
+void Modbus::StartOperation(uint8_t slave_address) {
+  Expect(data_interface_ != nullptr);
+  Expect(hw_interface_ != nullptr);
+  Expect(slave_address != 0);
 
-void ModbusStart() {
-  Expect(data_interface != nullptr);
-  Expect(hw_interface != nullptr);
+  address_ = slave_address;
 
-  hw_interface->ModbusSerialEnable();
+  hw_interface_->ModbusSerialEnable();
 
   // Wait for a inter-frame timeout which then puts the stack in operational
   // (idle) state.
-  hw_interface->ModbusStartTimer();
+  hw_interface_->ModbusStartTimer();
 }
 
-void ModbusByteReceived(uint8_t byte) {
-  switch (transmission_state) {
+void Modbus::ByteReceived(uint8_t byte) {
+  switch (transmission_state_) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
-      hw_interface->ModbusStartTimer();
+      hw_interface_->ModbusStartTimer();
       break;
 
     // First byte: Start of frame
     case kTransmissionIdle:
-      hw_interface->ModbusStartTimer();
+      hw_interface_->ModbusStartTimer();
 
       // Immediately check if address matches.
       // TODO: Allow broadcasts.
-      frame_valid = (byte == address);
+      frame_valid_ = (byte == address_);
 
       // Reset buffer and fill first byte.
-      req_buffer[0] = byte;
-      req_buffer_idx = 1;
+      req_buffer_[0] = byte;
+      req_buffer_idx_ = 1;
 
-      transmission_state = kTransmissionReception;
+      transmission_state_ = kTransmissionReception;
       break;
 
     case kTransmissionReception:
-      hw_interface->ModbusStartTimer();
+      hw_interface_->ModbusStartTimer();
 
       // Save data as long as it fits into the buffer.
-      if (req_buffer_idx < sizeof(req_buffer)) {
-        req_buffer[req_buffer_idx++] = byte;
+      if (req_buffer_idx_ < sizeof(req_buffer_)) {
+        req_buffer_[req_buffer_idx_++] = byte;
       }
 
       break;
 
     case kTransmissionControlAndWaiting:
-      frame_valid = false;
+      frame_valid_ = false;
       break;
 
     default:
@@ -275,11 +248,11 @@ void ModbusByteReceived(uint8_t byte) {
   }
 }
 
-void ModbusTimeout(ModbusTimeoutType timeout_type) {
-  switch (transmission_state) {
+void Modbus::Timeout(TimeoutType timeout_type) {
+  switch (transmission_state_) {
     case kTransmissionInital:
-      if (timeout_type == kModbusTimeoutInterFrameDelay) {
-        transmission_state = kTransmissionIdle;
+      if (timeout_type == kInterFrameDelay) {
+        transmission_state_ = kTransmissionIdle;
       }
       break;
 
@@ -288,28 +261,28 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
       break;
 
     case kTransmissionReception:
-      if (timeout_type == kModbusTimeoutInterCharacterDelay) {
-        transmission_state = kTransmissionControlAndWaiting;
+      if (timeout_type == kInterCharacterDelay) {
+        transmission_state_ = kTransmissionControlAndWaiting;
       }
 
     case kTransmissionControlAndWaiting:
-      if (timeout_type == kModbusTimeoutInterFrameDelay) {
+      if (timeout_type == kInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-        if (req_buffer_idx >= 3) {
-          uint16_t received_crc = BufferToWordLE(&req_buffer[req_buffer_idx - 2]);
-          uint16_t calculated_crc = Crc(&req_buffer[0], req_buffer_idx - 2);
-          if (frame_valid && received_crc == calculated_crc) {
+        if (req_buffer_idx_ >= 3) {
+          uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+          uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
+          if (frame_valid_ && received_crc == calculated_crc) {
             // Reset buffer for writing. The first two bytes are the same as in
             // the request.
-            resp_buffer[0] = req_buffer[0];  // Address
-            resp_buffer[1] = req_buffer[1];  // Function Code
-            resp_buffer_idx = 2;
+            resp_buffer_[0] = req_buffer_[0];  // Address
+            resp_buffer_[1] = req_buffer_[1];  // Function Code
+            resp_buffer_idx_ = 2;
 
-            HandleRequest(&req_buffer[1], req_buffer_idx - 3);
+            HandleRequest(&req_buffer_[1], req_buffer_idx_ - 3);
           }
         }
 
-        transmission_state = kTransmissionIdle;
+        transmission_state_ = kTransmissionIdle;
       }
       break;
 
@@ -318,5 +291,3 @@ void ModbusTimeout(ModbusTimeoutType timeout_type) {
       break;
   }
 }
-
-void ModbusParityError() { frame_valid = false; }
