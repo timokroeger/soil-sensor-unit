@@ -9,16 +9,20 @@
 /// expectation is not met. For release builds thes function is a noop.
 ///
 /// @param expr The expression to check validity for.
-#ifndef NDEBUG
-static inline void Expect(bool expr)
-{
+#ifdef UNIT_TEST
+// Make the program fail so that we use can death tests.
+#include <stdlib.h>
+static inline void Expect(bool) { exit(EXIT_FAILURE); }
+#else
+  #ifndef NDEBUG
+static inline void Expect(bool expr) {
   if (!expr) {
-    __asm volatile ("bkpt 0");
+    __asm volatile("bkpt 0");
   }
 }
-#else
-//static inline void Expect(bool expr) { (void)expr; }
-#define Expect(expr)
+  #else
+static inline void Expect(bool) {}
+  #endif
 #endif
 
 #endif  // EXPECT_H_

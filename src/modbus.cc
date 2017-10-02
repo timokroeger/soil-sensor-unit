@@ -97,7 +97,10 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
       req_buffer_{0},
       req_buffer_idx_(0),
       resp_buffer_{0},
-      resp_buffer_idx_(0) {}
+      resp_buffer_idx_(0) {
+  Expect(data_interface_ != nullptr);
+  Expect(hw_interface_ != nullptr);
+}
 
 void Modbus::ResponseAddByte(uint8_t b) {
   if (resp_buffer_idx_ + 1 > sizeof(resp_buffer_)) {
@@ -193,8 +196,7 @@ void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
 }
 
 void Modbus::StartOperation(uint8_t slave_address) {
-  Expect(data_interface_ != nullptr);
-  Expect(hw_interface_ != nullptr);
+
   Expect(slave_address != 0);
 
   address_ = slave_address;
@@ -264,6 +266,7 @@ void Modbus::Timeout(TimeoutType timeout_type) {
       if (timeout_type == kInterCharacterDelay) {
         transmission_state_ = kTransmissionControlAndWaiting;
       }
+      break;
 
     case kTransmissionControlAndWaiting:
       if (timeout_type == kInterFrameDelay) {
