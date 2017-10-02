@@ -28,10 +28,9 @@ void ModbusHw::SetupUart() {
 
   Chip_UART_Init(LPC_USART0);
   Chip_UART_SetBaud(LPC_USART0, UART_BAUDRATE);
-  Chip_UART_ConfigData(LPC_USART0,
-                       UART_CFG_DATALEN_8 | UART_CFG_PARITY_EVEN |
-                           UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
-                           UART_CFG_OEPOL);
+  Chip_UART_ConfigData(LPC_USART0, UART_CFG_DATALEN_8 | UART_CFG_PARITY_EVEN |
+                                       UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
+                                       UART_CFG_OEPOL);
 
   // Enable receive and overrun interrupt. No interrupts for frame, parity or
   // noise errors are enabled because those are checked when reading a received
@@ -56,11 +55,9 @@ ModbusHw::ModbusHw() {
   SetupTimers();
 }
 
-void ModbusHw::ModbusSerialEnable() {
-  Chip_UART_Enable(LPC_USART0);
-}
+void ModbusHw::ModbusSerialEnable() { Chip_UART_Enable(LPC_USART0); }
 
-void ModbusHw::ModbusSerialSend(uint8_t *data, int length) {
+void ModbusHw::ModbusSerialSend(uint8_t* data, int length) {
   Chip_UART_SendBlocking(LPC_USART0, data, length);
 }
 
@@ -89,9 +86,9 @@ extern "C" void UART0_IRQHandler() {
   uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
   ModbusHw::modbus()->ByteReceived(rxdata);
 
-  Chip_UART_ClearStatus(LPC_USART0,
-                        UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
-                            UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
+  Chip_UART_ClearStatus(LPC_USART0, UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
+                                        UART_STAT_PAR_ERRINT |
+                                        UART_STAT_RXNOISEINT);
 }
 
 extern "C" void MRT_IRQHandler() {

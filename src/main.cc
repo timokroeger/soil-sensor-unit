@@ -16,19 +16,18 @@
 #define ISR_PRIO_TIMER 1
 
 // Must have highest priority so that the ADC trigger can be reset in time.
-#define ISR_PRIO_SCT  0
+#define ISR_PRIO_SCT 0
 
 const uint32_t OscRateIn = OSC_FREQ;
-const uint32_t ExtRateIn = 0; // External clock input not used.
+const uint32_t ExtRateIn = 0;  // External clock input not used.
 
 // Delays execution by a few ticks.
 static inline void WaitTicks(uint32_t ticks) {
-  uint32_t num_iters = ticks / 3; // ASM code takes 3 ticks for each iteration.
-  __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r" (num_iters));
+  uint32_t num_iters = ticks / 3;  // ASM code takes 3 ticks for each iteration.
+  __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r"(num_iters));
 }
 
-static void InitSwichMatrix()
-{
+static void InitSwichMatrix() {
   // Enable switch matrix.
   Chip_SWM_Init();
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
@@ -47,8 +46,8 @@ static void InitSwichMatrix()
   Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
 
   // PWM output
-  Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);  // FREQ_LO
-  Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 14); // FREQ_HI
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);   // FREQ_LO
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 14);  // FREQ_HI
 
   // ADC input
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
@@ -60,8 +59,7 @@ static void InitSwichMatrix()
 
 // Initializes the chip to use an external 12MHz crystal as system clock without
 // PLL.
-static void InitSystemClock()
-{
+static void InitSystemClock() {
   // Start crystal oscillator.
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSOSC_PD);
 
@@ -74,21 +72,19 @@ static void InitSystemClock()
 
   // Disable internal RC oscillator.
   // TODO: Uncomment when sure that crystal oscillator is working.
-  //Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_IRCOUT_PD | SYSCTL_SLPWAKE_IRC_PD);
+  // Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_IRCOUT_PD | SYSCTL_SLPWAKE_IRC_PD);
 }
 
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.
 // Sets up the switch matrix (peripheral to pin connections) and the system
 // clock.
-extern "C" void SystemInit()
-{
+extern "C" void SystemInit() {
   InitSwichMatrix();
   InitSystemClock();
 }
 
 /// Enables interrupts.
-static void SetupNVIC()
-{
+static void SetupNVIC() {
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
   NVIC_EnableIRQ(UART0_IRQn);
 
@@ -101,8 +97,7 @@ static void SetupNVIC()
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
-extern "C" int main()
-{
+extern "C" int main() {
   ModbusData modbus_data;
   ModbusHw modbus_hardware;
   Modbus modbus(&modbus_data, &modbus_hardware);
@@ -116,7 +111,7 @@ extern "C" int main()
 
   // Main loop.
   for (;;) {
-    //uint32_t tmp = 0;
+    // uint32_t tmp = 0;
     uint32_t low_filter = 0;
     uint32_t high_filter = 0;
     for (int i = 0; i < (1 << 16); i++) {
@@ -124,7 +119,7 @@ extern "C" int main()
       uint32_t high = MeasureRaw(true);
       low_filter += low;
       high_filter += high;
-      //tmp += high - low;
+      // tmp += high - low;
     }
     low_filter >>= 16;
     high_filter >>= 16;

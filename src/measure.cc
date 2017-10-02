@@ -14,8 +14,7 @@ static void SetupAdc() {
 
   // Wait for ADC to be calibrated.
   Chip_ADC_StartCalibration(LPC_ADC);
-  while (!Chip_ADC_IsCalibrationDone(LPC_ADC))
-    ;
+  while (!Chip_ADC_IsCalibrationDone(LPC_ADC)) continue;
 
   // Set ADC clock: A value of 0 divides the system clock by 1.
   Chip_ADC_SetDivider(LPC_ADC, 0);
@@ -84,7 +83,7 @@ static void SetupPwm() {
   // Restart counter on event 0 and 1 (match occurred)
   LPC_SCT->LIMIT_L = (1 << 0) | (1 << 1);
 
-    // Start timer.
+  // Start timer.
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 

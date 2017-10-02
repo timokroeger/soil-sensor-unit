@@ -28,7 +28,7 @@ static const uint8_t crc_lookup_hi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
     0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
-    0x00, 0xC1, 0x81, 0x40 };
+    0x00, 0xC1, 0x81, 0x40};
 
 static const uint8_t crc_lookup_lo[] = {
     0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2, 0xC6, 0x06, 0x07, 0xC7,
@@ -52,7 +52,7 @@ static const uint8_t crc_lookup_lo[] = {
     0x5A, 0x9A, 0x9B, 0x5B, 0x99, 0x59, 0x58, 0x98, 0x88, 0x48, 0x49, 0x89,
     0x4B, 0x8B, 0x8A, 0x4A, 0x4E, 0x8E, 0x8F, 0x4F, 0x8D, 0x4D, 0x4C, 0x8C,
     0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83,
-    0x41, 0x81, 0x80, 0x40 };
+    0x41, 0x81, 0x80, 0x40};
 
 static uint16_t BufferToWordBE(const uint8_t *buffer) {
   return (uint16_t)((buffer[0] << 8) | buffer[1]);
@@ -74,15 +74,14 @@ static void WordToBufferLE(uint16_t word, uint8_t *buffer) {
 
 // Taken from Appendix B of "MODBUS over Serial Line Specification and
 // Implementation Guide V1.02"
-static uint16_t Crc(const uint8_t *data, uint32_t length)
-{
+static uint16_t Crc(const uint8_t *data, uint32_t length) {
   uint8_t crc_hi = 0xFF;
   uint8_t crc_lo = 0xFF;
 
   while (length--) {
     uint8_t idx = crc_lo ^ *data++;
-    crc_lo = crc_hi ^ crc_lookup_hi[idx] ;
-    crc_hi = crc_lookup_lo[idx] ;
+    crc_lo = crc_hi ^ crc_lookup_hi[idx];
+    crc_hi = crc_lookup_lo[idx];
   }
 
   return (uint16_t)((crc_hi << 8) | crc_lo);
@@ -128,7 +127,8 @@ void Modbus::SendResponse() {
   uint16_t crc = Crc(&resp_buffer_[0], resp_buffer_idx_);
   WordToBufferLE(crc, &resp_buffer_[resp_buffer_idx_]);
 
-  hw_interface_->ModbusSerialSend(resp_buffer_, (int)(resp_buffer_idx_ + 2));
+  hw_interface_->ModbusSerialSend(resp_buffer_,
+                                  static_cast<int>(resp_buffer_idx_ + 2));
 }
 
 void Modbus::SendException(uint8_t exception) {
@@ -139,7 +139,8 @@ void Modbus::SendException(uint8_t exception) {
   hw_interface_->ModbusSerialSend(resp_buffer_, 5);
 }
 
-Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data, uint32_t length) {
+Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
+                                                uint32_t length) {
   if (length != 4) {
     return kIllegalDataValue;
   }
@@ -196,7 +197,6 @@ void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
 }
 
 void Modbus::StartOperation(uint8_t slave_address) {
-
   Expect(slave_address != 0);
 
   address_ = slave_address;
@@ -272,7 +272,8 @@ void Modbus::Timeout(TimeoutType timeout_type) {
       if (timeout_type == kInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
         if (req_buffer_idx_ >= 3) {
-          uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+          uint16_t received_crc =
+              BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
           uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
           if (frame_valid_ && received_crc == calculated_crc) {
             // Reset buffer for writing. The first two bytes are the same as in
