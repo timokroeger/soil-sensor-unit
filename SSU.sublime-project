@@ -5,6 +5,15 @@
 			"path": "."
 		}
 	],
+	"build_systems":
+	[
+		{
+			"name": "SSU",
+			"cmd": "ninja",
+			"file_regex": "/([^/:]+):(\\d+):(\\d+): ",
+			"working_dir": "${project_path}/build",
+		}
+	],
 	"settings":
 	{
 		"ecc_flags_sources":
