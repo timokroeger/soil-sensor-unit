@@ -98,7 +98,7 @@ TEST_F(ModbusTest, ReadInputRegister) {
     0x01,        // Slave address
     0x04,        // Function code
     0x02,        // Byte Count
-    0xAB, 0xCD,  // Quantity of Input Registers
+    0xAB, 0xCD,  // Register Content
     0x07, 0x95,  // CRC
   };
 
@@ -179,6 +179,40 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
   SendMessage(read_register_request_0, sizeof(read_register_request_0));
   SendMessage(read_register_request_7E, sizeof(read_register_request_7E));
   SendMessage(read_register_request_100, sizeof(read_register_request_100));
+}
+
+TEST_F(ModbusTest, ReadInputRegisterMultiple) {
+  modbus_.StartOperation(1);
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+  modbus_.Timeout(Modbus::kInterFrameDelay);
+
+  const uint8_t read_register_request[] = {
+    0x01,        // Slave address
+    0x04,        // Function code
+    0x45, 0x67,  // Starting Address
+    0x00, 0x03,  // Quantity of Input Registers
+    0x14, 0xD8,  // CRC
+  };
+
+  const uint8_t read_register_response[] = {
+    0x01,        // Slave address
+    0x04,        // Function code
+    0x06,        // Byte Count
+    0xAB, 0xCD,  // Register Content
+    0xDE, 0xAD,
+    0xBE, 0xAF,
+    0xCE, 0x8D,  // CRC
+  };
+
+  EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+  EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4568, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xDEAD), Return(true)));
+  EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4569, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xBEAF), Return(true)));
+  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
+      .With(ElementsAreArray(read_register_response));
+  SendMessage(read_register_request, sizeof(read_register_request));
 }
 
 }  // namespace
