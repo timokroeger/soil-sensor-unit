@@ -5,6 +5,7 @@
 
 using ::testing::_;
 using ::testing::InSequence;
+using ::testing::NiceMock;
 using ::testing::StrictMock;
 
 namespace {
@@ -23,10 +24,14 @@ class MockModbusHw : public ModbusHwInterface {
 
 class ModbusTest : public ::testing::Test {
  protected:
-  ModbusTest() : mock_modbus_data_(), mock_modbus_hw_() {}
+  ModbusTest()
+      : mock_modbus_data_(),
+        mock_modbus_hw_(),
+        modbus_(&mock_modbus_data_, &mock_modbus_hw_) {}
 
   StrictMock<MockModbusData> mock_modbus_data_;
-  StrictMock<MockModbusHw> mock_modbus_hw_;
+  NiceMock<MockModbusHw> mock_modbus_hw_;
+  Modbus modbus_;
 };
 
 TEST_F(ModbusTest, NoInterfaces) {
@@ -42,27 +47,28 @@ TEST_F(ModbusTest, NoHwInterface) {
 }
 
 TEST_F(ModbusTest, InvalidSlaveAddresses) {
-  Modbus modbus(&mock_modbus_data_, &mock_modbus_hw_);
+  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
+  modbus_.StartOperation(0);
 
-  modbus.StartOperation(0);
-  modbus.StartOperation(248);
-  modbus.StartOperation(255);
+  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
+  modbus_.StartOperation(248);
+
+  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
+  modbus_.StartOperation(255);
 }
 
 TEST_F(ModbusTest, ValidSlaveAddresses) {
-  Modbus modbus(&mock_modbus_data_, &mock_modbus_hw_);
+  EXPECT_CALL(mock_modbus_hw_, SerialEnable());
+  EXPECT_CALL(mock_modbus_hw_, StartTimer());
+  modbus_.StartOperation(12);
 
   EXPECT_CALL(mock_modbus_hw_, SerialEnable());
   EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus.StartOperation(12);
+  modbus_.StartOperation(123);
 
   EXPECT_CALL(mock_modbus_hw_, SerialEnable());
   EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus.StartOperation(123);
-
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable());
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus.StartOperation(247);
+  modbus_.StartOperation(247);
 }
 
 }  // namespace
