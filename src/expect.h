@@ -12,17 +12,21 @@
 #ifdef UNIT_TEST
 // Make the program fail so that we use can death tests.
 #include <stdlib.h>
-static inline void Expect(bool) { exit(EXIT_FAILURE); }
+static inline void Expect(bool expr) {
+  if (!expr) {
+    exit(EXIT_FAILURE);
+  }
+}
 #else
-  #ifndef NDEBUG
+#ifndef NDEBUG
 static inline void Expect(bool expr) {
   if (!expr) {
     __asm volatile("bkpt 0");
   }
 }
-  #else
+#else
 static inline void Expect(bool) {}
-  #endif
+#endif
 #endif
 
 #endif  // EXPECT_H_

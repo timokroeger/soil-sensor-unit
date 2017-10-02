@@ -197,15 +197,15 @@ void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
 }
 
 void Modbus::StartOperation(uint8_t slave_address) {
-  Expect(slave_address != 0);
+  if (slave_address >= 1 && slave_address <= 247) {
+    address_ = slave_address;
 
-  address_ = slave_address;
+    hw_interface_->SerialEnable();
 
-  hw_interface_->SerialEnable();
-
-  // Wait for a inter-frame timeout which then puts the stack in operational
-  // (idle) state.
-  hw_interface_->StartTimer();
+    // Wait for a inter-frame timeout which then puts the stack in operational
+    // (idle) state.
+    hw_interface_->StartTimer();
+  }
 }
 
 void Modbus::ByteReceived(uint8_t byte) {
