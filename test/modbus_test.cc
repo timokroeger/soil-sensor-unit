@@ -35,10 +35,15 @@ class ModbusTest : public ::testing::Test {
   StrictMock<MockModbusHw> mock_modbus_hw_;
   Modbus modbus_;
 
-  void StartOperation() {
+  void StartOperationWrongAddr(uint8_t addr) {
+    EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
+    modbus_.StartOperation(addr);
+  }
+
+  void StartOperation(uint8_t addr) {
     EXPECT_CALL(mock_modbus_hw_, SerialEnable());
     EXPECT_CALL(mock_modbus_hw_, StartTimer());
-    modbus_.StartOperation(1);
+    modbus_.StartOperation(addr);
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
   }
@@ -66,28 +71,16 @@ TEST_F(ModbusTest, NoHwInterface) {
 }
 
 TEST_F(ModbusTest, InvalidSlaveAddresses) {
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
-  modbus_.StartOperation(0);
-
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
-  modbus_.StartOperation(248);
-
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
-  modbus_.StartOperation(255);
+  StartOperationWrongAddr(0);
+  for (int i = 248; i <= 255; i++) {
+    StartOperationWrongAddr(static_cast<uint8_t>(i));
+  }
 }
 
 TEST_F(ModbusTest, ValidSlaveAddresses) {
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable());
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus_.StartOperation(12);
-
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable());
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus_.StartOperation(123);
-
-  EXPECT_CALL(mock_modbus_hw_, SerialEnable());
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus_.StartOperation(247);
+  for (int i = 1; i <= 247; i++) {
+    StartOperation(static_cast<uint8_t>(i));
+  }
 }
 
 TEST_F(ModbusTest, EmptyMessage) {
@@ -96,7 +89,7 @@ TEST_F(ModbusTest, EmptyMessage) {
       0x7E, 0x80,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _)).Times(0);
   SendMessage(request, sizeof(request));
@@ -116,7 +109,7 @@ TEST_F(ModbusTest, InvalidFunctionCode) {
       0x86, 0x50,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
       .With(ElementsAreArray(response));
@@ -140,7 +133,7 @@ TEST_F(ModbusTest, ReadInputRegister) {
       0x07, 0x95,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
@@ -165,7 +158,7 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
       0xC2, 0xC1,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(Return(false));
@@ -206,7 +199,7 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
       0x03, 0x01,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _)).Times(0);
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
@@ -235,7 +228,7 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
       0xDE, 0xAD, 0xBE, 0xAF, 0xCE, 0x8D,  // CRC
   };
 
-  StartOperation();
+  StartOperation(1);
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
