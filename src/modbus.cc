@@ -271,7 +271,7 @@ void Modbus::Timeout(TimeoutType timeout_type) {
     case kTransmissionControlAndWaiting:
       if (timeout_type == kInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-        if (req_buffer_idx_ >= 3) {
+        if (req_buffer_idx_ > 3) {
           uint16_t received_crc =
               BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
           uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
