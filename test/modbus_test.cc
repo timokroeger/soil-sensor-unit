@@ -32,10 +32,19 @@ class ModbusTest : public ::testing::Test {
         modbus_(&mock_modbus_data_, &mock_modbus_hw_) {}
 
   StrictMock<MockModbusData> mock_modbus_data_;
-  NiceMock<MockModbusHw> mock_modbus_hw_;
+  StrictMock<MockModbusHw> mock_modbus_hw_;
   Modbus modbus_;
 
+  void StartOperation() {
+    EXPECT_CALL(mock_modbus_hw_, SerialEnable());
+    EXPECT_CALL(mock_modbus_hw_, StartTimer());
+    modbus_.StartOperation(1);
+    modbus_.Timeout(Modbus::kInterCharacterDelay);
+    modbus_.Timeout(Modbus::kInterFrameDelay);
+  }
+
   void SendMessage(const uint8_t *data, int length) {
+    EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
       modbus_.ByteReceived(data[i]);
     }
@@ -82,24 +91,18 @@ TEST_F(ModbusTest, ValidSlaveAddresses) {
 }
 
 TEST_F(ModbusTest, EmptyMessage) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t request[] = {
       0x01,        // Slave address
       0x7E, 0x80,  // CRC
   };
+
+  StartOperation();
 
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _)).Times(0);
   SendMessage(request, sizeof(request));
 }
 
 TEST_F(ModbusTest, InvalidFunctionCode) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t request[] = {
       0x01,        // Slave address
       0x09,        // Function code
@@ -113,16 +116,14 @@ TEST_F(ModbusTest, InvalidFunctionCode) {
       0x86, 0x50,  // CRC
   };
 
+  StartOperation();
+
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
       .With(ElementsAreArray(response));
   SendMessage(request, sizeof(request));
 }
 
 TEST_F(ModbusTest, ReadInputRegister) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t read_register_request[] = {
       0x01,        // Slave address
       0x04,        // Function code
@@ -139,6 +140,8 @@ TEST_F(ModbusTest, ReadInputRegister) {
       0x07, 0x95,  // CRC
   };
 
+  StartOperation();
+
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
@@ -147,10 +150,6 @@ TEST_F(ModbusTest, ReadInputRegister) {
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t read_register_request[] = {
       0x01,        // Slave address
       0x04,        // Function code
@@ -166,6 +165,8 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
       0xC2, 0xC1,  // CRC
   };
 
+  StartOperation();
+
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(Return(false));
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
@@ -174,10 +175,6 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t read_register_request_0[] = {
       0x01,        // Slave address
       0x04,        // Function code
@@ -209,6 +206,8 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
       0x03, 0x01,  // CRC
   };
 
+  StartOperation();
+
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _)).Times(0);
   EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
       .With(ElementsAreArray(read_register_response))
@@ -220,10 +219,6 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
 }
 
 TEST_F(ModbusTest, ReadInputRegisterMultiple) {
-  modbus_.StartOperation(1);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-
   const uint8_t read_register_request[] = {
       0x01,        // Slave address
       0x04,        // Function code
@@ -239,6 +234,8 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
       0xAB, 0xCD,                          // Register Content
       0xDE, 0xAD, 0xBE, 0xAF, 0xCE, 0x8D,  // CRC
   };
+
+  StartOperation();
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
