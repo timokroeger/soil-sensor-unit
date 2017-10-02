@@ -56,6 +56,13 @@ class ModbusTest : public ::testing::Test {
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
   }
+
+  void RequestResponse(const uint8_t *req, size_t req_len, const uint8_t *resp,
+                       size_t resp_len) {
+    EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
+        .With(ElementsAreArray(resp, resp_len));
+    SendMessage(req, static_cast<int>(req_len));
+  }
 };
 
 TEST_F(ModbusTest, NoInterfaces) {
@@ -111,9 +118,7 @@ TEST_F(ModbusTest, InvalidFunctionCode) {
 
   StartOperation(1);
 
-  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
-      .With(ElementsAreArray(response));
-  SendMessage(request, sizeof(request));
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegister) {
@@ -137,9 +142,9 @@ TEST_F(ModbusTest, ReadInputRegister) {
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
-  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
-      .With(ElementsAreArray(read_register_response));
-  SendMessage(read_register_request, sizeof(read_register_request));
+
+  RequestResponse(read_register_request, sizeof(read_register_request),
+                  read_register_response, sizeof(read_register_response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
@@ -162,9 +167,9 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _))
       .WillOnce(Return(false));
-  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
-      .With(ElementsAreArray(read_register_response));
-  SendMessage(read_register_request, sizeof(read_register_request));
+
+  RequestResponse(read_register_request, sizeof(read_register_request),
+                  read_register_response, sizeof(read_register_response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
@@ -202,13 +207,13 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
   StartOperation(1);
 
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4567, _)).Times(0);
-  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
-      .With(ElementsAreArray(read_register_response))
-      .Times(3);
 
-  SendMessage(read_register_request_0, sizeof(read_register_request_0));
-  SendMessage(read_register_request_7E, sizeof(read_register_request_7E));
-  SendMessage(read_register_request_100, sizeof(read_register_request_100));
+  RequestResponse(read_register_request_0, sizeof(read_register_request_0),
+                  read_register_response, sizeof(read_register_response));
+  RequestResponse(read_register_request_7E, sizeof(read_register_request_7E),
+                  read_register_response, sizeof(read_register_response));
+  RequestResponse(read_register_request_100, sizeof(read_register_request_100),
+                  read_register_response, sizeof(read_register_response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterMultiple) {
@@ -236,9 +241,9 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
       .WillOnce(DoAll(SetArgPointee<1>(0xDEAD), Return(true)));
   EXPECT_CALL(mock_modbus_data_, ReadRegister(0x4569, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xBEAF), Return(true)));
-  EXPECT_CALL(mock_modbus_hw_, SerialSend(_, _))
-      .With(ElementsAreArray(read_register_response));
-  SendMessage(read_register_request, sizeof(read_register_request));
+
+  RequestResponse(read_register_request, sizeof(read_register_request),
+                  read_register_response, sizeof(read_register_response));
 }
 
 }  // namespace
