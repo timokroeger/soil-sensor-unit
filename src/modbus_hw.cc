@@ -22,6 +22,24 @@ static uint32_t uart_noise_error_counter = 0;
 
 Modbus* ModbusHw::modbus_ = nullptr;
 
+ModbusHw::ModbusHw() {
+  SetupUart();
+  SetupTimers();
+}
+
+void ModbusHw::SerialEnable() { Chip_UART_Enable(LPC_USART0); }
+
+void ModbusHw::SerialSend(uint8_t* data, int length) {
+  Chip_UART_SendBlocking(LPC_USART0, data, length);
+}
+
+void ModbusHw::StartTimer() {
+  Chip_MRT_SetInterval(LPC_MRT_CH0,
+                       ((OSC_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
+  Chip_MRT_SetInterval(LPC_MRT_CH1,
+                       ((OSC_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
+}
+
 void ModbusHw::SetupUart() {
   // Enable global UART clock.
   Chip_Clock_SetUARTClockDiv(1);
@@ -48,24 +66,6 @@ void ModbusHw::SetupTimers() {
   // Channel 1: MODBUS inter-frame timeout
   Chip_MRT_SetMode(LPC_MRT_CH1, MRT_MODE_ONESHOT);
   Chip_MRT_SetEnabled(LPC_MRT_CH1);
-}
-
-ModbusHw::ModbusHw() {
-  SetupUart();
-  SetupTimers();
-}
-
-void ModbusHw::ModbusSerialEnable() { Chip_UART_Enable(LPC_USART0); }
-
-void ModbusHw::ModbusSerialSend(uint8_t* data, int length) {
-  Chip_UART_SendBlocking(LPC_USART0, data, length);
-}
-
-void ModbusHw::ModbusStartTimer() {
-  Chip_MRT_SetInterval(LPC_MRT_CH0,
-                       ((OSC_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
-  Chip_MRT_SetInterval(LPC_MRT_CH1,
-                       ((OSC_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }
 
 extern "C" void UART0_IRQHandler() {

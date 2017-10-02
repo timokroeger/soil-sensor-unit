@@ -127,8 +127,8 @@ void Modbus::SendResponse() {
   uint16_t crc = Crc(&resp_buffer_[0], resp_buffer_idx_);
   WordToBufferLE(crc, &resp_buffer_[resp_buffer_idx_]);
 
-  hw_interface_->ModbusSerialSend(resp_buffer_,
-                                  static_cast<int>(resp_buffer_idx_ + 2));
+  hw_interface_->SerialSend(resp_buffer_,
+                            static_cast<int>(resp_buffer_idx_ + 2));
 }
 
 void Modbus::SendException(uint8_t exception) {
@@ -136,7 +136,7 @@ void Modbus::SendException(uint8_t exception) {
   resp_buffer_[2] = exception;
   uint16_t crc = Crc(resp_buffer_, 3);
   WordToBufferLE(crc, &resp_buffer_[3]);
-  hw_interface_->ModbusSerialSend(resp_buffer_, 5);
+  hw_interface_->SerialSend(resp_buffer_, 5);
 }
 
 Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
@@ -158,8 +158,8 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
   // Add all requested registers to the response.
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
-    bool ok = data_interface_->ModbusReadRegister((uint16_t)(starting_addr + i),
-                                                  &reg_content);
+    bool ok = data_interface_->ReadRegister((uint16_t)(starting_addr + i),
+                                             &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {
@@ -201,23 +201,23 @@ void Modbus::StartOperation(uint8_t slave_address) {
 
   address_ = slave_address;
 
-  hw_interface_->ModbusSerialEnable();
+  hw_interface_->SerialEnable();
 
   // Wait for a inter-frame timeout which then puts the stack in operational
   // (idle) state.
-  hw_interface_->ModbusStartTimer();
+  hw_interface_->StartTimer();
 }
 
 void Modbus::ByteReceived(uint8_t byte) {
   switch (transmission_state_) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
-      hw_interface_->ModbusStartTimer();
+      hw_interface_->StartTimer();
       break;
 
     // First byte: Start of frame
     case kTransmissionIdle:
-      hw_interface_->ModbusStartTimer();
+      hw_interface_->StartTimer();
 
       // Immediately check if address matches.
       // TODO: Allow broadcasts.
@@ -231,7 +231,7 @@ void Modbus::ByteReceived(uint8_t byte) {
       break;
 
     case kTransmissionReception:
-      hw_interface_->ModbusStartTimer();
+      hw_interface_->StartTimer();
 
       // Save data as long as it fits into the buffer.
       if (req_buffer_idx_ < sizeof(req_buffer_)) {

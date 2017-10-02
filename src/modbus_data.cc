@@ -2,7 +2,7 @@
 
 #include "modbus_data.h"
 
-bool ModbusData::ModbusReadRegister(uint16_t address, uint16_t *data_out) {
+bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   (void)address;
   *data_out = raw_value_;
   return true;

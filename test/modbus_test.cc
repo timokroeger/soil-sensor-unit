@@ -10,14 +10,14 @@ namespace {
 
 class MockModbusData : public ModbusDataInterface {
  public:
-  MOCK_METHOD2(ModbusReadRegister, bool(uint16_t address, uint16_t *data_out));
+  MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
 };
 
 class MockModbusHw : public ModbusHwInterface {
  public:
-  MOCK_METHOD0(ModbusSerialEnable, void());
-  MOCK_METHOD2(ModbusSerialSend, void(uint8_t *data, int length));
-  MOCK_METHOD0(ModbusStartTimer, void());
+  MOCK_METHOD0(SerialEnable, void());
+  MOCK_METHOD2(SerialSend, void(uint8_t *data, int length));
+  MOCK_METHOD0(StartTimer, void());
 };
 
 class ModbusTest : public ::testing::Test {

@@ -10,9 +10,9 @@ class ModbusHw : public ModbusHwInterface {
  public:
   ModbusHw();
 
-  void ModbusSerialEnable() override;
-  void ModbusSerialSend(uint8_t *data, int length) override;
-  void ModbusStartTimer() override;
+  void SerialEnable() override;
+  void SerialSend(uint8_t *data, int length) override;
+  void StartTimer() override;
 
   static Modbus *modbus() { return modbus_; }
   static void set_modbus(Modbus *modbus) { modbus_ = modbus; }
