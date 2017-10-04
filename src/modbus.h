@@ -30,6 +30,9 @@ class Modbus {
   // Starts operation of the MODBUS stack.
   void StartOperation(uint8_t slave_address);
 
+  // Notify the MODBUS stack that a start bit was detected.
+  void ByteStart();
+
   // Notify the MODBUS stack that a new byte was received.
   //
   // Typically called by the UART RX ISR.
@@ -80,6 +83,7 @@ class Modbus {
   uint8_t address_;
 
   TransmissionState transmission_state_;
+  bool receiving_byte;
   bool frame_valid_;
 
   uint8_t req_buffer_[256];

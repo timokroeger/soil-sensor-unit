@@ -50,10 +50,10 @@ void ModbusHw::SetupUart() {
                                        UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
                                        UART_CFG_OEPOL);
 
-  // Enable receive and overrun interrupt. No interrupts for frame, parity or
+  // Enable receive and start interrupt. No interrupts for frame, parity or
   // noise errors are enabled because those are checked when reading a received
   // byte.
-  Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_OVERRUN);
+  Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_START);
 }
 
 void ModbusHw::SetupTimers() {
@@ -70,25 +70,32 @@ void ModbusHw::SetupTimers() {
 
 extern "C" void UART0_IRQHandler() {
   uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
-  Expect((interrupt_status & (UART_STAT_RXRDY | UART_STAT_OVERRUNINT)) ==
-         UART_STAT_RXRDY);
 
-  if (interrupt_status & UART_STAT_FRM_ERRINT) {
-    uart_frame_error_counter++;
-  }
-  if (interrupt_status & UART_STAT_PAR_ERRINT) {
-    uart_parity_error_counter++;
-  }
-  if (interrupt_status & UART_STAT_RXNOISEINT) {
-    uart_noise_error_counter++;
+  if (interrupt_status & UART_STAT_START) {
+    ModbusHw::modbus()->ByteStart();
+
+    Chip_UART_ClearStatus(LPC_USART0, UART_STAT_START);
   }
 
-  uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
-  ModbusHw::modbus()->ByteReceived(rxdata);
+  if (interrupt_status & UART_STAT_RXRDY) {
+    uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
+    ModbusHw::modbus()->ByteReceived(rxdata);
 
-  Chip_UART_ClearStatus(LPC_USART0, UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
-                                        UART_STAT_PAR_ERRINT |
-                                        UART_STAT_RXNOISEINT);
+    if (interrupt_status & UART_STAT_FRM_ERRINT) {
+      uart_frame_error_counter++;
+    }
+    if (interrupt_status & UART_STAT_PAR_ERRINT) {
+      uart_parity_error_counter++;
+      ModbusHw::modbus()->ParityError();
+    }
+    if (interrupt_status & UART_STAT_RXNOISEINT) {
+      uart_noise_error_counter++;
+    }
+
+    Chip_UART_ClearStatus(LPC_USART0,
+                          UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
+                              UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
+  }
 }
 
 extern "C" void MRT_IRQHandler() {

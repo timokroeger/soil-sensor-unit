@@ -92,6 +92,7 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
       hw_interface_(hw_if),
       address_(0),
       transmission_state_(kTransmissionInital),
+      receiving_byte(false),
       frame_valid_(false),
       req_buffer_{0},
       req_buffer_idx_(0),
@@ -208,17 +209,22 @@ void Modbus::StartOperation(uint8_t slave_address) {
   }
 }
 
+void Modbus::ByteStart() {
+  receiving_byte = true;
+}
+
 void Modbus::ByteReceived(uint8_t byte) {
+  Expect(receiving_byte);
+
+  hw_interface_->StartTimer();
+
   switch (transmission_state_) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
-      hw_interface_->StartTimer();
       break;
 
     // First byte: Start of frame
     case kTransmissionIdle:
-      hw_interface_->StartTimer();
-
       // Immediately check if address matches.
       // TODO: Allow broadcasts.
       frame_valid_ = (byte == address_);
@@ -231,8 +237,6 @@ void Modbus::ByteReceived(uint8_t byte) {
       break;
 
     case kTransmissionReception:
-      hw_interface_->StartTimer();
-
       // Save data as long as it fits into the buffer.
       if (req_buffer_idx_ < sizeof(req_buffer_)) {
         req_buffer_[req_buffer_idx_++] = byte;
@@ -248,9 +252,17 @@ void Modbus::ByteReceived(uint8_t byte) {
       Expect(false);
       break;
   }
+
+  receiving_byte = false;
 }
 
 void Modbus::Timeout(TimeoutType timeout_type) {
+  // This means that the start bit was in time and a byte is currently received
+  // which restarts the timer. Ignore the timeout in this case.
+  if (receiving_byte) {
+    return;
+  }
+
   switch (transmission_state_) {
     case kTransmissionInital:
       if (timeout_type == kInterFrameDelay) {
