@@ -37,9 +37,9 @@ static void SetupPwm() {
   // to the match register with each limit event.
   // The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
   // create complementary outputs with two timer states.
-  const uint16_t timer_counts = (OSC_FREQ / (PWM_FREQ * 2)) - 1;
-  static_assert(timer_counts > 25, "PWM too fast for ADC.");
-  LPC_SCT->MATCHREL[0].L = timer_counts;
+  const uint16_t timer_counts = (OSC_FREQ / (PWM_FREQ * 2));
+  static_assert(timer_counts >= 25, "PWM too fast for ADC.");
+  LPC_SCT->MATCHREL[0].L = timer_counts - 1;
 
   // Set ADC trigger 8 cycles (approximate sampling time) before PWM output
   // switches
