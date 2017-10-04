@@ -95,6 +95,18 @@ static void SetupNVIC() {
   NVIC_EnableIRQ(SCT_IRQn);
 }
 
+static uint16_t AverageMeasurement(void) {
+  uint32_t low = 0;
+  uint32_t high = 0;
+
+  for (int i = 0; i < (1 << 16); i++) {
+    low += MeasureRaw(false);
+    high += MeasureRaw(true);
+  }
+
+  return static_cast<uint16_t>((high - low) >> 16);
+}
+
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 extern "C" int main() {
@@ -107,25 +119,13 @@ extern "C" int main() {
 
   SetupNVIC();
 
+  modbus_data.set_raw_value(AverageMeasurement());
   modbus.StartOperation(1);
 
   // Main loop.
   for (;;) {
-    // uint32_t tmp = 0;
-    uint32_t low_filter = 0;
-    uint32_t high_filter = 0;
-    for (int i = 0; i < (1 << 16); i++) {
-      uint32_t low = MeasureRaw(false);
-      uint32_t high = MeasureRaw(true);
-      low_filter += low;
-      high_filter += high;
-      // tmp += high - low;
-    }
-    low_filter >>= 16;
-    high_filter >>= 16;
-    uint32_t tmp = high_filter - low_filter;
-    LOG_DEBUG("%d %d %d\n", tmp, high_filter, low_filter);
-    modbus_data.set_raw_value((uint16_t)tmp);
+    modbus_data.set_raw_value(AverageMeasurement());
+    LOG_DEBUG("%d\n", modbus_data.raw_value());
   }
 
   // Never reached.
