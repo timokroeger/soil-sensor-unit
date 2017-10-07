@@ -51,6 +51,7 @@ class ModbusTest : public ::testing::Test {
   void SendMessage(const uint8_t *data, int length) {
     EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
+      modbus_.ByteStart();
       modbus_.ByteReceived(data[i]);
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
