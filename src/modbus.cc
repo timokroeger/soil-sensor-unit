@@ -103,27 +103,21 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
 }
 
 void Modbus::ResponseAddByte(uint8_t b) {
-  if (resp_buffer_idx_ + 1 > sizeof(resp_buffer_)) {
-    return;
-  }
+  Expect(resp_buffer_idx_ + 1 <= sizeof(resp_buffer_));
 
   resp_buffer_[resp_buffer_idx_] = b;
   resp_buffer_idx_++;
 }
 
 void Modbus::ResponseAddWord(uint16_t word) {
-  if (resp_buffer_idx_ + 2 > sizeof(resp_buffer_)) {
-    return;
-  }
+  Expect(resp_buffer_idx_ + 2 <= sizeof(resp_buffer_));
 
   WordToBufferBE(word, &resp_buffer_[resp_buffer_idx_]);
   resp_buffer_idx_ += 2;
 }
 
 void Modbus::SendResponse() {
-  if (resp_buffer_idx_ + 2 > sizeof(resp_buffer_)) {
-    return;
-  }
+  Expect(resp_buffer_idx_ + 2 <= sizeof(resp_buffer_));
 
   uint16_t crc = Crc(&resp_buffer_[0], resp_buffer_idx_);
   WordToBufferLE(crc, &resp_buffer_[resp_buffer_idx_]);
@@ -172,10 +166,7 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
 }
 
 void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
-  if (length == 0) {
-    SendException(kIllegalFunction);
-    return;
-  }
+  Expect(length > 0);
 
   ExceptionType exception = kOk;
 
