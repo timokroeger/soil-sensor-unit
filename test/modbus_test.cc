@@ -292,4 +292,31 @@ TEST_F(ModbusTest, RequestTimeout) {
   modbus_.Timeout(Modbus::kInterFrameDelay);
 }
 
+TEST_F(ModbusTest, AdditionalRequestBytes) {
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+
+  StartOperation(1);
+
+  // Send all bytes but last as usual.
+  SendMessage(read_register_request, sizeof(read_register_request) - 1);
+
+  EXPECT_CALL(mock_modbus_hw_, StartTimer());
+  modbus_.ByteStart();
+  modbus_.ByteReceived(
+      read_register_request[sizeof(read_register_request) - 1]);
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+
+  // Do not finish frame…
+  // modbus_.Timeout(Modbus::kInterFrameDelay);
+
+  // …but send more data.
+  SendMessage(read_register_request, sizeof(read_register_request));
+}
+
 }  // namespace
