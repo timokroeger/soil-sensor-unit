@@ -247,4 +247,38 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
                   read_register_response, sizeof(read_register_response));
 }
 
+TEST_F(ModbusTest, RequestTimeout) {
+  // Use a valid request.
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+  const int length = sizeof(read_register_request);
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
+
+  // But only send half of message…
+  for (int i = 0; i < length / 2; i++) {
+    modbus_.ByteStart();
+    modbus_.ByteReceived(read_register_request[i]);
+  }
+
+  // …before there is an timeout.
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+
+  for (int i = length / 2; i < length; i++) {
+    modbus_.ByteStart();
+    modbus_.ByteReceived(read_register_request[i]);
+  }
+
+  // Send rest of message which should be ignored.
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+  modbus_.Timeout(Modbus::kInterFrameDelay);
+}
+
 }  // namespace
