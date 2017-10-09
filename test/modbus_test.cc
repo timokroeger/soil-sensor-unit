@@ -5,6 +5,7 @@
 
 using ::testing::ElementsAreArray;
 using ::testing::InSequence;
+using ::testing::Mock;
 using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
@@ -93,6 +94,12 @@ TEST_F(ModbusTest, ValidSlaveAddresses) {
     EXPECT_CALL(mock_modbus_hw_, DisableHw());
     modbus_.StopOperation();
   }
+}
+
+TEST_F(ModbusTest, MisbehavingTimer) {
+  StartOperation(1);
+  Mock::AllowLeak(&mock_modbus_hw_);
+  ASSERT_DEATH(modbus_.Timeout(Modbus::kInterFrameDelay), "");
 }
 
 TEST_F(ModbusTest, EmptyMessage) {

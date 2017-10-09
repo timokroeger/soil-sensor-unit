@@ -268,12 +268,14 @@ void Modbus::Timeout(TimeoutType timeout_type) {
       break;
 
     case kTransmissionIdle:
-      // No timeouts during idling.
+      Expect(false);
       break;
 
     case kTransmissionReception:
       if (timeout_type == kInterCharacterDelay) {
         transmission_state_ = kTransmissionControlAndWaiting;
+      } else {
+        Expect(false);
       }
       break;
 
