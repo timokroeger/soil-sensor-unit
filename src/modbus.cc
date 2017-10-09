@@ -189,15 +189,21 @@ void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
 }
 
 void Modbus::StartOperation(uint8_t slave_address) {
+  Expect(transmission_state_ == kTransmissionInital);
   if (slave_address >= 1 && slave_address <= 247) {
     address_ = slave_address;
 
-    hw_interface_->SerialEnable();
+    hw_interface_->EnableHw();
 
     // Wait for a inter-frame timeout which then puts the stack in operational
     // (idle) state.
     hw_interface_->StartTimer();
   }
+}
+
+void Modbus::StopOperation() {
+  hw_interface_->DisableHw();
+  transmission_state_ = kTransmissionInital;
 }
 
 void Modbus::ByteStart() {

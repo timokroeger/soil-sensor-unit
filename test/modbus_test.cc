@@ -19,7 +19,8 @@ class MockModbusData : public ModbusDataInterface {
 
 class MockModbusHw : public ModbusHwInterface {
  public:
-  MOCK_METHOD0(SerialEnable, void());
+  MOCK_METHOD0(EnableHw, void());
+  MOCK_METHOD0(DisableHw, void());
   MOCK_METHOD2(SerialSend, void(uint8_t *data, int length));
   MOCK_METHOD0(StartTimer, void());
 };
@@ -36,12 +37,12 @@ class ModbusTest : public ::testing::Test {
   Modbus modbus_;
 
   void StartOperationWrongAddr(uint8_t addr) {
-    EXPECT_CALL(mock_modbus_hw_, SerialEnable()).Times(0);
+    EXPECT_CALL(mock_modbus_hw_, EnableHw()).Times(0);
     modbus_.StartOperation(addr);
   }
 
   void StartOperation(uint8_t addr) {
-    EXPECT_CALL(mock_modbus_hw_, SerialEnable());
+    EXPECT_CALL(mock_modbus_hw_, EnableHw());
     EXPECT_CALL(mock_modbus_hw_, StartTimer());
     modbus_.StartOperation(addr);
     modbus_.Timeout(Modbus::kInterCharacterDelay);
@@ -88,6 +89,9 @@ TEST_F(ModbusTest, InvalidSlaveAddresses) {
 TEST_F(ModbusTest, ValidSlaveAddresses) {
   for (int i = 1; i <= 247; i++) {
     StartOperation(static_cast<uint8_t>(i));
+
+    EXPECT_CALL(mock_modbus_hw_, DisableHw());
+    modbus_.StopOperation();
   }
 }
 

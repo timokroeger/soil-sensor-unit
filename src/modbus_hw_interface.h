@@ -7,13 +7,17 @@
 
 class ModbusHwInterface {
  public:
-  // Initalises the serial interface and the timers required by the modbus
-  // stack.
+  // Initalizes the serial device and the timers required by the modbus stack.
   //
   // The user must configure the serial interface with the desired baudrate,
   // parity and stop bits. As inter-character and inter-frame timeout values
   // depend on baudrate it is also up to the user to decide on those.
-  virtual void SerialEnable() = 0;
+  virtual void EnableHw() = 0;
+
+  // Stops timers and disables the serial device.
+  // Make sure to stop an disable timers first so that a timer interrupt does
+  // not cause any further processing inside the MODBUS stack.
+  virtual void DisableHw() = 0;
 
   // Sends a modbus response via serial interface.
   virtual void SerialSend(uint8_t *data, int length) = 0;

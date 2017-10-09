@@ -30,6 +30,9 @@ class Modbus {
   // Starts operation of the MODBUS stack.
   void StartOperation(uint8_t slave_address);
 
+  // Stops operation of the MODBUS stack.
+  void StopOperation();
+
   // Notify the MODBUS stack that a start bit was detected.
   void ByteStart();
 

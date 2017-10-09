@@ -10,7 +10,8 @@ class ModbusHw : public ModbusHwInterface {
  public:
   ModbusHw();
 
-  void SerialEnable() override;
+  void EnableHw() override;
+  void DisableHw() override;
   void SerialSend(uint8_t *data, int length) override;
   void StartTimer() override;
 
