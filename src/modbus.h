@@ -79,7 +79,7 @@ class Modbus {
   void SendResponse();
   void SendException(uint8_t exception);
   ExceptionType ReadInputRegister(const uint8_t *data, uint32_t length);
-  void HandleRequest(const uint8_t *data, uint32_t length);
+  void HandleRequest(uint8_t fn_code, const uint8_t *data, uint32_t length);
 
   ModbusDataInterface *data_interface_;
   ModbusHwInterface *hw_interface_;

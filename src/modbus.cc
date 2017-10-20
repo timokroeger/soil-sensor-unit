@@ -165,15 +165,13 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
   return kOk;
 }
 
-void Modbus::HandleRequest(const uint8_t *data, uint32_t length) {
-  Expect(length > 0);
-
+void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
+                           uint32_t length) {
   ExceptionType exception = kOk;
 
-  uint8_t fn_code = data[0];
   switch (fn_code) {
     case 0x04:
-      exception = ReadInputRegister(&data[1], length - 1);
+      exception = ReadInputRegister(data, length);
       break;
 
     default:
@@ -283,17 +281,21 @@ void Modbus::Timeout(TimeoutType timeout_type) {
       if (timeout_type == kInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
         if (req_buffer_idx_ > 3) {
+          // Parse request
+          uint8_t address = req_buffer_[0];
+          uint8_t fn_code = req_buffer_[1];
           uint16_t received_crc =
               BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+
           uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
           if (frame_valid_ && received_crc == calculated_crc) {
             // Reset buffer for writing. The first two bytes are the same as in
             // the request.
-            resp_buffer_[0] = req_buffer_[0];  // Address
-            resp_buffer_[1] = req_buffer_[1];  // Function Code
+            resp_buffer_[0] = address;
+            resp_buffer_[1] = fn_code;
             resp_buffer_idx_ = 2;
 
-            HandleRequest(&req_buffer_[1], req_buffer_idx_ - 3);
+            HandleRequest(fn_code, &req_buffer_[2], req_buffer_idx_ - 4);
           }
         }
 
