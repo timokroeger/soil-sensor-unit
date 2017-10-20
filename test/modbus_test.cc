@@ -16,6 +16,7 @@ namespace {
 class MockModbusData : public ModbusDataInterface {
  public:
   MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
+  MOCK_METHOD2(WriteRegister, bool(uint16_t address, uint16_t data));
 };
 
 class MockModbusHw : public ModbusHwInterface {
@@ -256,6 +257,87 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
 
   RequestResponse(read_register_request, sizeof(read_register_request),
                   read_register_response, sizeof(read_register_response));
+}
+
+TEST_F(ModbusTest, WriteSingleRegister) {
+  const uint8_t write_single_register[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Quantity of Input Registers
+      0x93, 0xBC,  // CRC
+  };
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(true));
+
+  RequestResponse(write_single_register, sizeof(write_single_register),
+                  write_single_register, sizeof(write_single_register));
+}
+
+TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
+  const uint8_t write_single_register_request[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Quantity of Input Registers
+      0x93, 0xBC,  // CRC
+  };
+
+  const uint8_t write_single_register_response[] = {
+      0x01,        // Slave address
+      0x86,        // Error code
+      0x02,        // Exception code
+      0xC3, 0xA1,  // CRC
+  };
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_data_, WriteRegister(0x4567, 0xABCD))
+      .WillOnce(Return(false));
+
+  RequestResponse(
+      write_single_register_request, sizeof(write_single_register_request),
+      write_single_register_response, sizeof(write_single_register_response));
+}
+
+TEST_F(ModbusTest, WriteSingleRegisterInvalidLength) {
+  const uint8_t write_single_register_request_too_short[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB,        // Quantity of Input Registers
+      0x63, 0x12,  // CRC
+  };
+
+  const uint8_t write_single_register_request_too_long[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Quantity of Input Registers
+      0x00,        // Extra Byte
+      0xFC, 0x6D,  // CRC
+  };
+
+  const uint8_t write_single_register_response[] = {
+      0x01,        // Slave address
+      0x86,        // Error code
+      0x03,        // Exception code
+      0x02, 0x61,  // CRC
+  };
+
+  StartOperation(1);
+
+  RequestResponse(write_single_register_request_too_short,
+                  sizeof(write_single_register_request_too_short),
+                  write_single_register_response,
+                  sizeof(write_single_register_response));
+
+  RequestResponse(write_single_register_request_too_long,
+                  sizeof(write_single_register_request_too_long),
+                  write_single_register_response,
+                  sizeof(write_single_register_response));
 }
 
 TEST_F(ModbusTest, RequestTimeout) {

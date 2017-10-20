@@ -154,7 +154,7 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
   for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
     bool ok = data_interface_->ReadRegister((uint16_t)(starting_addr + i),
-                                             &reg_content);
+                                            &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {
@@ -165,6 +165,25 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
   return kOk;
 }
 
+Modbus::ExceptionType Modbus::WriteSingleRegister(const uint8_t *data,
+                                                  uint32_t length) {
+  if (length != 4) {
+    return kIllegalDataValue;
+  }
+
+  uint16_t wr_addr = BufferToWordBE(&data[0]);
+  uint16_t wr_data = BufferToWordBE(&data[2]);
+
+  bool ok = data_interface_->WriteRegister(wr_addr, wr_data);
+  if (ok) {
+    ResponseAddWord(wr_addr);
+    ResponseAddWord(wr_data);
+    return kOk;
+  } else {
+    return kIllegalDataAddress;
+  }
+}
+
 void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
                            uint32_t length) {
   ExceptionType exception = kOk;
@@ -172,6 +191,10 @@ void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
   switch (fn_code) {
     case 0x04:
       exception = ReadInputRegister(data, length);
+      break;
+
+    case 0x06:
+      exception = WriteSingleRegister(data, length);
       break;
 
     default:
@@ -204,9 +227,7 @@ void Modbus::StopOperation() {
   transmission_state_ = kTransmissionInital;
 }
 
-void Modbus::ByteStart() {
-  receiving_byte = true;
-}
+void Modbus::ByteStart() { receiving_byte = true; }
 
 void Modbus::ByteReceived(uint8_t byte) {
   Expect(receiving_byte);

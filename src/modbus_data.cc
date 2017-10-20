@@ -7,3 +7,7 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   *data_out = raw_value_;
   return true;
 }
+
+bool ModbusData::WriteRegister(uint16_t, uint16_t) {
+  return false;
+}
