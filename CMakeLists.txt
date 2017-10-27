@@ -13,6 +13,7 @@ add_subdirectory(lib)
 
 add_executable(firmware.elf
   src/startup_LPC82x.s
+  src/config_storage.cc
   src/log.cc
   src/main.cc
   src/measure.cc

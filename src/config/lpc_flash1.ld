@@ -62,6 +62,13 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .config_flash :
+  {
+    . = ALIGN(64);
+    KEEP(*(.config_flash))
+    . = ALIGN(64);
+  } >FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {

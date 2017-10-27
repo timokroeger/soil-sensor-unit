@@ -5,6 +5,7 @@
 #include "chip.h"
 
 #include "common.h"
+#include "config_storage.h"
 #include "expect.h"
 #include "log.h"
 #include "measure.h"
@@ -120,7 +121,10 @@ extern "C" int main() {
   SetupNVIC();
 
   modbus_data.set_raw_value(AverageMeasurement());
-  modbus.StartOperation(1);
+
+  uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
+  Expect(sensor_id >= 1 && sensor_id <= 247);
+  modbus.StartOperation(static_cast<uint8_t>(sensor_id));
 
   // Main loop.
   for (;;) {

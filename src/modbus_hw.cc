@@ -5,10 +5,9 @@
 #include "chip.h"
 
 #include "common.h"
+#include "config_storage.h"
 #include "expect.h"
 #include "modbus.h"
-
-#define UART_BAUDRATE 19200u
 
 // Increased when no stop bits were received.
 static uint32_t uart_frame_error_counter = 0;
@@ -56,7 +55,9 @@ void ModbusHw::SetupUart() {
   Chip_Clock_SetUARTClockDiv(1);
 
   Chip_UART_Init(LPC_USART0);
-  Chip_UART_SetBaud(LPC_USART0, UART_BAUDRATE);
+
+  uint32_t baudrate = ConfigStorage::Instance().Get(ConfigStorage::kBaudrate);
+  Chip_UART_SetBaud(LPC_USART0, baudrate);
   Chip_UART_ConfigData(LPC_USART0, UART_CFG_DATALEN_8 | UART_CFG_PARITY_EVEN |
                                        UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
                                        UART_CFG_OEPOL);
