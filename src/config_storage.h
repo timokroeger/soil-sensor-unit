@@ -15,19 +15,19 @@ class ConfigStorage {
 
   static ConfigStorage& Instance();
 
-  void Set(ConfigIndex idx, uint32_t value);
-  uint32_t Get(ConfigIndex idx);
+  void Set(ConfigIndex idx, uint16_t value);
+  uint16_t Get(ConfigIndex idx);
 
   void WriteConfigToFlash();
 
  private:
   ConfigStorage();
 
-  static const int kNumConfigEntries = 16;
+  static const int kNumConfigEntries = 32;
 
-  static uint32_t config_flash[kNumConfigEntries];
+  static uint16_t config_flash[kNumConfigEntries];
 
-  uint32_t config_ram[kNumConfigEntries];
+  uint16_t config_ram[kNumConfigEntries];
 };
 
 #endif  // CONFIG_STORAGE_
