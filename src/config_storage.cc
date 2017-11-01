@@ -41,8 +41,18 @@ uint16_t ConfigStorage::Get(ConfigIndex idx) {
 }
 
 void ConfigStorage::WriteConfigToFlash() {
-  Chip_IAP_PreSectorForReadWrite(0, 0);
+  uint32_t sector_nr = (uint32_t)(&config_flash[0]) / 1024;  // 1 sector = 1kb
+  uint32_t page_nr = (uint32_t)(&config_flash[0]) / 64;      // 1 page = 64b
+
+  __disable_irq();
+  // Erase old page
+  Chip_IAP_PreSectorForReadWrite(sector_nr, sector_nr);
+  Chip_IAP_ErasePage(page_nr, page_nr);
+
+  // Write new page
+  Chip_IAP_PreSectorForReadWrite(sector_nr, sector_nr);
   Chip_IAP_CopyRamToFlash(reinterpret_cast<uint32_t>(config_flash),
                           reinterpret_cast<uint32_t *>(config_ram),
                           sizeof(config_ram));
+  __enable_irq();
 }
