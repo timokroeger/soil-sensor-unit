@@ -2,11 +2,16 @@
 
 #include "modbus_data.h"
 
-#include "config_storage.h"
+#include "chip.h"
 
-#define CONFIG_OFFSET 128u
+#include "config_storage.h"
+#include "expect.h"
+
+#define RESET_OFFSET 256u
+#define CONFIG_OFFSET 257u
 
 static bool write_config = false;
+static bool reset_device = false;
 
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
@@ -29,15 +34,23 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
     cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET),
            data);
     write_config = true;
-    return true;
+  } else if (address == RESET_OFFSET) {
+    reset_device = (data != 0);
+  } else {
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 void ModbusData::Idle() {
   if (write_config) {
     ConfigStorage::Instance().WriteConfigToFlash();
     write_config = false;
+  }
+
+  if (reset_device) {
+    NVIC_SystemReset();
+    Expect(false);
   }
 }
