@@ -6,6 +6,8 @@
 
 #define CONFIG_OFFSET 128u
 
+static bool write_config = false;
+
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = raw_value_;
@@ -26,7 +28,7 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
     ConfigStorage cs = ConfigStorage::Instance();
     cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET),
            data);
-    cs.WriteConfigToFlash();
+    write_config = true;
     return true;
   }
 
@@ -34,5 +36,8 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
 }
 
 void ModbusData::Idle() {
-  // TODO
+  if (write_config) {
+    ConfigStorage::Instance().WriteConfigToFlash();
+    write_config = false;
+  }
 }
