@@ -257,7 +257,6 @@ void Modbus::ByteReceived(uint8_t byte) {
       if (req_buffer_idx_ < sizeof(req_buffer_)) {
         req_buffer_[req_buffer_idx_++] = byte;
       }
-
       break;
 
     case kTransmissionControlAndWaiting:
@@ -282,6 +281,7 @@ void Modbus::Timeout(TimeoutType timeout_type) {
   switch (transmission_state_) {
     case kTransmissionInital:
       if (timeout_type == kInterFrameDelay) {
+        data_interface_->Idle();
         transmission_state_ = kTransmissionIdle;
       }
       break;
@@ -320,6 +320,7 @@ void Modbus::Timeout(TimeoutType timeout_type) {
           }
         }
 
+        data_interface_->Idle();
         transmission_state_ = kTransmissionIdle;
       }
       break;

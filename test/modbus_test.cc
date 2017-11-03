@@ -17,6 +17,7 @@ class MockModbusData : public ModbusDataInterface {
  public:
   MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
   MOCK_METHOD2(WriteRegister, bool(uint16_t address, uint16_t data));
+  MOCK_METHOD0(Idle, void());
 };
 
 class MockModbusHw : public ModbusHwInterface {
@@ -46,6 +47,7 @@ class ModbusTest : public ::testing::Test {
   void StartOperation(uint8_t addr) {
     EXPECT_CALL(mock_modbus_hw_, EnableHw());
     EXPECT_CALL(mock_modbus_hw_, StartTimer());
+    EXPECT_CALL(mock_modbus_data_, Idle());
     modbus_.StartOperation(addr);
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
@@ -53,6 +55,7 @@ class ModbusTest : public ::testing::Test {
 
   void SendMessage(const uint8_t *data, int length) {
     EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
+    EXPECT_CALL(mock_modbus_data_, Idle());
     for (int i = 0; i < length; i++) {
       modbus_.ByteStart();
       modbus_.ByteReceived(data[i]);
@@ -100,6 +103,7 @@ TEST_F(ModbusTest, ValidSlaveAddresses) {
 TEST_F(ModbusTest, MisbehavingTimer) {
   StartOperation(1);
   Mock::AllowLeak(&mock_modbus_hw_);
+  Mock::AllowLeak(&mock_modbus_data_);
   ASSERT_DEATH(modbus_.Timeout(Modbus::kInterFrameDelay), "");
 }
 
@@ -354,6 +358,7 @@ TEST_F(ModbusTest, RequestTimeout) {
   StartOperation(1);
 
   EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
+  EXPECT_CALL(mock_modbus_data_, Idle());
 
   // But only send half of message…
   for (int i = 0; i < length / 2; i++) {

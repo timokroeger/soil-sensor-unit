@@ -11,6 +11,7 @@ class ModbusData : public ModbusDataInterface {
  public:
   bool ReadRegister(uint16_t address, uint16_t *data_out) override;
   bool WriteRegister(uint16_t address, uint16_t data) override;
+  void Idle() override;
 
   void set_raw_value(uint16_t v) { raw_value_ = v; }
   int raw_value() const { return raw_value_; }

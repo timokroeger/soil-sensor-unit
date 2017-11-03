@@ -32,3 +32,7 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
 
   return false;
 }
+
+void ModbusData::Idle() {
+  // TODO
+}
