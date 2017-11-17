@@ -15,7 +15,7 @@
 extern "C" int SEGGER_RTT_vprintf(unsigned BufferIndex, const char *sFormat,
                                   va_list *pParamList);
 
-static const char log_level_strings[kLogLevelMax][8] = {
+static const char *log_level_strings[kLogLevelMax] = {
     "ERROR  ",
     "WARNING",
     "INFO   ",

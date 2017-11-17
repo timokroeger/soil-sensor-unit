@@ -7,6 +7,8 @@
 
 class ModbusHwInterface {
  public:
+  virtual ~ModbusHwInterface() {}
+
   // Initalizes the serial device and the timers required by the modbus stack.
   //
   // The user must configure the serial interface with the desired baudrate,
