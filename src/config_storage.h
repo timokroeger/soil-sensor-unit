@@ -25,7 +25,8 @@ class ConfigStorage {
 
   static const int kNumConfigEntries = 32;
 
-  static uint16_t config_flash[kNumConfigEntries];
+  static uint16_t config_flash[kNumConfigEntries]
+      __attribute__((section(".config_flash")));
 
   uint16_t config_ram[kNumConfigEntries];
 };
