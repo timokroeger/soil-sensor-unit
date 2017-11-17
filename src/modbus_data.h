@@ -9,6 +9,8 @@
 
 class ModbusData : public ModbusDataInterface {
  public:
+  ModbusData() : raw_value_(0) {}
+
   bool ReadRegister(uint16_t address, uint16_t *data_out) override;
   bool WriteRegister(uint16_t address, uint16_t data) override;
   void Idle() override;
