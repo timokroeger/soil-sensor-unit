@@ -30,9 +30,9 @@ void SetupSwichMatrix() {
   Chip_SWM_EnableFixedPin(SWM_FIXED_XTALOUT);
 
   // UART0
-  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 4);
-  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 15);
-  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
+  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 17);
+  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 12);
+  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 13);
 
   // PWM output
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);   // FREQ_LO
