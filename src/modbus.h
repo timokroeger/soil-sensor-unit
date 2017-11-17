@@ -74,6 +74,8 @@ class Modbus {
     kTransmissionControlAndWaiting,
   };
 
+  static const int kBufferSize = 256;
+
   void ResponseAddByte(uint8_t b);
   void ResponseAddWord(uint16_t word);
   void SendResponse();
@@ -91,10 +93,10 @@ class Modbus {
   bool receiving_byte;
   bool frame_valid_;
 
-  uint8_t req_buffer_[256];
+  uint8_t req_buffer_[kBufferSize];
   size_t req_buffer_idx_;
 
-  uint8_t resp_buffer_[256];
+  uint8_t resp_buffer_[kBufferSize];
   size_t resp_buffer_idx_;
 };
 
