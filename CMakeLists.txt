@@ -8,6 +8,11 @@ set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 
 project(GaMoSy-SSU ASM C CXX)
 
+# Set target architecture settings for everything.
+set(CORTEX_M0_FLAGS "-mcpu=cortex-m0 -mthumb -fno-common -ffunction-sections -fdata-sections")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORTEX_M0_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORTEX_M0_FLAGS}")
+
 set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
@@ -23,7 +28,6 @@ add_executable(firmware.elf
 )
 
 target_compile_options(firmware.elf PUBLIC
-    -fno-common -ffunction-sections -fdata-sections
     -fno-exceptions -fno-non-call-exceptions -fno-rtti
     -Wall -Wextra -Wconversion -Woverloaded-virtual -Wreorder -Wsign-promo)
 target_compile_features(firmware.elf PUBLIC cxx_std_11)

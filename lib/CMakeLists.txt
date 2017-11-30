@@ -34,7 +34,6 @@ target_include_directories(LPC8xx SYSTEM
 )
 
 target_compile_definitions(LPC8xx PUBLIC -DCORE_M0PLUS)
-target_compile_options(LPC8xx PUBLIC -mcpu=cortex-m0 -mthumb -mfloat-abi=soft)
 
 add_library(SEGGER_RTT
   SEGGER/SEGGER_RTT.c
