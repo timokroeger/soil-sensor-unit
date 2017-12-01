@@ -39,19 +39,13 @@ class Modbus {
   // Notify the MODBUS stack that a new byte was received.
   //
   // Typically called by the UART RX ISR.
-  void ByteReceived(uint8_t byte);
+  void ByteReceived(uint8_t byte, bool parity_ok);
 
   // A MODBUS timeout occurred.
   //
   // Typically called by a timer ISR. The MODBUS stack starts the timer with the
   // ModbusStartTimer() function defined in modbus_callbacks.c.
   void Timeout(TimeoutType timeout_type);
-
-  // A parity error occurred.
-  //
-  // Typically called by the UART RX ISR. Make sure to call this function after
-  // ModbusByteReceived().
-  void ParityError() { frame_valid_ = false; }
 
  private:
   enum ExceptionType {

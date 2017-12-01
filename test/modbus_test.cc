@@ -58,7 +58,18 @@ class ModbusTest : public ::testing::Test {
     EXPECT_CALL(mock_modbus_data_, Idle());
     for (int i = 0; i < length; i++) {
       modbus_.ByteStart();
-      modbus_.ByteReceived(data[i]);
+      modbus_.ByteReceived(data[i], true);
+    }
+    modbus_.Timeout(Modbus::kInterCharacterDelay);
+    modbus_.Timeout(Modbus::kInterFrameDelay);
+  }
+
+  void SendMessageParityError(const uint8_t *data, int length, int error_idx) {
+    EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
+    EXPECT_CALL(mock_modbus_data_, Idle());
+    for (int i = 0; i < length; i++) {
+      modbus_.ByteStart();
+      modbus_.ByteReceived(data[i], i != error_idx);
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
@@ -363,7 +374,7 @@ TEST_F(ModbusTest, RequestTimeout) {
   // But only send half of message…
   for (int i = 0; i < length / 2; i++) {
     modbus_.ByteStart();
-    modbus_.ByteReceived(read_register_request[i]);
+    modbus_.ByteReceived(read_register_request[i], true);
   }
 
   // …before there is an timeout.
@@ -371,7 +382,7 @@ TEST_F(ModbusTest, RequestTimeout) {
 
   for (int i = length / 2; i < length; i++) {
     modbus_.ByteStart();
-    modbus_.ByteReceived(read_register_request[i]);
+    modbus_.ByteReceived(read_register_request[i], true);
   }
 
   // Send rest of message which should be ignored.
@@ -396,7 +407,7 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
   EXPECT_CALL(mock_modbus_hw_, StartTimer());
   modbus_.ByteStart();
   modbus_.ByteReceived(
-      read_register_request[sizeof(read_register_request) - 1]);
+      read_register_request[sizeof(read_register_request) - 1], true);
   modbus_.Timeout(Modbus::kInterCharacterDelay);
 
   // Do not finish frame…
@@ -404,6 +415,23 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
 
   // …but send more data.
   SendMessage(read_register_request, sizeof(read_register_request));
+}
+
+TEST_F(ModbusTest, ParityError) {
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+
+  StartOperation(1);
+
+  int length = static_cast<int>(sizeof(read_register_request));
+  SendMessageParityError(read_register_request, length, 0);
+  SendMessageParityError(read_register_request, length, length / 2);
+  SendMessageParityError(read_register_request, length, length - 1);
 }
 
 }  // namespace

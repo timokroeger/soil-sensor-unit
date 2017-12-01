@@ -90,19 +90,21 @@ extern "C" void UART0_IRQHandler() {
   }
 
   if (interrupt_status & UART_STAT_RXRDY) {
-    uint8_t rxdata = (uint8_t)Chip_UART_ReadByte(LPC_USART0);
-    ModbusHw::modbus()->ByteReceived(rxdata);
+    bool parity_ok = true;
 
     if (interrupt_status & UART_STAT_FRM_ERRINT) {
       uart_frame_error_counter++;
     }
     if (interrupt_status & UART_STAT_PAR_ERRINT) {
       uart_parity_error_counter++;
-      ModbusHw::modbus()->ParityError();
+      parity_ok = false;
     }
     if (interrupt_status & UART_STAT_RXNOISEINT) {
       uart_noise_error_counter++;
     }
+
+    uint8_t rxdata = static_cast<uint8_t>(Chip_UART_ReadByte(LPC_USART0));
+    ModbusHw::modbus()->ByteReceived(rxdata, parity_ok);
 
     Chip_UART_ClearStatus(LPC_USART0,
                           UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |

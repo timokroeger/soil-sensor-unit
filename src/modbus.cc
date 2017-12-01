@@ -229,7 +229,7 @@ void Modbus::StopOperation() {
 
 void Modbus::ByteStart() { receiving_byte = true; }
 
-void Modbus::ByteReceived(uint8_t byte) {
+void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
   Expect(receiving_byte);
 
   hw_interface_->StartTimer();
@@ -266,6 +266,10 @@ void Modbus::ByteReceived(uint8_t byte) {
     default:
       Expect(false);
       break;
+  }
+
+  if (!parity_ok) {
+    frame_valid_ = false;
   }
 
   receiving_byte = false;
