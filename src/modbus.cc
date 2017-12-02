@@ -92,7 +92,7 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
       hw_interface_(hw_if),
       address_(0),
       transmission_state_(kTransmissionInital),
-      receiving_byte(false),
+      receiving_byte_(false),
       frame_valid_(false),
       req_buffer_{0},
       req_buffer_idx_(0),
@@ -227,10 +227,10 @@ void Modbus::StopOperation() {
   transmission_state_ = kTransmissionInital;
 }
 
-void Modbus::ByteStart() { receiving_byte = true; }
+void Modbus::ByteStart() { receiving_byte_ = true; }
 
 void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
-  Expect(receiving_byte);
+  Expect(receiving_byte_);
 
   hw_interface_->StartTimer();
 
@@ -272,13 +272,13 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
     frame_valid_ = false;
   }
 
-  receiving_byte = false;
+  receiving_byte_ = false;
 }
 
 void Modbus::Timeout(TimeoutType timeout_type) {
   // This means that the start bit was in time and a byte is currently received
   // which restarts the timer. Ignore the timeout in this case.
-  if (receiving_byte) {
+  if (receiving_byte_) {
     return;
   }
 

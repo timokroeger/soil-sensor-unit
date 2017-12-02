@@ -84,7 +84,7 @@ class Modbus {
   uint8_t address_;
 
   TransmissionState transmission_state_;
-  bool receiving_byte;
+  bool receiving_byte_;
   bool frame_valid_;
 
   uint8_t req_buffer_[kBufferSize];
