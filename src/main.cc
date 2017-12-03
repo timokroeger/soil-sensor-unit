@@ -129,7 +129,16 @@ extern "C" int main() {
   // Main loop.
   for (;;) {
     modbus_data.set_raw_value(AverageMeasurement());
-    LOG_DEBUG("%d\n", modbus_data.raw_value());
+
+    uint32_t ev = modbus_data.GetEvents();
+    if (ev & ModbusData::kWriteConfiguration) {
+      ConfigStorage::Instance().WriteConfigToFlash();
+    }
+
+    if (ev & ModbusData::kResetDevice) {
+      NVIC_SystemReset();
+      Expect(false);
+    }
   }
 
   // Never reached.

@@ -10,9 +10,6 @@
 #define RESET_OFFSET 256u
 #define CONFIG_OFFSET 257u
 
-static bool write_config = false;
-static bool reset_device = false;
-
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = raw_value_;
@@ -33,9 +30,11 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
     ConfigStorage cs = ConfigStorage::Instance();
     cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET),
            data);
-    write_config = true;
+    event_flags_ |= kWriteConfiguration;
   } else if (address == RESET_OFFSET) {
-    reset_device = (data != 0);
+    if (data != 0) {
+      event_flags_ |= kResetDevice;
+    }
   } else {
     return false;
   }
@@ -43,14 +42,8 @@ bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
   return true;
 }
 
-void ModbusData::Idle() {
-  if (write_config) {
-    ConfigStorage::Instance().WriteConfigToFlash();
-    write_config = false;
-  }
-
-  if (reset_device) {
-    NVIC_SystemReset();
-    Expect(false);
-  }
+uint32_t ModbusData::GetEvents() {
+  uint32_t ret = event_flags_;
+  event_flags_ = 0;
+  return ret;
 }
