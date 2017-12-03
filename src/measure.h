@@ -12,4 +12,8 @@ void MeasureInit();
 // The high parameter specifies which state of PWM to measure.
 uint16_t MeasureRaw(bool high);
 
+// Clears ADC trigger and stops any further conversions.
+// Must be called from the timer interrupt that triggers the ADC.
+void MeasureResetTrigger();
+
 #endif  // MEASURE_H_
