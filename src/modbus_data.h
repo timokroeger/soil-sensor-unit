@@ -14,18 +14,14 @@ class ModbusData : public ModbusDataInterface {
     kWriteConfiguration = 0x02,
   };
 
-  ModbusData() : raw_value_(0), event_flags_(0) {}
+  ModbusData() : event_flags_(0) {}
 
   bool ReadRegister(uint16_t address, uint16_t *data_out) override;
   bool WriteRegister(uint16_t address, uint16_t data) override;
 
-  void set_raw_value(uint16_t v) { raw_value_ = v; }
-  uint16_t raw_value() const { return raw_value_; }
-
   uint32_t GetEvents();
 
  private:
-  uint16_t raw_value_;
   uint32_t event_flags_;
 };
 

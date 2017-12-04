@@ -6,13 +6,26 @@
 
 #include "config_storage.h"
 #include "expect.h"
+#include "measure.h"
 
 #define RESET_OFFSET 256u
 #define CONFIG_OFFSET 257u
 
+static uint16_t AverageMeasurement() {
+  uint32_t low = 0;
+  uint32_t high = 0;
+
+  for (int i = 0; i < (1 << 10); i++) {
+    low += MeasureRaw(false);
+    high += MeasureRaw(true);
+  }
+
+  return static_cast<uint16_t>((high - low) >> 10);
+}
+
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
-    *data_out = raw_value_;
+    *data_out = AverageMeasurement();
   } else if (address >= CONFIG_OFFSET &&
              address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
     *data_out = ConfigStorage::Instance().Get(

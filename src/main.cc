@@ -96,18 +96,6 @@ static void SetupNVIC() {
   NVIC_EnableIRQ(SCT_IRQn);
 }
 
-static uint16_t AverageMeasurement(void) {
-  uint32_t low = 0;
-  uint32_t high = 0;
-
-  for (int i = 0; i < (1 << 8); i++) {
-    low += MeasureRaw(false);
-    high += MeasureRaw(true);
-  }
-
-  return static_cast<uint16_t>((high - low) >> 8);
-}
-
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 extern "C" int main() {
@@ -120,15 +108,12 @@ extern "C" int main() {
 
   SetupNVIC();
 
-  modbus_data.set_raw_value(AverageMeasurement());
-
   uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
   Expect(sensor_id >= 1 && sensor_id <= 247);
   modbus.StartOperation(static_cast<uint8_t>(sensor_id));
 
   // Main loop.
   for (;;) {
-    modbus_data.set_raw_value(AverageMeasurement());
     modbus.Update();
 
     uint32_t ev = modbus_data.GetEvents();
