@@ -40,9 +40,8 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
 bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
   if (address >= CONFIG_OFFSET &&
       address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
-    ConfigStorage cs = ConfigStorage::Instance();
-    cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET),
-           data);
+    ConfigStorage& cs = ConfigStorage::Instance();
+    cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET), data);
     event_flags_ |= kWriteConfiguration;
   } else if (address == RESET_OFFSET) {
     if (data != 0) {
