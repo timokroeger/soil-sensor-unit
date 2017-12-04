@@ -100,12 +100,12 @@ static uint16_t AverageMeasurement(void) {
   uint32_t low = 0;
   uint32_t high = 0;
 
-  for (int i = 0; i < (1 << 16); i++) {
+  for (int i = 0; i < (1 << 8); i++) {
     low += MeasureRaw(false);
     high += MeasureRaw(true);
   }
 
-  return static_cast<uint16_t>((high - low) >> 16);
+  return static_cast<uint16_t>((high - low) >> 8);
 }
 
 // The switch matrix and system clock (12Mhz by external crystal) were already
