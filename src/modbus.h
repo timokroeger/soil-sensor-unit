@@ -9,8 +9,6 @@
 #include "modbus_data_interface.h"
 #include "modbus_hw_interface.h"
 
-// TODO: Think about RX ISR / Timer ISR priority and timing issues.
-
 class Modbus {
  public:
   enum TimeoutType {
@@ -32,6 +30,10 @@ class Modbus {
 
   // Stops operation of the MODBUS stack.
   void StopOperation();
+
+  // Processes a frame and sends a response or does nothing when no request
+  // occurred. Must be called in the main loop to guarantee response times.
+  void Update();
 
   // Notify the MODBUS stack that a start bit was detected.
   void ByteStart();
@@ -66,6 +68,7 @@ class Modbus {
     kTransmissionIdle,
     kTransmissionReception,
     kTransmissionControlAndWaiting,
+    kProcessFrame,
   };
 
   static const int kBufferSize = 256;

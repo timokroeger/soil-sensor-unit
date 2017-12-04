@@ -129,6 +129,7 @@ extern "C" int main() {
   // Main loop.
   for (;;) {
     modbus_data.set_raw_value(AverageMeasurement());
+    modbus.Update();
 
     uint32_t ev = modbus_data.GetEvents();
     if (ev & ModbusData::kWriteConfiguration) {

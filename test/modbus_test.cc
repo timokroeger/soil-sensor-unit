@@ -49,6 +49,7 @@ class ModbusTest : public ::testing::Test {
     modbus_.StartOperation(addr);
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Update();
   }
 
   void SendMessage(const uint8_t *data, int length) {
@@ -59,6 +60,7 @@ class ModbusTest : public ::testing::Test {
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Update();
   }
 
   void SendMessageParityError(const uint8_t *data, int length, int error_idx) {
@@ -69,6 +71,7 @@ class ModbusTest : public ::testing::Test {
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
     modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Update();
   }
 
   void RequestResponse(const uint8_t *req, size_t req_len, const uint8_t *resp,
@@ -383,6 +386,7 @@ TEST_F(ModbusTest, RequestTimeout) {
   // Send rest of message which should be ignored.
   modbus_.Timeout(Modbus::kInterCharacterDelay);
   modbus_.Timeout(Modbus::kInterFrameDelay);
+  modbus_.Update();
 }
 
 TEST_F(ModbusTest, AdditionalRequestBytes) {
@@ -407,6 +411,7 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
 
   // Do not finish frame…
   // modbus_.Timeout(Modbus::kInterFrameDelay);
+  modbus_.Update();
 
   // …but send more data.
   SendMessage(read_register_request, sizeof(read_register_request));

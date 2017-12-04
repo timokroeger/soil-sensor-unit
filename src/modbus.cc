@@ -227,6 +227,13 @@ void Modbus::StopOperation() {
   transmission_state_ = kTransmissionInital;
 }
 
+void Modbus::Update() {
+  if (transmission_state_ == kProcessFrame) {
+    HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_idx_ - 4);
+    transmission_state_ = kTransmissionIdle;
+  }
+}
+
 void Modbus::ByteStart() { receiving_byte_ = true; }
 
 void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
@@ -261,6 +268,11 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
 
     case kTransmissionControlAndWaiting:
       frame_valid_ = false;
+      break;
+
+    case kProcessFrame:
+      // There should be no more bytes after a request frame. If there are some
+      // ingnore them.
       break;
 
     default:
@@ -304,27 +316,30 @@ void Modbus::Timeout(TimeoutType timeout_type) {
     case kTransmissionControlAndWaiting:
       if (timeout_type == kInterFrameDelay) {
         // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-        if (req_buffer_idx_ > 3) {
-          // Parse request
-          uint8_t address = req_buffer_[0];
-          uint8_t fn_code = req_buffer_[1];
+        if (frame_valid_ && req_buffer_idx_ > 3) {
           uint16_t received_crc =
               BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
-
           uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
-          if (frame_valid_ && received_crc == calculated_crc) {
+          if (received_crc == calculated_crc) {
             // Reset buffer for writing. The first two bytes are the same as in
             // the request.
-            resp_buffer_[0] = address;
-            resp_buffer_[1] = fn_code;
+            resp_buffer_[0] = req_buffer_[0];  // Address
+            resp_buffer_[1] = req_buffer_[1];  // Function code
             resp_buffer_idx_ = 2;
 
-            HandleRequest(fn_code, &req_buffer_[2], req_buffer_idx_ - 4);
+            transmission_state_ = kProcessFrame;
+          } else {
+            transmission_state_ = kTransmissionIdle;
           }
+        } else {
+          // Invalid frame received. Ignore it and wait for next request.
+          transmission_state_ = kTransmissionIdle;
         }
-
-        transmission_state_ = kTransmissionIdle;
       }
+      break;
+
+    case kProcessFrame:
+      Expect(false);
       break;
 
     default:
