@@ -5,8 +5,8 @@
 
 #include <stdint.h>
 
-// Initializes hardware required for capacitance measurement (PWM and ADC).
-void MeasureInit();
+// Starts the PWM and ADC peripheral.
+void MeasureStart();
 
 // Measures the capacitor voltage right before PWM switches states.
 // The high parameter specifies which state of PWM to measure.

@@ -20,7 +20,7 @@ add_executable(firmware.elf
   src/startup_LPC82x.s
   src/config_storage.cc
   src/globals.cc
-  src/hardware.cc
+  src/setup.cc
   src/isr.cc
   src/log.cc
   src/main.cc
