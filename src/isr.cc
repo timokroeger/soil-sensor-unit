@@ -2,9 +2,11 @@
 
 #include "chip.h"
 
+#include <stdint.h>
+
 #include "globals.h"
 #include "measure.h"
-#include "modbus_hw.h"
+#include "modbus.h"
 
 // Increased when no stop bits were received.
 static uint32_t uart_frame_error_counter = 0;

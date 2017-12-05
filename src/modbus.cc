@@ -5,6 +5,8 @@
 #include "modbus.h"
 
 #include "expect.h"
+#include "modbus_data_interface.h"
+#include "modbus_hw_interface.h"
 
 static const uint8_t crc_lookup_hi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,

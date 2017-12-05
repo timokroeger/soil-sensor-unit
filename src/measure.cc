@@ -5,7 +5,6 @@
 #include "chip.h"
 
 #include "common.h"
-#include "expect.h"
 
 #define PWM_FREQ 200000u
 

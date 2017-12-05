@@ -5,8 +5,6 @@
 #include "chip.h"
 
 #include "common.h"
-#include "expect.h"
-#include "modbus.h"
 
 void ModbusHw::EnableHw() { Chip_UART_Enable(LPC_USART0); }
 

@@ -3,7 +3,8 @@
 #ifndef MODBUS_HW_H_
 #define MODBUS_HW_H_
 
-#include "modbus.h"
+#include <stdint.h>
+
 #include "modbus_hw_interface.h"
 
 class ModbusHw : public ModbusHwInterface {

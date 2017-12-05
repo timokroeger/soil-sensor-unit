@@ -4,7 +4,6 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "cmsis.h"
 #include "SEGGER_RTT.h"

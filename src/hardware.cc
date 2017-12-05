@@ -4,8 +4,6 @@
 
 #include "chip.h"
 
-#include "common.h"
-
 void HwSetupUart(uint32_t baudrate) {
   // Enable global UART clock.
   Chip_Clock_SetUARTClockDiv(1);

@@ -9,11 +9,9 @@
 #include "expect.h"
 #include "globals.h"
 #include "hardware.h"
-#include "log.h"
 #include "measure.h"
 #include "modbus.h"
 #include "modbus_data.h"
-#include "modbus_hw.h"
 
 #define ISR_PRIO_UART 1
 #define ISR_PRIO_TIMER 1
