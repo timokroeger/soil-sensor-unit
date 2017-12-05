@@ -8,6 +8,7 @@
 #include "config_storage.h"
 #include "expect.h"
 #include "globals.h"
+#include "hardware.h"
 #include "log.h"
 #include "measure.h"
 #include "modbus.h"
@@ -100,9 +101,10 @@ static void SetupNVIC() {
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 extern "C" int main() {
-  MeasureInit();
-
+  HwSetupUart(ConfigStorage::Instance().Get(ConfigStorage::kBaudrate));
+  HwSetupTimers();
   SetupNVIC();
+  MeasureInit();
 
   uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
   Expect(sensor_id >= 1 && sensor_id <= 247);
