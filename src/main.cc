@@ -100,8 +100,6 @@ static void SetupNVIC() {
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 extern "C" int main() {
-  modbus_hardware.set_modbus(&modbus);
-
   MeasureInit();
 
   SetupNVIC();

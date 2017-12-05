@@ -9,8 +9,6 @@
 #include "expect.h"
 #include "modbus.h"
 
-Modbus* ModbusHw::modbus_ = nullptr;
-
 ModbusHw::ModbusHw() {
   SetupUart();
   SetupTimers();
