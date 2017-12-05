@@ -7,6 +7,7 @@
 #include "common.h"
 #include "config_storage.h"
 #include "expect.h"
+#include "globals.h"
 #include "log.h"
 #include "measure.h"
 #include "modbus.h"
@@ -99,9 +100,6 @@ static void SetupNVIC() {
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 extern "C" int main() {
-  ModbusData modbus_data;
-  ModbusHw modbus_hardware;
-  Modbus modbus(&modbus_data, &modbus_hardware);
   modbus_hardware.set_modbus(&modbus);
 
   MeasureInit();
