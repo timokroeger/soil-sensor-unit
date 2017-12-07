@@ -39,8 +39,8 @@ void UART0_IRQHandler() {
   uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
 
   if (interrupt_status & UART_STAT_START) {
-    modbus.ByteStart();
-
+    Chip_MRT_SetInterval(LPC_MRT_CH0, 0 | MRT_INTVAL_LOAD);
+    Chip_MRT_SetInterval(LPC_MRT_CH1, 0 | MRT_INTVAL_LOAD);
     Chip_UART_ClearStatus(LPC_USART0, UART_STAT_START);
   }
 

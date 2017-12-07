@@ -35,9 +35,6 @@ class Modbus {
   // occurred. Must be called in the main loop to guarantee response times.
   void Update();
 
-  // Notify the MODBUS stack that a start bit was detected.
-  void ByteStart();
-
   // Notify the MODBUS stack that a new byte was received.
   //
   // Typically called by the UART RX ISR.
@@ -87,7 +84,6 @@ class Modbus {
   uint8_t address_;
 
   TransmissionState transmission_state_;
-  bool receiving_byte_;
   bool frame_valid_;
 
   uint8_t req_buffer_[kBufferSize];

@@ -58,7 +58,6 @@ class ModbusTest : public ::testing::Test {
   void SendMessage(const uint8_t *data, int length) {
     EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
-      modbus_.ByteStart();
       modbus_.ByteReceived(data[i], true);
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
@@ -69,7 +68,6 @@ class ModbusTest : public ::testing::Test {
   void SendMessageParityError(const uint8_t *data, int length, int error_idx) {
     EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
-      modbus_.ByteStart();
       modbus_.ByteReceived(data[i], i != error_idx);
     }
     modbus_.Timeout(Modbus::kInterCharacterDelay);
@@ -374,7 +372,6 @@ TEST_F(ModbusTest, RequestTimeout) {
 
   // But only send half of message…
   for (int i = 0; i < length / 2; i++) {
-    modbus_.ByteStart();
     modbus_.ByteReceived(read_register_request[i], true);
   }
 
@@ -382,7 +379,6 @@ TEST_F(ModbusTest, RequestTimeout) {
   modbus_.Timeout(Modbus::kInterCharacterDelay);
 
   for (int i = length / 2; i < length; i++) {
-    modbus_.ByteStart();
     modbus_.ByteReceived(read_register_request[i], true);
   }
 
@@ -407,7 +403,6 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
   SendMessage(read_register_request, sizeof(read_register_request) - 1);
 
   EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus_.ByteStart();
   modbus_.ByteReceived(
       read_register_request[sizeof(read_register_request) - 1], true);
   modbus_.Timeout(Modbus::kInterCharacterDelay);

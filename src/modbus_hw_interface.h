@@ -27,6 +27,9 @@ class ModbusHwInterface {
   // This function shall start a one-shot timer which calls ModbusTimeout()
   // first kModbusTimeoutInterCharacterDelay after typically 750us and then
   // kModbusTimeoutInterFrameDelay after typically 1750us.
+  // The time should be stopped as soon as the start bit of a new byte is
+  // detected. If not it should include an additional delay of one character
+  // time.
   virtual void StartTimer() = 0;
 };
 
