@@ -2,8 +2,11 @@
 
 #include "chip.h"
 
+#include <stdint.h>
+
+#include "globals.h"
 #include "measure.h"
-#include "modbus_hw.h"
+#include "modbus.h"
 
 // Increased when no stop bits were received.
 static uint32_t uart_frame_error_counter = 0;
@@ -23,12 +26,12 @@ void SCT_IRQHandler() { MeasureResetTrigger(); }
 void MRT_IRQHandler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
-    ModbusHw::modbus()->Timeout(Modbus::kInterCharacterDelay);
+    modbus.Timeout(Modbus::kInterCharacterDelay);
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
     Chip_MRT_IntClear(LPC_MRT_CH1);
-    ModbusHw::modbus()->Timeout(Modbus::kInterFrameDelay);
+    modbus.Timeout(Modbus::kInterFrameDelay);
   }
 }
 
@@ -36,7 +39,7 @@ void UART0_IRQHandler() {
   uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
 
   if (interrupt_status & UART_STAT_START) {
-    ModbusHw::modbus()->ByteStart();
+    modbus.ByteStart();
 
     Chip_UART_ClearStatus(LPC_USART0, UART_STAT_START);
   }
@@ -56,7 +59,7 @@ void UART0_IRQHandler() {
     }
 
     uint8_t rxdata = static_cast<uint8_t>(Chip_UART_ReadByte(LPC_USART0));
-    ModbusHw::modbus()->ByteReceived(rxdata, parity_ok);
+    modbus.ByteReceived(rxdata, parity_ok);
 
     Chip_UART_ClearStatus(LPC_USART0,
                           UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |

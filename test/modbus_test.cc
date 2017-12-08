@@ -2,6 +2,8 @@
 #include "gtest/gtest.h"
 
 #include "modbus.h"
+#include "modbus_data_interface.h"
+#include "modbus_hw_interface.h"
 
 using ::testing::ElementsAreArray;
 using ::testing::InSequence;
@@ -11,6 +13,7 @@ using ::testing::Return;
 using ::testing::SetArgPointee;
 using ::testing::StrictMock;
 using ::testing::_;
+
 namespace {
 
 class MockModbusData : public ModbusDataInterface {

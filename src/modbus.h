@@ -6,8 +6,8 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>
 
-#include "modbus_data_interface.h"
-#include "modbus_hw_interface.h"
+class ModbusDataInterface;
+class ModbusHwInterface;
 
 class Modbus {
  public:

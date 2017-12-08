@@ -2,10 +2,7 @@
 
 #include "modbus_data.h"
 
-#include "chip.h"
-
 #include "config_storage.h"
-#include "expect.h"
 #include "measure.h"
 
 #define RESET_OFFSET 256u
