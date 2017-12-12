@@ -87,10 +87,10 @@ class Modbus {
   bool frame_valid_;
 
   uint8_t req_buffer_[kBufferSize];
-  size_t req_buffer_idx_;
+  uint32_t req_buffer_idx_;
 
   uint8_t resp_buffer_[kBufferSize];
-  size_t resp_buffer_idx_;
+  uint32_t resp_buffer_idx_;
 };
 
 #endif  // MODBUS_H_
