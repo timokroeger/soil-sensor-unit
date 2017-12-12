@@ -57,21 +57,21 @@ static const uint8_t crc_lookup_lo[] = {
     0x41, 0x81, 0x80, 0x40};
 
 static uint16_t BufferToWordBE(const uint8_t *buffer) {
-  return (uint16_t)((buffer[0] << 8) | buffer[1]);
+  return static_cast<uint16_t>((buffer[0] << 8) | buffer[1]);
 }
 
 static uint16_t BufferToWordLE(const uint8_t *buffer) {
-  return (uint16_t)((buffer[1] << 8) | buffer[0]);
+  return static_cast<uint16_t>((buffer[1] << 8) | buffer[0]);
 }
 
 static void WordToBufferBE(uint16_t word, uint8_t *buffer) {
-  buffer[0] = (uint8_t)(word >> 8);
-  buffer[1] = (uint8_t)word;
+  buffer[0] = static_cast<uint8_t>(word >> 8);
+  buffer[1] = static_cast<uint8_t>(word);
 }
 
 static void WordToBufferLE(uint16_t word, uint8_t *buffer) {
-  buffer[0] = (uint8_t)word;
-  buffer[1] = (uint8_t)(word >> 8);
+  buffer[0] = static_cast<uint8_t>(word);
+  buffer[1] = static_cast<uint8_t>(word >> 8);
 }
 
 // Taken from Appendix B of "MODBUS over Serial Line Specification and
@@ -86,7 +86,7 @@ static uint16_t Crc(const uint8_t *data, uint32_t length) {
     crc_hi = crc_lookup_lo[idx];
   }
 
-  return (uint16_t)((crc_hi << 8) | crc_lo);
+  return static_cast<uint16_t>((crc_hi << 8) | crc_lo);
 }
 
 Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
@@ -149,13 +149,13 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
   }
 
   // Byte Count
-  ResponseAddByte((uint8_t)(quantity_regs * 2));
+  ResponseAddByte(static_cast<uint8_t>(quantity_regs * 2));
 
   // Add all requested registers to the response.
-  for (uint16_t i = 0; i < quantity_regs; i++) {
+  for (int i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
-    bool ok = data_interface_->ReadRegister((uint16_t)(starting_addr + i),
-                                            &reg_content);
+    uint16_t addr = static_cast<uint16_t>(starting_addr + i);
+    bool ok = data_interface_->ReadRegister(addr, &reg_content);
     if (ok) {
       ResponseAddWord(reg_content);
     } else {
