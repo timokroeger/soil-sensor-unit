@@ -149,6 +149,83 @@ TEST_F(ModbusTest, InvalidFunctionCode) {
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
+TEST_F(ModbusTest, RequestTimeout) {
+  // Use a valid request.
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+  const int length = sizeof(read_register_request);
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
+
+  // But only send half of message…
+  for (int i = 0; i < length / 2; i++) {
+    modbus_.ByteReceived(read_register_request[i], true);
+  }
+
+  // …before there is an timeout.
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+
+  for (int i = length / 2; i < length; i++) {
+    modbus_.ByteReceived(read_register_request[i], true);
+  }
+
+  // Send rest of message which should be ignored.
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+  modbus_.Timeout(Modbus::kInterFrameDelay);
+  modbus_.Update();
+}
+
+TEST_F(ModbusTest, AdditionalRequestBytes) {
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+
+  StartOperation(1);
+
+  // Send all bytes but last as usual.
+  SendMessage(read_register_request, sizeof(read_register_request) - 1);
+
+  EXPECT_CALL(mock_modbus_hw_, StartTimer());
+  modbus_.ByteReceived(
+      read_register_request[sizeof(read_register_request) - 1], true);
+  modbus_.Timeout(Modbus::kInterCharacterDelay);
+
+  // Do not finish frame…
+  // modbus_.Timeout(Modbus::kInterFrameDelay);
+  modbus_.Update();
+
+  // …but send more data.
+  SendMessage(read_register_request, sizeof(read_register_request));
+}
+
+TEST_F(ModbusTest, ParityError) {
+  const uint8_t read_register_request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x95, 0x19,  // CRC
+  };
+
+  StartOperation(1);
+
+  int length = static_cast<int>(sizeof(read_register_request));
+  SendMessageParityError(read_register_request, length, 0);
+  SendMessageParityError(read_register_request, length, length / 2);
+  SendMessageParityError(read_register_request, length, length - 1);
+}
+
 TEST_F(ModbusTest, ReadInputRegister) {
   const uint8_t read_register_request[] = {
       0x01,        // Slave address
@@ -353,83 +430,6 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidLength) {
                   sizeof(write_single_register_request_too_long),
                   write_single_register_response,
                   sizeof(write_single_register_response));
-}
-
-TEST_F(ModbusTest, RequestTimeout) {
-  // Use a valid request.
-  const uint8_t read_register_request[] = {
-      0x01,        // Slave address
-      0x04,        // Function code
-      0x45, 0x67,  // Starting Address
-      0x00, 0x01,  // Quantity of Input Registers
-      0x95, 0x19,  // CRC
-  };
-  const int length = sizeof(read_register_request);
-
-  StartOperation(1);
-
-  EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
-
-  // But only send half of message…
-  for (int i = 0; i < length / 2; i++) {
-    modbus_.ByteReceived(read_register_request[i], true);
-  }
-
-  // …before there is an timeout.
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-
-  for (int i = length / 2; i < length; i++) {
-    modbus_.ByteReceived(read_register_request[i], true);
-  }
-
-  // Send rest of message which should be ignored.
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-  modbus_.Update();
-}
-
-TEST_F(ModbusTest, AdditionalRequestBytes) {
-  const uint8_t read_register_request[] = {
-      0x01,        // Slave address
-      0x04,        // Function code
-      0x45, 0x67,  // Starting Address
-      0x00, 0x01,  // Quantity of Input Registers
-      0x95, 0x19,  // CRC
-  };
-
-  StartOperation(1);
-
-  // Send all bytes but last as usual.
-  SendMessage(read_register_request, sizeof(read_register_request) - 1);
-
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
-  modbus_.ByteReceived(
-      read_register_request[sizeof(read_register_request) - 1], true);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-
-  // Do not finish frame…
-  // modbus_.Timeout(Modbus::kInterFrameDelay);
-  modbus_.Update();
-
-  // …but send more data.
-  SendMessage(read_register_request, sizeof(read_register_request));
-}
-
-TEST_F(ModbusTest, ParityError) {
-  const uint8_t read_register_request[] = {
-      0x01,        // Slave address
-      0x04,        // Function code
-      0x45, 0x67,  // Starting Address
-      0x00, 0x01,  // Quantity of Input Registers
-      0x95, 0x19,  // CRC
-  };
-
-  StartOperation(1);
-
-  int length = static_cast<int>(sizeof(read_register_request));
-  SendMessageParityError(read_register_request, length, 0);
-  SendMessageParityError(read_register_request, length, length / 2);
-  SendMessageParityError(read_register_request, length, length - 1);
 }
 
 }  // namespace
