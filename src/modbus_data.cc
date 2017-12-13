@@ -2,11 +2,20 @@
 
 #include "modbus_data.h"
 
+#include "config.h"
 #include "config_storage.h"
 #include "measure.h"
 
+#define INFO_OFFSET 128u
+#define INFO_SIZE 5u
+
+#define VERSION_OFFSET (INFO_OFFSET + INFO_SIZE)
 #define RESET_OFFSET 256u
 #define CONFIG_OFFSET 257u
+
+// "GaMoSy-SSU" encoded in 16bit integer values.
+static const uint16_t device_identification[INFO_SIZE]
+    = {0x4761, 0x4d6f, 0x5379, 0x2d53, 0x5355};
 
 static uint16_t AverageMeasurement() {
   uint32_t low = 0;
@@ -23,6 +32,10 @@ static uint16_t AverageMeasurement() {
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = AverageMeasurement();
+  } else if (address >= INFO_OFFSET && address < INFO_OFFSET + INFO_SIZE) {
+    *data_out = device_identification[address - INFO_OFFSET];
+  } else if (address == VERSION_OFFSET) {
+    *data_out = (FW_VERSION_MAJOR << 8 | FW_VERSION_MINOR);
   } else if (address >= CONFIG_OFFSET &&
              address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
     *data_out = ConfigStorage::Instance().Get(
