@@ -4,7 +4,7 @@
 
 #include "chip.h"
 
-#include "common.h"
+#include "config.h"
 
 void ModbusHw::EnableHw() { Chip_UART_Enable(LPC_USART0); }
 

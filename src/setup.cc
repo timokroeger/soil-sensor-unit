@@ -4,7 +4,7 @@
 
 #include "chip.h"
 
-#include "common.h"
+#include "config.h"
 
 #define ISR_PRIO_UART 1
 #define ISR_PRIO_TIMER 1

@@ -4,7 +4,7 @@
 
 #include "chip.h"
 
-#include "common.h"
+#include "config.h"
 #include "config_storage.h"
 #include "expect.h"
 #include "globals.h"
