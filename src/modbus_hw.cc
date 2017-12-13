@@ -25,7 +25,7 @@ void ModbusHw::SerialSend(uint8_t* data, int length) {
 
 void ModbusHw::StartTimer() {
   Chip_MRT_SetInterval(LPC_MRT_CH0,
-                       ((OSC_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
+                       ((CPU_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
   Chip_MRT_SetInterval(LPC_MRT_CH1,
-                       ((OSC_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
+                       ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }

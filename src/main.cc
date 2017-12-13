@@ -16,7 +16,7 @@
 extern "C" {
 
 // Required by the vendor chip library.
-const uint32_t OscRateIn = OSC_FREQ;
+const uint32_t OscRateIn = CPU_FREQ;
 const uint32_t ExtRateIn = 0;  // External clock input not used.
 
 // Called by asm setup (startup_LPC82x.s) code before main() is executed.

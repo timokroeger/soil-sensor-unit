@@ -3,6 +3,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define OSC_FREQ 12000000u
+// Frequency of the main and system clock.
+#define CPU_FREQ 12000000u
 
 #endif  // CONFIG_H_
