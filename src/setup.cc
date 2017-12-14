@@ -20,14 +20,22 @@ static inline void WaitTicks(uint32_t ticks) {
   __asm__ volatile("0: SUB %[i],#1; BNE 0b;" : [i] "+r"(num_iters));
 }
 
+void SetupGpio() {
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
+
+  // Set open drain pins as output and pull them low. Also turns on the LED.
+  LPC_GPIO_PORT->DIRSET[0] = (1 << 11) | (1 << 10);
+  LPC_GPIO_PORT->SET[0] = (1 << 11) | (1 << 10);
+
+  // Analog mode for ADC input pin.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
+
+  Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_IOCON);
+}
+
 void SetupSwichMatrix() {
   // Enable switch matrix.
   Chip_SWM_Init();
-  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
-
-  // Select XTAL functionality for PIO0_8 and PIO0_9.
-  Chip_SWM_EnableFixedPin(SWM_FIXED_XTALIN);
-  Chip_SWM_EnableFixedPin(SWM_FIXED_XTALOUT);
 
   // UART0
   Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 17);
@@ -40,7 +48,6 @@ void SetupSwichMatrix() {
 
   // ADC input
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
 
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();

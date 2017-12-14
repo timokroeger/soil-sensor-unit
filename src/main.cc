@@ -24,7 +24,7 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 // clock.
 void SystemInit() {
   SystemCoreClockUpdate();
-
+  SetupGpio();
   SetupAdc();
   SetupPwm();
   SetupTimers();

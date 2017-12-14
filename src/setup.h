@@ -5,6 +5,9 @@
 
 #include <stdint.h>
 
+// Enables LED output and sets ADC pin to analog mode.
+void SetupGpio();
+
 // Assigns peripherals to pins.
 void SetupSwichMatrix();
 
