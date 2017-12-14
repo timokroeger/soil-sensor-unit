@@ -8,10 +8,6 @@
 // Assigns peripherals to pins.
 void SetupSwichMatrix();
 
-// Initializes the chip to use an external 12MHz crystal as system clock without
-// PLL.
-void SetupMainClockCrystal();
-
 // Calibrates the ADC and sets up a single measurement sequence which is
 // triggered by the PWM timer.
 void SetupAdc();

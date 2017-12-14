@@ -23,7 +23,8 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 // Sets up the switch matrix (peripheral to pin connections) and the system
 // clock.
 void SystemInit() {
-  //SetupMainClockCrystal();
+  SystemCoreClockUpdate();
+
   SetupAdc();
   SetupPwm();
   SetupTimers();
