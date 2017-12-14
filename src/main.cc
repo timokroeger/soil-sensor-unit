@@ -24,11 +24,11 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 // clock.
 void SystemInit() {
   //SetupMainClockCrystal();
-  SetupSwichMatrix();
   SetupAdc();
   SetupPwm();
   SetupTimers();
   SetupUart(ConfigStorage::Instance().Get(ConfigStorage::kBaudrate));
+  SetupSwichMatrix();
   SetupNVIC();
 }
 
