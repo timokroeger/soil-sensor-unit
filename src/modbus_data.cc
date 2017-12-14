@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "config_storage.h"
+#include "led.h"
 #include "measure.h"
 
 #define INFO_OFFSET 128u
@@ -30,6 +31,8 @@ static uint16_t AverageMeasurement() {
 }
 
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
+  LedBlink(1);
+
   if (address == 0) {
     *data_out = AverageMeasurement();
   } else if (address >= INFO_OFFSET && address < INFO_OFFSET + INFO_SIZE) {
@@ -48,6 +51,8 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
 }
 
 bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
+  LedBlink(2);
+
   if (address >= CONFIG_OFFSET &&
       address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
     ConfigStorage& cs = ConfigStorage::Instance();
