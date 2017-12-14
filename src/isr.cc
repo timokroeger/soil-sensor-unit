@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include "expect.h"
 #include "globals.h"
 #include "measure.h"
 #include "modbus.h"
@@ -32,6 +33,11 @@ void MRT_IRQHandler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
     Chip_MRT_IntClear(LPC_MRT_CH1);
     modbus.Timeout(Modbus::kInterFrameDelay);
+  }
+
+  if (Chip_MRT_IntPending(LPC_MRT_CH2)) {
+    NVIC_SystemReset();
+    Expect(false);
   }
 }
 

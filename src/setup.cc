@@ -151,6 +151,10 @@ void SetupTimers() {
   // Channel 1: MODBUS inter-frame timeout
   Chip_MRT_SetMode(LPC_MRT_CH1, MRT_MODE_ONESHOT);
   Chip_MRT_SetEnabled(LPC_MRT_CH1);
+
+  // Channel 2: Delayed reset
+  Chip_MRT_SetMode(LPC_MRT_CH2, MRT_MODE_ONESHOT);
+  Chip_MRT_SetEnabled(LPC_MRT_CH2);
 }
 
 void SetupUart(uint32_t baudrate) {

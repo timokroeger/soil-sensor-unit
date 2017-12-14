@@ -51,8 +51,10 @@ int main() {
     }
 
     if (ev & ModbusData::kResetDevice) {
-      NVIC_SystemReset();
-      Expect(false);
+      // Delay reset by 15ms so that a valid modbus response can be sent.
+      // Actual reset is executed in the MRT ISR in isr.c
+      Chip_MRT_SetInterval(LPC_MRT_CH2,
+                           ((CPU_FREQ / 1000000) * 15000) | MRT_INTVAL_LOAD);
     }
   }
 

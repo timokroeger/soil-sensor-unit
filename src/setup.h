@@ -20,8 +20,10 @@ void SetupAdc();
 // capacitive measurement. A second channel is used as ADC trigger.
 void SetupPwm();
 
-// Sets up the a timer channels 0 and 1 (clocked by FREQ_OSC) which generates
-// an interrupt after timeout which is used for MODBUS timing.
+// Sets up the a timer channels 0, 1 and 2 (clocked by FREQ_OSC) which generate
+// an interrupt after timeout (see isr.c).
+// Channel 0 and 1 are used for MODBUS timing.
+// Channel 2 is used to delay system reset.
 void SetupTimers();
 
 // Sets up UART0 with RTS pin as drive enable for the RS485 receiver.
