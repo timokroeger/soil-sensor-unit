@@ -25,7 +25,7 @@ void SetupGpio() {
 
   // Set open drain pins as output and pull them low. Also turns on the LED.
   LPC_GPIO_PORT->DIRSET[0] = (1 << 11) | (1 << 10);
-  LPC_GPIO_PORT->SET[0] = (1 << 11) | (1 << 10);
+  LPC_GPIO_PORT->CLR[0] = (1 << 11) | (1 << 10);
 
   // Analog mode for ADC input pin.
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
@@ -140,6 +140,10 @@ void SetupTimers() {
   // Channel 2: Delayed reset
   Chip_MRT_SetMode(LPC_MRT_CH2, MRT_MODE_ONESHOT);
   Chip_MRT_SetEnabled(LPC_MRT_CH2);
+
+  // Channel 3: LED blinking
+  Chip_MRT_SetMode(LPC_MRT_CH3, MRT_MODE_ONESHOT);
+  Chip_MRT_SetEnabled(LPC_MRT_CH3);
 }
 
 void SetupUart(uint32_t baudrate) {

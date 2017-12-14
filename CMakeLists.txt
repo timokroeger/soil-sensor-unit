@@ -17,17 +17,18 @@ set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
 add_executable(firmware.elf
-  src/startup_LPC82x.s
   src/config_storage.cc
   src/globals.cc
-  src/setup.cc
   src/isr.cc
   src/log.cc
+  src/led.cc
   src/main.cc
   src/measure.cc
   src/modbus.cc
   src/modbus_data.cc
   src/modbus_hw.cc
+  src/setup.cc
+  src/startup_LPC82x.s
 )
 
 target_compile_options(firmware.elf PUBLIC

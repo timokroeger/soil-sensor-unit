@@ -6,6 +6,7 @@
 
 #include "expect.h"
 #include "globals.h"
+#include "led.h"
 #include "measure.h"
 #include "modbus.h"
 
@@ -36,8 +37,14 @@ void MRT_IRQHandler() {
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH2)) {
+    Chip_MRT_IntClear(LPC_MRT_CH2);
     NVIC_SystemReset();
     Expect(false);
+  }
+
+  if (Chip_MRT_IntPending(LPC_MRT_CH3)) {
+    Chip_MRT_IntClear(LPC_MRT_CH3);
+    LedTimeout();
   }
 }
 
