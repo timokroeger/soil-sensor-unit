@@ -20,12 +20,10 @@ static uint32_t uart_parity_error_counter = 0;
 // Increased when only 2 of 3 samples of a UART bit reading were stable.
 static uint32_t uart_noise_error_counter = 0;
 
-extern "C" {
-
-void SCT_IRQHandler() { MeasureResetTrigger(); }
+void SCT_Handler() { MeasureResetTrigger(); }
 
 // MODBUS Timeouts
-void MRT_IRQHandler() {
+void MRT_Handler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
     modbus.Timeout(Modbus::kInterCharacterDelay);
@@ -48,7 +46,7 @@ void MRT_IRQHandler() {
   }
 }
 
-void UART0_IRQHandler() {
+void UART0_Handler() {
   uint32_t interrupt_status = Chip_UART_GetIntStatus(LPC_USART0);
 
   if (interrupt_status & UART_STAT_START) {
@@ -78,6 +76,4 @@ void UART0_IRQHandler() {
                           UART_STAT_RXRDY | UART_STAT_FRM_ERRINT |
                               UART_STAT_PAR_ERRINT | UART_STAT_RXNOISEINT);
   }
-}
-
 }

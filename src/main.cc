@@ -13,17 +13,13 @@
 #include "modbus.h"
 #include "modbus_data.h"
 
-extern "C" {
-
 // Required by the vendor chip library.
 const uint32_t OscRateIn = CPU_FREQ;
 const uint32_t ExtRateIn = 0;  // External clock input not used.
 
-// Called by asm setup (startup_LPC82x.s) code before main() is executed.
-// Sets up the switch matrix (peripheral to pin connections) and the system
-// clock.
-void SystemInit() {
+static void SystemInit() {
   SystemCoreClockUpdate();
+
   SetupGpio();
   SetupAdc();
   SetupPwm();
@@ -36,6 +32,7 @@ void SystemInit() {
 // The switch matrix and system clock (12Mhz by external crystal) were already
 // configured by SystemInit() before main was called.
 int main() {
+  SystemInit();
   MeasureStart();
 
   uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
@@ -61,6 +58,4 @@ int main() {
 
   // Never reached.
   return 0;
-}
-
 }

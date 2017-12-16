@@ -28,7 +28,7 @@ add_executable(firmware.elf
   src/modbus_data.cc
   src/modbus_hw.cc
   src/setup.cc
-  src/startup_LPC82x.s
+  src/startup.cc
 )
 
 target_compile_options(firmware.elf PUBLIC
