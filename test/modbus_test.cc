@@ -314,7 +314,7 @@ TEST_F(ModbusTest, WriteSingleRegister) {
       0x01,        // Slave address
       0x06,        // Function code
       0x45, 0x67,  // Starting Address
-      0xAB, 0xCD,  // Quantity of Input Registers
+      0xAB, 0xCD,  // Register Value
       0x93, 0xBC,  // CRC
   };
 
@@ -331,7 +331,7 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
       0x01,        // Slave address
       0x06,        // Function code
       0x45, 0x67,  // Starting Address
-      0xAB, 0xCD,  // Quantity of Input Registers
+      0xAB, 0xCD,  // Register Value
       0x93, 0xBC,  // CRC
   };
 
@@ -357,7 +357,7 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidLength) {
       0x01,        // Slave address
       0x06,        // Function code
       0x45, 0x67,  // Starting Address
-      0xAB,        // Quantity of Input Registers
+      0xAB,        // Register Value
       0x63, 0x12,  // CRC
   };
 
@@ -365,7 +365,7 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidLength) {
       0x01,        // Slave address
       0x06,        // Function code
       0x45, 0x67,  // Starting Address
-      0xAB, 0xCD,  // Quantity of Input Registers
+      0xAB, 0xCD,  // Register Value
       0x00,        // Extra Byte
       0xFC, 0x6D,  // CRC
   };
@@ -388,6 +388,97 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidLength) {
                   sizeof(write_single_register_request_too_long),
                   write_single_register_response,
                   sizeof(write_single_register_response));
+}
+
+TEST_F(ModbusTest, WriteMultipleRegisters) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xDE, 0xAD,  // Register Value 1
+      0xBE, 0xEF,  // Register Value 2
+      0x21, 0x17,  // CRC
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0xE5, 0x1B,  // CRC
+  };
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_data_, WriteRegister(0x4567, 0xDEAD))
+      .WillOnce(Return(true));
+  EXPECT_CALL(mock_modbus_data_, WriteRegister(0x4568, 0xBEEF))
+      .WillOnce(Return(true));
+
+  RequestResponse(request, sizeof(request), response, sizeof(response));
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersInvalidQuantity) {
+  const uint8_t request_invalid_quantity[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x00,  // Quantity of Registers
+      0x00,        // Byte Count
+      0xDB, 0xEB,  // CRC
+  };
+
+  const uint8_t request_invalid_bytecount[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xAB, 0xCD,  // Registers Value
+      0xE4, 0x27,  // CRC
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x90,        // Error code
+      0x03,        // Exception code
+      0x0C, 0x01,  // CRC
+  };
+
+  StartOperation(1);
+
+  RequestResponse(request_invalid_quantity, sizeof(request_invalid_quantity),
+                  response, sizeof(response));
+  RequestResponse(request_invalid_bytecount, sizeof(request_invalid_bytecount),
+                  response, sizeof(response));
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersInvalidAddress) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Registers
+      0x02,        // Byte Count
+      0xAB, 0xCD,  // Registers Value
+      0x04, 0x26,  // CRC
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x90,        // Error code
+      0x02,        // Exception code
+      0xCD, 0xC1,  // CRC
+  };
+
+  StartOperation(1);
+
+  EXPECT_CALL(mock_modbus_data_, WriteRegister(0x4567, 0xABCD))
+      .WillOnce(Return(false));
+
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 }  // namespace
