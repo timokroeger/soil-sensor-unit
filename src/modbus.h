@@ -76,6 +76,7 @@ class Modbus {
 
   ExceptionType ReadInputRegister(const uint8_t *data, size_t length);
   ExceptionType WriteSingleRegister(const uint8_t *data, size_t length);
+  ExceptionType WriteMultipleRegisters(const uint8_t *data, size_t length);
   void HandleRequest(uint8_t fn_code, const uint8_t *data, size_t length);
 
   etl::atomic<TransmissionState> transmission_state_;
