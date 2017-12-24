@@ -4,18 +4,18 @@ extern int main(void);
 
 extern "C" {
 
-void _estack(void);         // Provided by linker script.
-void __libc_init_array();   // Provided by libc.
+extern void _estack(void);         // Provided by linker script.
+extern void __libc_init_array();   // Provided by libc.
 
 void Reset_Handler(void);   // Required for ENTRY() in linker script.
 void Unused_Handler(void);  // Required for alias attribute.
 
 // Code locations provided by the linker script.
-unsigned int _sidata;
-unsigned int _sdata;
-unsigned int _edata;
-unsigned int _sbss;
-unsigned int _ebss;
+extern unsigned int _sidata;
+extern unsigned int _sdata;
+extern unsigned int _edata;
+extern unsigned int _sbss;
+extern unsigned int _ebss;
 
 }
 
