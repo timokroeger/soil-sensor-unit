@@ -14,6 +14,10 @@ class Modbus {
   Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if);
 
   // Starts operation of the MODBUS stack.
+  //
+  // Note that the Timeout() function must be called once to signal an bus
+  // idle condition before the stack actually enters an operational mode
+  // where it receives requests.
   void StartOperation(uint8_t slave_address);
 
   // Stops operation of the MODBUS stack.

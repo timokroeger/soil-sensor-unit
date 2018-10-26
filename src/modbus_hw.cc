@@ -6,7 +6,16 @@
 
 #include "config.h"
 
-void ModbusHw::EnableHw() { Chip_UART_Enable(LPC_USART0); }
+void ModbusHw::EnableHw() {
+  // Assume that UART peripheral and the MRT timers were correctly initialized
+  // in the startup code.
+  Chip_UART_Enable(LPC_USART0);
+
+  // Wait for a inter-frame timeout which then puts the stack in operational
+  // (idle) state.
+  Chip_MRT_SetInterval(LPC_MRT_CH0,
+                      ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
+}
 
 void ModbusHw::DisableHw() {
   Chip_MRT_SetInterval(LPC_MRT_CH0, 0 | MRT_INTVAL_LOAD);
@@ -20,9 +29,4 @@ void ModbusHw::DisableHw() {
 
 void ModbusHw::SerialSend(uint8_t* data, int length) {
   Chip_UART_SendBlocking(LPC_USART0, data, length);
-}
-
-void ModbusHw::StartTimer() {
-  Chip_MRT_SetInterval(LPC_MRT_CH0,
-                       ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }

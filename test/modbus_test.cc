@@ -27,7 +27,6 @@ class MockModbusHw : public ModbusHwInterface {
   MOCK_METHOD0(EnableHw, void());
   MOCK_METHOD0(DisableHw, void());
   MOCK_METHOD2(SerialSend, void(uint8_t *data, int length));
-  MOCK_METHOD0(StartTimer, void());
 };
 
 class ModbusTest : public ::testing::Test {
@@ -48,14 +47,12 @@ class ModbusTest : public ::testing::Test {
 
   void StartOperation(uint8_t addr) {
     EXPECT_CALL(mock_modbus_hw_, EnableHw());
-    EXPECT_CALL(mock_modbus_hw_, StartTimer());
     modbus_.StartOperation(addr);
     modbus_.Timeout();
     modbus_.Update();
   }
 
   void SendMessage(const uint8_t *data, int length) {
-    EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
       modbus_.ByteReceived(data[i], true);
     }
@@ -64,7 +61,6 @@ class ModbusTest : public ::testing::Test {
   }
 
   void SendMessageParityError(const uint8_t *data, int length, int error_idx) {
-    EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
     for (int i = 0; i < length; i++) {
       modbus_.ByteReceived(data[i], i != error_idx);
     }
@@ -160,7 +156,6 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
   // Send all bytes but last as usual.
   SendMessage(read_register_request, sizeof(read_register_request) - 1);
 
-  EXPECT_CALL(mock_modbus_hw_, StartTimer());
   modbus_.ByteReceived(
       read_register_request[sizeof(read_register_request) - 1], true);
 

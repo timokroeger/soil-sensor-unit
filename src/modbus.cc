@@ -1,7 +1,5 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-// TODO: What do when multiple requests?
-
 #include "modbus.h"
 
 #include "expect.h"
@@ -216,10 +214,6 @@ void Modbus::StartOperation(uint8_t slave_address) {
     address_ = slave_address;
 
     hw_interface_->EnableHw();
-
-    // Wait for a inter-frame timeout which then puts the stack in operational
-    // (idle) state.
-    hw_interface_->StartTimer();
   }
 }
 
@@ -243,8 +237,6 @@ void Modbus::Update() {
 }
 
 void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
-  hw_interface_->StartTimer();
-
   switch (transmission_state_) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
@@ -312,7 +304,8 @@ void Modbus::Timeout() {
       break;
 
     case kProcessFrame:
-      Expect(false);
+      // Just as there should be no data there should also be no inter-frame
+      // delay timeout. Ignore timeout if it occurres anyway.
       break;
 
     default:

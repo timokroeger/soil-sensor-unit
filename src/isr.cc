@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include "config.h"
 #include "expect.h"
 #include "globals.h"
 #include "led.h"
@@ -13,8 +14,7 @@
 // Increased when no stop bits were received.
 static uint32_t uart_frame_error_counter = 0;
 
-// No parity bit is used in the GaMoSy Communication Protocol so this should
-// always stay at 0.
+// Increased when there was a parity error.
 static uint32_t uart_parity_error_counter = 0;
 
 // Increased when only 2 of 3 samples of a UART bit reading were stable.
@@ -51,6 +51,10 @@ void UART0_Handler() {
 
   if (interrupt_status & UART_STAT_RXRDY) {
     bool parity_ok = true;
+
+    // Start inter frame-delay timer.
+    Chip_MRT_SetInterval(LPC_MRT_CH0,
+                         ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 
     if (interrupt_status & UART_STAT_FRM_ERRINT) {
       uart_frame_error_counter++;
