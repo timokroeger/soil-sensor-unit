@@ -50,8 +50,7 @@ class ModbusTest : public ::testing::Test {
     EXPECT_CALL(mock_modbus_hw_, EnableHw());
     EXPECT_CALL(mock_modbus_hw_, StartTimer());
     modbus_.StartOperation(addr);
-    modbus_.Timeout(Modbus::kInterCharacterDelay);
-    modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Timeout();
     modbus_.Update();
   }
 
@@ -60,8 +59,7 @@ class ModbusTest : public ::testing::Test {
     for (int i = 0; i < length; i++) {
       modbus_.ByteReceived(data[i], true);
     }
-    modbus_.Timeout(Modbus::kInterCharacterDelay);
-    modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Timeout();
     modbus_.Update();
   }
 
@@ -70,8 +68,7 @@ class ModbusTest : public ::testing::Test {
     for (int i = 0; i < length; i++) {
       modbus_.ByteReceived(data[i], i != error_idx);
     }
-    modbus_.Timeout(Modbus::kInterCharacterDelay);
-    modbus_.Timeout(Modbus::kInterFrameDelay);
+    modbus_.Timeout();
     modbus_.Update();
   }
 
@@ -115,7 +112,7 @@ TEST_F(ModbusTest, MisbehavingTimer) {
   StartOperation(1);
   Mock::AllowLeak(&mock_modbus_hw_);
   Mock::AllowLeak(&mock_modbus_data_);
-  ASSERT_DEATH(modbus_.Timeout(Modbus::kInterFrameDelay), "");
+  ASSERT_DEATH(modbus_.Timeout(), "");
 }
 
 TEST_F(ModbusTest, EmptyMessage) {
@@ -149,39 +146,6 @@ TEST_F(ModbusTest, InvalidFunctionCode) {
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
-TEST_F(ModbusTest, RequestTimeout) {
-  // Use a valid request.
-  const uint8_t read_register_request[] = {
-      0x01,        // Slave address
-      0x04,        // Function code
-      0x45, 0x67,  // Starting Address
-      0x00, 0x01,  // Quantity of Input Registers
-      0x95, 0x19,  // CRC
-  };
-  const int length = sizeof(read_register_request);
-
-  StartOperation(1);
-
-  EXPECT_CALL(mock_modbus_hw_, StartTimer()).Times(length);
-
-  // But only send half of message…
-  for (int i = 0; i < length / 2; i++) {
-    modbus_.ByteReceived(read_register_request[i], true);
-  }
-
-  // …before there is an timeout.
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-
-  for (int i = length / 2; i < length; i++) {
-    modbus_.ByteReceived(read_register_request[i], true);
-  }
-
-  // Send rest of message which should be ignored.
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
-  modbus_.Timeout(Modbus::kInterFrameDelay);
-  modbus_.Update();
-}
-
 TEST_F(ModbusTest, AdditionalRequestBytes) {
   const uint8_t read_register_request[] = {
       0x01,        // Slave address
@@ -199,10 +163,9 @@ TEST_F(ModbusTest, AdditionalRequestBytes) {
   EXPECT_CALL(mock_modbus_hw_, StartTimer());
   modbus_.ByteReceived(
       read_register_request[sizeof(read_register_request) - 1], true);
-  modbus_.Timeout(Modbus::kInterCharacterDelay);
 
   // Do not finish frame…
-  // modbus_.Timeout(Modbus::kInterFrameDelay);
+  // modbus_.Timeout();
   modbus_.Update();
 
   // …but send more data.

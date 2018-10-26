@@ -10,7 +10,6 @@ void ModbusHw::EnableHw() { Chip_UART_Enable(LPC_USART0); }
 
 void ModbusHw::DisableHw() {
   Chip_MRT_SetInterval(LPC_MRT_CH0, 0 | MRT_INTVAL_LOAD);
-  Chip_MRT_SetInterval(LPC_MRT_CH1, 0 | MRT_INTVAL_LOAD);
 
   // Wait for the bus to be idle.
   uint32_t flags = (UART_STAT_RXIDLE | UART_STAT_TXIDLE);
@@ -25,7 +24,5 @@ void ModbusHw::SerialSend(uint8_t* data, int length) {
 
 void ModbusHw::StartTimer() {
   Chip_MRT_SetInterval(LPC_MRT_CH0,
-                       ((CPU_FREQ / 1000000) * 750) | MRT_INTVAL_LOAD);
-  Chip_MRT_SetInterval(LPC_MRT_CH1,
                        ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }

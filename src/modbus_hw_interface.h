@@ -24,12 +24,12 @@ class ModbusHwInterface {
   // Sends a modbus response via serial interface.
   virtual void SerialSend(uint8_t *data, int length) = 0;
 
-  // This function shall start a one-shot timer which calls ModbusTimeout()
-  // first kModbusTimeoutInterCharacterDelay after typically 750us and then
-  // kModbusTimeoutInterFrameDelay after typically 1750us.
-  // The time should be stopped as soon as the start bit of a new byte is
-  // detected. If not it should include an additional delay of one character
-  // time.
+  // Starts a one shot timer which calls ModbusTimeout() after the inter-frame
+  // delay (IFD) elapsed.
+  //
+  // The inter-frame delay is the minimum time between two frames measured
+  // between the end of the stop bit and the beginning of the start bit.
+  // IFD = MIN(3.5 * 11 / baudrate, 1750us).
   virtual void StartTimer() = 0;
 };
 

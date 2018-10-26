@@ -11,18 +11,6 @@ class ModbusHwInterface;
 
 class Modbus {
  public:
-  enum TimeoutType {
-    // Inter-character delay is the maximum time between two characters of a
-    // frame
-    // = MIN(1,5 * 11 / baudrate, 750us)
-    kInterCharacterDelay,
-    // Inter-frame delay is the minimum time between two frames
-    // = MIN(3.5 * 11 / baudrate, 1750us)
-    kInterFrameDelay,
-    // Used internally only. Calling ModbusTimeout() with this is a NOOP.
-    kNoTimeout
-  };
-
   Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if);
 
   // Starts operation of the MODBUS stack.
@@ -40,11 +28,15 @@ class Modbus {
   // Typically called by the UART RX ISR.
   void ByteReceived(uint8_t byte, bool parity_ok);
 
-  // A MODBUS timeout occurred.
+  // A MODBUS inter frame timeout occurred.
+  //
+  // The inter-frame delay (IFD) is the minimum time between two frames measured
+  // between the end of the stop bit and the beginning of the start bit.
+  // IFD = MIN(3.5 * 11 / baudrate, 1750us)
   //
   // Typically called by a timer ISR. The MODBUS stack starts the timer with the
   // ModbusStartTimer() function defined in modbus_callbacks.c.
-  void Timeout(TimeoutType timeout_type);
+  void Timeout();
 
  private:
   enum ExceptionType {
@@ -64,7 +56,6 @@ class Modbus {
     kTransmissionInital = 0,
     kTransmissionIdle,
     kTransmissionReception,
-    kTransmissionControlAndWaiting,
     kProcessFrame,
   };
 

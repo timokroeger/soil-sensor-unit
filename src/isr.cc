@@ -26,12 +26,7 @@ void SCT_Handler() { MeasureResetTrigger(); }
 void MRT_Handler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH0)) {
     Chip_MRT_IntClear(LPC_MRT_CH0);
-    modbus.Timeout(Modbus::kInterCharacterDelay);
-  }
-
-  if (Chip_MRT_IntPending(LPC_MRT_CH1)) {
-    Chip_MRT_IntClear(LPC_MRT_CH1);
-    modbus.Timeout(Modbus::kInterFrameDelay);
+    modbus.Timeout();
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH2)) {
@@ -51,7 +46,6 @@ void UART0_Handler() {
 
   if (interrupt_status & UART_STAT_START) {
     Chip_MRT_SetInterval(LPC_MRT_CH0, 0 | MRT_INTVAL_LOAD);
-    Chip_MRT_SetInterval(LPC_MRT_CH1, 0 | MRT_INTVAL_LOAD);
     Chip_UART_ClearStatus(LPC_USART0, UART_STAT_START);
   }
 

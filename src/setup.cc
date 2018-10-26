@@ -129,13 +129,9 @@ void SetupPwm() {
 void SetupTimers() {
   Chip_MRT_Init();
 
-  // Channel 0: MODBUS inter-character timeout
+  // Channel 0: MODBUS inter-frame timeout
   Chip_MRT_SetMode(LPC_MRT_CH0, MRT_MODE_ONESHOT);
   Chip_MRT_SetEnabled(LPC_MRT_CH0);
-
-  // Channel 1: MODBUS inter-frame timeout
-  Chip_MRT_SetMode(LPC_MRT_CH1, MRT_MODE_ONESHOT);
-  Chip_MRT_SetEnabled(LPC_MRT_CH1);
 
   // Channel 2: Delayed reset
   Chip_MRT_SetMode(LPC_MRT_CH2, MRT_MODE_ONESHOT);

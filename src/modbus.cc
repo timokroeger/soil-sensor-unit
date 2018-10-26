@@ -270,14 +270,9 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
       }
       break;
 
-    case kTransmissionControlAndWaiting:
-      // Bytes after the inter-character delay are not allowed.
-      frame_valid_ = false;
-      break;
-
     case kProcessFrame:
       // There should be no more bytes after a request frame. If there are some
-      // ingnore them.
+      // ignore them.
       break;
 
     default:
@@ -290,12 +285,10 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
   }
 }
 
-void Modbus::Timeout(TimeoutType timeout_type) {
+void Modbus::Timeout() {
   switch (transmission_state_) {
     case kTransmissionInital:
-      if (timeout_type == kInterFrameDelay) {
-        transmission_state_ = kTransmissionIdle;
-      }
+      transmission_state_ = kTransmissionIdle;
       break;
 
     case kTransmissionIdle:
@@ -303,30 +296,19 @@ void Modbus::Timeout(TimeoutType timeout_type) {
       break;
 
     case kTransmissionReception:
-      if (timeout_type == kInterCharacterDelay) {
-        // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-        if (frame_valid_) {
-          if (req_buffer_idx_ > 3) {
-            uint16_t received_crc =
-                BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
-            uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
-            frame_valid_ = (received_crc == calculated_crc);
-          } else {
-            frame_valid_ = false;
-          }
+      // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
+      if (frame_valid_) {
+        if (req_buffer_idx_ > 3) {
+          uint16_t received_crc =
+              BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+          uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
+          frame_valid_ = (received_crc == calculated_crc);
+        } else {
+          frame_valid_ = false;
         }
-
-        transmission_state_ = kTransmissionControlAndWaiting;
-      } else {
-        Expect(false);
       }
-      break;
 
-    case kTransmissionControlAndWaiting:
-      if (timeout_type == kInterFrameDelay) {
-        // Ignore invalid frames and wait for next request.
-        transmission_state_ = frame_valid_ ? kProcessFrame : kTransmissionIdle;
-      }
+      transmission_state_ = frame_valid_ ? kProcessFrame : kTransmissionIdle;
       break;
 
     case kProcessFrame:
