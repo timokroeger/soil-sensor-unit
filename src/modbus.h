@@ -60,7 +60,8 @@ class Modbus {
     kTransmissionInital = 0,
     kTransmissionIdle,
     kTransmissionReception,
-    kProcessFrame,
+    kProcessingFrame,
+    kInvalidFrame,
   };
 
   static const int kBufferSize = 256;
@@ -79,7 +80,6 @@ class Modbus {
   uint8_t address_;
 
   TransmissionState transmission_state_;
-  bool frame_valid_;
 
   uint8_t req_buffer_[kBufferSize];
   uint32_t req_buffer_idx_;

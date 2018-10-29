@@ -92,7 +92,6 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
       hw_interface_(hw_if),
       address_(0),
       transmission_state_(kTransmissionInital),
-      frame_valid_(false),
       req_buffer_{0},
       req_buffer_idx_(0),
       resp_buffer_{0},
@@ -223,7 +222,7 @@ void Modbus::StopOperation() {
 }
 
 void Modbus::Update() {
-  if (transmission_state_ == kProcessFrame) {
+  if (transmission_state_ == kProcessingFrame) {
     // Reset buffer for writing.
     // The first two bytes are the same as in the request.
     resp_buffer_[0] = req_buffer_[0];  // Address
@@ -237,6 +236,10 @@ void Modbus::Update() {
 }
 
 void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
+  if (!parity_ok) {
+    transmission_state_ = kInvalidFrame;
+  }
+
   switch (transmission_state_) {
     // Ignore received messages until first inter-frame delay is detected.
     case kTransmissionInital:
@@ -246,13 +249,15 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
     case kTransmissionIdle:
       // Immediately check if address matches.
       // TODO: Allow broadcasts.
-      frame_valid_ = (byte == address_);
+      if (byte == address_) {
+        // Reset buffer and fill first byte.
+        req_buffer_[0] = byte;
+        req_buffer_idx_ = 1;
 
-      // Reset buffer and fill first byte.
-      req_buffer_[0] = byte;
-      req_buffer_idx_ = 1;
-
-      transmission_state_ = kTransmissionReception;
+        transmission_state_ = kTransmissionReception;
+      } else {
+        transmission_state_ = kInvalidFrame;
+      }
       break;
 
     case kTransmissionReception:
@@ -262,18 +267,18 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
       }
       break;
 
-    case kProcessFrame:
+    case kProcessingFrame:
       // There should be no more bytes after a request frame. If there are some
       // ignore them.
+      break;
+
+    case kInvalidFrame:
+      // Silently discard data of invalid frames.
       break;
 
     default:
       Expect(false);
       break;
-  }
-
-  if (!parity_ok) {
-    frame_valid_ = false;
   }
 }
 
@@ -289,23 +294,26 @@ void Modbus::Timeout() {
 
     case kTransmissionReception:
       // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-      if (frame_valid_) {
-        if (req_buffer_idx_ > 3) {
-          uint16_t received_crc =
-              BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
-          uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
-          frame_valid_ = (received_crc == calculated_crc);
-        } else {
-          frame_valid_ = false;
-        }
+      if (req_buffer_idx_ > 3) {
+        uint16_t received_crc =
+            BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+        uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
+        transmission_state_ = (received_crc == calculated_crc)
+                                  ? kProcessingFrame
+                                  : kTransmissionIdle;
+      } else {
+        transmission_state_ = kTransmissionIdle;
       }
-
-      transmission_state_ = frame_valid_ ? kProcessFrame : kTransmissionIdle;
       break;
 
-    case kProcessFrame:
+    case kProcessingFrame:
       // Just as there should be no data there should also be no inter-frame
       // delay timeout. Ignore timeout if it occurres anyway.
+      break;
+
+    case kInvalidFrame:
+      // Frame finished try to receive the next one.
+      transmission_state_ = kTransmissionIdle;
       break;
 
     default:
