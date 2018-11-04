@@ -223,17 +223,20 @@ void Modbus::StopOperation() {
 
 void Modbus::Update() {
   if (transmission_state_ == kProcessingFrame) {
-    // Extract CRC from message and calculate our own.
-    uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
-    uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
-    if (received_crc == calculated_crc) {
-      // Reset buffer for writing.
-      // The first two bytes are the same as in the request.
-      resp_buffer_[0] = req_buffer_[0];  // Address
-      resp_buffer_[1] = req_buffer_[1];  // Function code
-      resp_buffer_idx_ = 2;
+    // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
+    if (req_buffer_idx_ >= 4) {
+      // Extract CRC from message and calculate our own.
+      uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
+      uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
+      if (received_crc == calculated_crc) {
+        // Reset buffer for writing.
+        // The first two bytes are the same as in the request.
+        resp_buffer_[0] = req_buffer_[0];  // Address
+        resp_buffer_[1] = req_buffer_[1];  // Function code
+        resp_buffer_idx_ = 2;
 
-      HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_idx_ - 4);
+        HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_idx_ - 4);
+      }
     }
 
     transmission_state_ = kTransmissionIdle;
@@ -298,12 +301,7 @@ void Modbus::Timeout() {
       break;
 
     case kTransmissionReception:
-      // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-      if (req_buffer_idx_ > 3) {
-        transmission_state_ = kProcessingFrame;
-      } else {
-        transmission_state_ = kTransmissionIdle;
-      }
+      transmission_state_ = kProcessingFrame;
       break;
 
     case kProcessingFrame:
