@@ -224,7 +224,8 @@ void Modbus::StopOperation() {
 void Modbus::Update() {
   if (transmission_state_ == kProcessingFrame) {
     // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
-    if (req_buffer_idx_ >= 4) {
+    // TODO: Allow broadcasts (addr = 0)
+    if ((req_buffer_idx_ >= 4) && (req_buffer_[0] == address_)) {
       // Extract CRC from message and calculate our own.
       uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
       uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
@@ -255,17 +256,11 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
 
     // First byte: Start of frame
     case kTransmissionIdle:
-      // Immediately check if address matches.
-      // TODO: Allow broadcasts.
-      if (byte == address_) {
-        // Reset buffer and fill first byte.
-        req_buffer_[0] = byte;
-        req_buffer_idx_ = 1;
+      // Reset buffer and fill first byte.
+      req_buffer_[0] = byte;
+      req_buffer_idx_ = 1;
 
-        transmission_state_ = kTransmissionReception;
-      } else {
-        transmission_state_ = kInvalidFrame;
-      }
+      transmission_state_ = kTransmissionReception;
       break;
 
     case kTransmissionReception:
