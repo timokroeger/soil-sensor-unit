@@ -6,6 +6,8 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>
 
+#include <atomic>
+
 class ModbusDataInterface;
 class ModbusHwInterface;
 
@@ -75,17 +77,17 @@ class Modbus {
   ExceptionType WriteSingleRegister(const uint8_t *data, uint32_t length);
   void HandleRequest(uint8_t fn_code, const uint8_t *data, uint32_t length);
 
-  ModbusDataInterface *data_interface_;
-  ModbusHwInterface *hw_interface_;
-  uint8_t address_;
-
-  TransmissionState transmission_state_;
+  std::atomic<TransmissionState> transmission_state_;
 
   uint8_t req_buffer_[kBufferSize];
   uint32_t req_buffer_idx_;
 
   uint8_t resp_buffer_[kBufferSize];
   uint32_t resp_buffer_idx_;
+
+  ModbusDataInterface *data_interface_;
+  ModbusHwInterface *hw_interface_;
+  uint8_t address_;
 };
 
 #endif  // MODBUS_H_

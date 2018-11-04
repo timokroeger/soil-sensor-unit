@@ -88,14 +88,14 @@ static uint16_t Crc(const uint8_t *data, uint32_t length) {
 }
 
 Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
-    : data_interface_(data_if),
-      hw_interface_(hw_if),
-      address_(0),
-      transmission_state_(kTransmissionInital),
+    : transmission_state_(kTransmissionInital),
       req_buffer_{0},
       req_buffer_idx_(0),
       resp_buffer_{0},
-      resp_buffer_idx_(0) {
+      resp_buffer_idx_(0),
+      data_interface_(data_if),
+      hw_interface_(hw_if),
+      address_(0) {
   Expect(data_interface_ != nullptr);
   Expect(hw_interface_ != nullptr);
 }
