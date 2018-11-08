@@ -36,7 +36,7 @@ target_compile_options(firmware.elf PUBLIC
     -Wall -Wextra -Wconversion -Woverloaded-virtual -Wreorder -Wsign-promo)
 target_compile_features(firmware.elf PUBLIC cxx_std_11)
 
-target_link_libraries(firmware.elf LPC8xx SEGGER_RTT
+target_link_libraries(firmware.elf LPC8xx SEGGER_RTT etl
     -specs=nosys.specs -specs=nano.specs
     -Wl,--gc-sections,-T${CMAKE_SOURCE_DIR}/src/config/lpc_flash1.ld)
 

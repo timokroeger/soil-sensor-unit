@@ -43,3 +43,6 @@ add_library(SEGGER_RTT
 target_include_directories(SEGGER_RTT
   PUBLIC SEGGER ${CONFIG_INCLUDE}
 )
+
+set(BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(etl)
