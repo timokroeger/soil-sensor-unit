@@ -6,6 +6,7 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>
 
+#include "etl/array.h"
 #include "etl/atomic.h"
 #include "etl/vector.h"
 
@@ -71,6 +72,7 @@ class Modbus {
 
   void ResponseAddByte(uint8_t b);
   void ResponseAddWord(uint16_t word);
+  void ResponseAddCrc();
   void SendResponse();
   void SendException(uint8_t exception);
 
@@ -81,9 +83,7 @@ class Modbus {
   etl::atomic<TransmissionState> transmission_state_;
 
   etl::vector<uint8_t, kBufferSize> req_buffer_;
-
-  uint8_t resp_buffer_[kBufferSize];
-  uint32_t resp_buffer_idx_;
+  etl::vector<uint8_t, kBufferSize> resp_buffer_;
 
   ModbusDataInterface *data_interface_;
   ModbusHwInterface *hw_interface_;

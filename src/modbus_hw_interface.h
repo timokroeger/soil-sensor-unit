@@ -3,7 +3,7 @@
 #ifndef MODBUS_HW_INTERFACE_H_
 #define MODBUS_HW_INTERFACE_H_
 
-#include <stdint.h>
+#include <stddef.h>
 
 class ModbusHwInterface {
  public:
@@ -23,7 +23,7 @@ class ModbusHwInterface {
   virtual void DisableHw() = 0;
 
   // Sends a modbus response via the serial interface.
-  virtual void SerialSend(uint8_t *data, int length) = 0;
+  virtual void SerialSend(uint8_t *data, size_t length) = 0;
 };
 
 #endif  // MODBUS_HW_INTERFACE_H_

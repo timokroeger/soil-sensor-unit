@@ -62,16 +62,6 @@ static uint16_t BufferToWordLE(const uint8_t *buffer) {
   return static_cast<uint16_t>((buffer[1] << 8) | buffer[0]);
 }
 
-static void WordToBufferBE(uint16_t word, uint8_t *buffer) {
-  buffer[0] = static_cast<uint8_t>(word >> 8);
-  buffer[1] = static_cast<uint8_t>(word);
-}
-
-static void WordToBufferLE(uint16_t word, uint8_t *buffer) {
-  buffer[0] = static_cast<uint8_t>(word);
-  buffer[1] = static_cast<uint8_t>(word >> 8);
-}
-
 // Taken from Appendix B of "MODBUS over Serial Line Specification and
 // Implementation Guide V1.02"
 static uint16_t Crc(const uint8_t *data, size_t length) {
@@ -89,8 +79,6 @@ static uint16_t Crc(const uint8_t *data, size_t length) {
 
 Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
     : transmission_state_(kTransmissionInital),
-      resp_buffer_{0},
-      resp_buffer_idx_(0),
       data_interface_(data_if),
       hw_interface_(hw_if),
       address_(0) {
@@ -99,35 +87,32 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
 }
 
 void Modbus::ResponseAddByte(uint8_t b) {
-  Expect(resp_buffer_idx_ + 1 <= sizeof(resp_buffer_));
-
-  resp_buffer_[resp_buffer_idx_] = b;
-  resp_buffer_idx_++;
+  resp_buffer_.push_back(b);
 }
 
 void Modbus::ResponseAddWord(uint16_t word) {
-  Expect(resp_buffer_idx_ + 2 <= sizeof(resp_buffer_));
+  resp_buffer_.push_back(static_cast<uint8_t>(word >> 8));
+  resp_buffer_.push_back(static_cast<uint8_t>(word));
+}
 
-  WordToBufferBE(word, &resp_buffer_[resp_buffer_idx_]);
-  resp_buffer_idx_ += 2;
+void Modbus::ResponseAddCrc() {
+  uint16_t crc = Crc(resp_buffer_.data(), resp_buffer_.size());
+  resp_buffer_.push_back(static_cast<uint8_t>(crc));
+  resp_buffer_.push_back(static_cast<uint8_t>(crc >> 8));
 }
 
 void Modbus::SendResponse() {
-  Expect(resp_buffer_idx_ + 2 <= sizeof(resp_buffer_));
-
-  uint16_t crc = Crc(&resp_buffer_[0], resp_buffer_idx_);
-  WordToBufferLE(crc, &resp_buffer_[resp_buffer_idx_]);
-
-  hw_interface_->SerialSend(resp_buffer_,
-                            static_cast<int>(resp_buffer_idx_ + 2));
+  ResponseAddCrc();
+  hw_interface_->SerialSend(resp_buffer_.data(), resp_buffer_.size());
 }
 
 void Modbus::SendException(uint8_t exception) {
-  resp_buffer_[1] |= 0x80;  // Flag response as exception.
-  resp_buffer_[2] = exception;
-  uint16_t crc = Crc(resp_buffer_, 3);
-  WordToBufferLE(crc, &resp_buffer_[3]);
-  hw_interface_->SerialSend(resp_buffer_, 5);
+  resp_buffer_.clear();
+  ResponseAddByte(req_buffer_[0]);         // Copy address from request.
+  ResponseAddByte(req_buffer_[1] | 0x80);  // Flag response as exception.
+  ResponseAddByte(exception);
+  ResponseAddCrc();
+  hw_interface_->SerialSend(resp_buffer_.data(), resp_buffer_.size());
 }
 
 Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
@@ -228,11 +213,11 @@ void Modbus::Update() {
       uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_.size() - 2]);
       uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_.size() - 2);
       if (received_crc == calculated_crc) {
-        // Reset buffer for writing.
+        resp_buffer_.clear();
+
         // The first two bytes are the same as in the request.
-        resp_buffer_[0] = req_buffer_[0];  // Address
-        resp_buffer_[1] = req_buffer_[1];  // Function code
-        resp_buffer_idx_ = 2;
+        ResponseAddByte(req_buffer_[0]);  // Address
+        ResponseAddByte(req_buffer_[1]);  // Function code
 
         HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_.size() - 4);
       }
