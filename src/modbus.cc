@@ -74,7 +74,7 @@ static void WordToBufferLE(uint16_t word, uint8_t *buffer) {
 
 // Taken from Appendix B of "MODBUS over Serial Line Specification and
 // Implementation Guide V1.02"
-static uint16_t Crc(const uint8_t *data, uint32_t length) {
+static uint16_t Crc(const uint8_t *data, size_t length) {
   uint8_t crc_hi = 0xFF;
   uint8_t crc_lo = 0xFF;
 
@@ -89,8 +89,6 @@ static uint16_t Crc(const uint8_t *data, uint32_t length) {
 
 Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
     : transmission_state_(kTransmissionInital),
-      req_buffer_{0},
-      req_buffer_idx_(0),
       resp_buffer_{0},
       resp_buffer_idx_(0),
       data_interface_(data_if),
@@ -133,7 +131,7 @@ void Modbus::SendException(uint8_t exception) {
 }
 
 Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
-                                                uint32_t length) {
+                                                size_t length) {
   if (length != 4) {
     return kIllegalDataValue;
   }
@@ -164,7 +162,7 @@ Modbus::ExceptionType Modbus::ReadInputRegister(const uint8_t *data,
 }
 
 Modbus::ExceptionType Modbus::WriteSingleRegister(const uint8_t *data,
-                                                  uint32_t length) {
+                                                  size_t length) {
   if (length != 4) {
     return kIllegalDataValue;
   }
@@ -183,7 +181,7 @@ Modbus::ExceptionType Modbus::WriteSingleRegister(const uint8_t *data,
 }
 
 void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
-                           uint32_t length) {
+                           size_t length) {
   ExceptionType exception = kOk;
 
   switch (fn_code) {
@@ -225,10 +223,10 @@ void Modbus::Update() {
   if (transmission_state_ == kProcessingFrame) {
     // Minimum message size is: 4b (= 1b addr + 1b fn_code + 2b CRC)
     // TODO: Allow broadcasts (addr = 0)
-    if ((req_buffer_idx_ >= 4) && (req_buffer_[0] == address_)) {
+    if ((req_buffer_.size() >= 4) && (req_buffer_[0] == address_)) {
       // Extract CRC from message and calculate our own.
-      uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_idx_ - 2]);
-      uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_idx_ - 2);
+      uint16_t received_crc = BufferToWordLE(&req_buffer_[req_buffer_.size() - 2]);
+      uint16_t calculated_crc = Crc(&req_buffer_[0], req_buffer_.size() - 2);
       if (received_crc == calculated_crc) {
         // Reset buffer for writing.
         // The first two bytes are the same as in the request.
@@ -236,7 +234,7 @@ void Modbus::Update() {
         resp_buffer_[1] = req_buffer_[1];  // Function code
         resp_buffer_idx_ = 2;
 
-        HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_idx_ - 4);
+        HandleRequest(req_buffer_[1], &req_buffer_[2], req_buffer_.size() - 4);
       }
     }
 
@@ -257,16 +255,16 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
     // First byte: Start of frame
     case kTransmissionIdle:
       // Reset buffer and fill first byte.
-      req_buffer_[0] = byte;
-      req_buffer_idx_ = 1;
+      req_buffer_.clear();
+      req_buffer_.push_back(byte);
 
       transmission_state_ = kTransmissionReception;
       break;
 
     case kTransmissionReception:
       // Save data as long as it fits into the buffer.
-      if (req_buffer_idx_ < sizeof(req_buffer_)) {
-        req_buffer_[req_buffer_idx_++] = byte;
+      if (!req_buffer_.full()) {
+        req_buffer_.push_back(byte);
       }
       break;
 

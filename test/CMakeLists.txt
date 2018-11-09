@@ -7,13 +7,14 @@ project(ssu_test)
 if(WIN32)
   set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads for google test.")
 endif()
+add_subdirectory(../lib/etl ./lib/etl)
 add_subdirectory(../lib/googletest ./lib/googletest)
 include_directories(SYSTEM ../lib/googletest/googlemock/include ../lib/googletest/googletest/include)
 
 # Build test executable.
 include_directories(../src)
 add_executable(ssu_test ${SRC_BASE} modbus_test.cc ../src/modbus.cc)
-target_link_libraries(ssu_test gmock gmock_main)
+target_link_libraries(ssu_test etl gmock gmock_main)
 
 # Enable as much warnings as possible.
 target_compile_definitions(ssu_test PUBLIC UNIT_TEST)
