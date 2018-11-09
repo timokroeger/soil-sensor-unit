@@ -5,8 +5,8 @@
 
 #include <stddef.h>  // size_t
 #include <stdint.h>
-#include <atomic>
 
+#include "etl/atomic.h"
 #include "etl/vector.h"
 
 class ModbusDataInterface;
@@ -78,7 +78,7 @@ class Modbus {
   ExceptionType WriteSingleRegister(const uint8_t *data, size_t length);
   void HandleRequest(uint8_t fn_code, const uint8_t *data, size_t length);
 
-  std::atomic<TransmissionState> transmission_state_;
+  etl::atomic<TransmissionState> transmission_state_;
 
   etl::vector<uint8_t, kBufferSize> req_buffer_;
 
