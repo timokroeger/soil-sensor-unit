@@ -6,7 +6,8 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>
 
-#include <atomic>
+#include "etl/atomic.h"
+#include "etl/vector.h"
 
 class ModbusDataInterface;
 class ModbusHwInterface;
@@ -70,20 +71,17 @@ class Modbus {
 
   void ResponseAddByte(uint8_t b);
   void ResponseAddWord(uint16_t word);
-  void SendResponse();
+  void ResponseAddCrc();
   void SendException(uint8_t exception);
 
-  ExceptionType ReadInputRegister(const uint8_t *data, uint32_t length);
-  ExceptionType WriteSingleRegister(const uint8_t *data, uint32_t length);
-  void HandleRequest(uint8_t fn_code, const uint8_t *data, uint32_t length);
+  ExceptionType ReadInputRegister(const uint8_t *data, size_t length);
+  ExceptionType WriteSingleRegister(const uint8_t *data, size_t length);
+  void HandleRequest(uint8_t fn_code, const uint8_t *data, size_t length);
 
-  std::atomic<TransmissionState> transmission_state_;
+  etl::atomic<TransmissionState> transmission_state_;
 
-  uint8_t req_buffer_[kBufferSize];
-  uint32_t req_buffer_idx_;
-
-  uint8_t resp_buffer_[kBufferSize];
-  uint32_t resp_buffer_idx_;
+  etl::vector<uint8_t, kBufferSize> req_buffer_;
+  etl::vector<uint8_t, kBufferSize> resp_buffer_;
 
   ModbusDataInterface *data_interface_;
   ModbusHwInterface *hw_interface_;

@@ -26,7 +26,7 @@ class MockModbusHw : public ModbusHwInterface {
  public:
   MOCK_METHOD0(EnableHw, void());
   MOCK_METHOD0(DisableHw, void());
-  MOCK_METHOD2(SerialSend, void(uint8_t *data, int length));
+  MOCK_METHOD2(SerialSend, void(uint8_t *data, size_t length));
 };
 
 class ModbusTest : public ::testing::Test {
