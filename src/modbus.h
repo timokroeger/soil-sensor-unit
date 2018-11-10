@@ -6,7 +6,6 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>
 
-#include "etl/array.h"
 #include "etl/atomic.h"
 #include "etl/vector.h"
 
@@ -73,7 +72,6 @@ class Modbus {
   void ResponseAddByte(uint8_t b);
   void ResponseAddWord(uint16_t word);
   void ResponseAddCrc();
-  void SendResponse();
   void SendException(uint8_t exception);
 
   ExceptionType ReadInputRegister(const uint8_t *data, size_t length);

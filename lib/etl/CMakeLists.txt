@@ -23,6 +23,7 @@ add_library(etl
   src/crc16.cpp
   src/crc16_ccitt.cpp
   src/crc16_kermit.cpp
+  src/crc16_modbus.cpp
   src/crc32.cpp
   src/crc64_ecma.cpp
   src/crc8_ccitt.cpp
