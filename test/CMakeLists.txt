@@ -2,24 +2,16 @@ cmake_minimum_required(VERSION 3.1)
 
 project(ssu_test)
 
-# Disbale pthreads feature for compatiblity with MinGW. Google test is confused
-# if pthreads is available on windows.
-if(WIN32)
-  set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads for google test.")
-endif()
+# Prevent overriding the parent project's compiler/linker settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 add_subdirectory(../lib/etl ./lib/etl)
-add_subdirectory(../lib/googletest ./lib/googletest)
-include_directories(SYSTEM ../lib/googletest/googlemock/include ../lib/googletest/googletest/include)
+add_subdirectory(../lib/googletest ./lib/googletest EXCLUDE_FROM_ALL)
 
 # Build test executable.
 include_directories(../src)
 add_executable(ssu_test ${SRC_BASE} modbus_test.cc ../src/modbus.cc)
-target_link_libraries(ssu_test etl gmock gmock_main)
-
-# Enable as much warnings as possible.
-target_compile_options(ssu_test PUBLIC
-    -Wall -Wextra -Wconversion -Woverloaded-virtual -Wreorder -Wsign-promo)
-target_compile_features(ssu_test PUBLIC cxx_std_11)
+target_link_libraries(ssu_test etl gmock_main)
 
 option(ASAN_UBSAN "Enable address & undefined behavior sanitizer." OFF)
 
