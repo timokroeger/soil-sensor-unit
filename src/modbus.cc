@@ -2,9 +2,9 @@
 
 #include "modbus.h"
 
-#include "etl/crc16_modbus.h"
+#include <assert.h>
 
-#include "expect.h"
+#include "etl/crc16_modbus.h"
 #include "modbus_data_interface.h"
 #include "modbus_hw_interface.h"
 
@@ -25,8 +25,8 @@ Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
       data_interface_(data_if),
       hw_interface_(hw_if),
       address_(0) {
-  Expect(data_interface_ != nullptr);
-  Expect(hw_interface_ != nullptr);
+  assert(data_interface_ != nullptr);
+  assert(hw_interface_ != nullptr);
 }
 
 void Modbus::ResponseAddByte(uint8_t b) { resp_buffer_.push_back(b); }
@@ -128,7 +128,7 @@ void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
 }
 
 void Modbus::StartOperation(uint8_t slave_address) {
-  Expect(transmission_state_ == kTransmissionInital);
+  assert(transmission_state_ == kTransmissionInital);
   if (slave_address >= 1 && slave_address <= 247) {
     address_ = slave_address;
 
@@ -201,7 +201,7 @@ void Modbus::ByteReceived(uint8_t byte, bool parity_ok) {
       break;
 
     default:
-      Expect(false);
+      assert(false);
       break;
   }
 }
@@ -213,7 +213,7 @@ void Modbus::Timeout() {
       break;
 
     case kTransmissionIdle:
-      Expect(false);
+      assert(false);
       break;
 
     case kTransmissionReception:
@@ -231,7 +231,7 @@ void Modbus::Timeout() {
       break;
 
     default:
-      Expect(false);
+      assert(false);
       break;
   }
 }

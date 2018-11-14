@@ -2,10 +2,10 @@
 
 #include "chip.h"
 
+#include <assert.h>
 #include <stdint.h>
 
 #include "config.h"
-#include "expect.h"
 #include "globals.h"
 #include "led.h"
 #include "measure.h"
@@ -32,7 +32,7 @@ void MRT_Handler() {
   if (Chip_MRT_IntPending(LPC_MRT_CH2)) {
     Chip_MRT_IntClear(LPC_MRT_CH2);
     NVIC_SystemReset();
-    Expect(false);
+    assert(false);
   }
 
   if (Chip_MRT_IntPending(LPC_MRT_CH3)) {

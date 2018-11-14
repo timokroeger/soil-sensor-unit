@@ -17,6 +17,7 @@ set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
 add_executable(firmware.elf
+  src/assert_impl.cc
   src/config_storage.cc
   src/globals.cc
   src/isr.cc

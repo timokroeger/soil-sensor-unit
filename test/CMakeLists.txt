@@ -17,7 +17,6 @@ add_executable(ssu_test ${SRC_BASE} modbus_test.cc ../src/modbus.cc)
 target_link_libraries(ssu_test etl gmock gmock_main)
 
 # Enable as much warnings as possible.
-target_compile_definitions(ssu_test PUBLIC UNIT_TEST)
 target_compile_options(ssu_test PUBLIC
     -Wall -Wextra -Wconversion -Woverloaded-virtual -Wreorder -Wsign-promo)
 target_compile_features(ssu_test PUBLIC cxx_std_11)

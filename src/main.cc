@@ -1,12 +1,12 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
+#include <assert.h>
 #include <stdint.h>
 
 #include "chip.h"
 
 #include "config.h"
 #include "config_storage.h"
-#include "expect.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
@@ -36,7 +36,7 @@ int main() {
   MeasureStart();
 
   uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
-  Expect(sensor_id >= 1 && sensor_id <= 247);
+  assert(sensor_id >= 1 && sensor_id <= 247);
   modbus.StartOperation(static_cast<uint8_t>(sensor_id));
 
   // Main loop.

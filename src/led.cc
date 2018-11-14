@@ -2,16 +2,16 @@
 
 #include "led.h"
 
-#include "chip.h"
+#include <assert.h>
 
-#include "expect.h"
+#include "chip.h"
 #include "config.h"
 
 static volatile int blink_count = 0;
 static volatile bool led_state = true;
 
 void LedBlink(int times) {
-  Expect(times > 0);
+  assert(times > 0);
 
   // Do nothing when blinking already.
   if (blink_count == 0) {
