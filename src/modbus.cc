@@ -8,17 +8,21 @@
 #include "modbus_data_interface.h"
 #include "modbus_hw_interface.h"
 
-static uint16_t BufferToWordBE(const uint8_t *buffer) {
+namespace {
+
+uint16_t BufferToWordBE(const uint8_t *buffer) {
   return static_cast<uint16_t>((buffer[0] << 8) | buffer[1]);
 }
 
-static uint16_t BufferToWordLE(const uint8_t *buffer) {
+uint16_t BufferToWordLE(const uint8_t *buffer) {
   return static_cast<uint16_t>((buffer[1] << 8) | buffer[0]);
 }
 
-static uint16_t Crc(const uint8_t *data, size_t length) {
+uint16_t Crc(const uint8_t *data, size_t length) {
   return static_cast<uint16_t>(etl::crc16_modbus(data, data + length).value());
 }
+
+}  // namespace
 
 Modbus::Modbus(ModbusDataInterface *data_if, ModbusHwInterface *hw_if)
     : transmission_state_(kTransmissionInital),
