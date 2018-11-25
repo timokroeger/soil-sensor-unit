@@ -11,7 +11,7 @@ class ModbusHw : public ModbusHwInterface {
  public:
   void EnableHw() override;
   void DisableHw() override;
-  void SerialSend(uint8_t *data, size_t length) override;
+  void SerialSend(const uint8_t *data, size_t length) override;
 };
 
 #endif  // MODBUS_HW_H_

@@ -23,7 +23,7 @@ class ModbusHwInterface {
   virtual void DisableHw() = 0;
 
   // Sends a modbus response via the serial interface.
-  virtual void SerialSend(uint8_t *data, size_t length) = 0;
+  virtual void SerialSend(const uint8_t *data, size_t length) = 0;
 };
 
 #endif  // MODBUS_HW_INTERFACE_H_

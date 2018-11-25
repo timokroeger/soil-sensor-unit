@@ -27,6 +27,6 @@ void ModbusHw::DisableHw() {
   Chip_UART_Disable(LPC_USART0);
 }
 
-void ModbusHw::SerialSend(uint8_t* data, size_t length) {
+void ModbusHw::SerialSend(const uint8_t* data, size_t length) {
   Chip_UART_SendBlocking(LPC_USART0, data, static_cast<int>(length));
 }
