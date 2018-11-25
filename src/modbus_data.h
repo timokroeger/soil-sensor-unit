@@ -7,7 +7,7 @@
 
 #include "modbus_data_interface.h"
 
-class ModbusData : public ModbusDataInterface {
+class ModbusData final : public ModbusDataInterface {
  public:
   enum EventFlags {
     kResetDevice        = 0x01,

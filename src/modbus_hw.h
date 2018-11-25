@@ -7,7 +7,7 @@
 
 #include "modbus_hw_interface.h"
 
-class ModbusHw : public ModbusHwInterface {
+class ModbusHw final : public ModbusHwInterface {
  public:
   void EnableHw() override;
   void DisableHw() override;
