@@ -86,7 +86,7 @@ void SetupPwm() {
   // Set ADC trigger 8 cycles (approximate sampling time) before PWM output
   // switches
   // Found by experimenting with different values.
-  LPC_SCT->MATCHREL[1].L = (uint16_t)(timer_counts - 8);
+  LPC_SCT->MATCHREL[1].L = timer_counts - 8;
 
   // Link events to states.
   LPC_SCT->EV[0].STATE = (1 << 0);  // Event 0 only happens in state 0

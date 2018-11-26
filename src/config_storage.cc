@@ -41,8 +41,10 @@ uint16_t ConfigStorage::Get(ConfigIndex idx) {
 }
 
 void ConfigStorage::WriteConfigToFlash() {
-  uint32_t sector_nr = (uint32_t)(&config_flash[0]) / 1024;  // 1 sector = 1kb
-  uint32_t page_nr = (uint32_t)(&config_flash[0]) / 64;      // 1 page = 64b
+  // 1 sector = 1kb
+  uint32_t sector_nr = reinterpret_cast<uint32_t>(&config_flash[0]) / 1024;
+  // 1 page = 64b
+  uint32_t page_nr = reinterpret_cast<uint32_t>(&config_flash[0]) / 64; 
 
   __disable_irq();
   // Erase old page
