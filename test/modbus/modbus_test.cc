@@ -1,0 +1,201 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include "modbus/data_interface.h"
+#include "modbus/modbus.h"
+#include "modbus/protocol_interface.h"
+
+using ::testing::_;
+using ::testing::InSequence;
+using ::testing::Return;
+using ::testing::SetArgPointee;
+using ::testing::StrictMock;
+
+namespace modbus {
+
+class ProtocolMock : public ProtocolInterface {
+ public:
+  MOCK_METHOD0(FrameAvailable, bool());
+  MOCK_METHOD0(ReadFrame, FrameData());
+  MOCK_METHOD1(WriteFrame, bool(FrameData));
+};
+
+class DataMock : public DataInterface {
+ public:
+  MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
+  MOCK_METHOD2(WriteRegister, bool(uint16_t address, uint16_t data));
+};
+
+class ModbusTest : public ::testing::Test {
+ protected:
+  ModbusTest() : data_(), protocol_(), modbus_(protocol_, data_) {}
+
+  void SetUp() override { modbus_.set_address(1); }
+
+  void RequestResponse(FrameData req, FrameData resp) {
+    InSequence sequence_dummy;
+    EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(true));
+    EXPECT_CALL(protocol_, ReadFrame()).WillOnce(Return(req));
+    EXPECT_CALL(protocol_, WriteFrame(resp));
+    modbus_.Execute();
+  }
+
+  void RequestNoResponse(FrameData req) {
+    InSequence sequence_dummy;
+    EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(true));
+    EXPECT_CALL(protocol_, ReadFrame()).WillOnce(Return(req));
+    EXPECT_CALL(protocol_, WriteFrame(_)).Times(0);
+    modbus_.Execute();
+  }
+
+  ProtocolMock protocol_;
+  DataMock data_;
+  Modbus modbus_;
+};
+
+TEST_F(ModbusTest, FrameNotAvailable) {
+  EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(false));
+  EXPECT_CALL(protocol_, ReadFrame()).Times(0);
+  EXPECT_CALL(protocol_, WriteFrame(_)).Times(0);
+  modbus_.Execute();
+}
+
+TEST_F(ModbusTest, ReadInputRegister) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x02,        // Byte Count
+      0xAB, 0xCD,  // Register Content
+  };
+
+  EXPECT_CALL(data_, ReadRegister(0x4567, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, ReadInputRegisterMultiple) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x03,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x06,        // Byte Count
+      0xAB, 0xCD,  // Register Content
+      0xDE, 0xAD,  // Register Content
+      0xBE, 0xAF,  // Register Content
+  };
+
+  EXPECT_CALL(data_, ReadRegister(0x4567, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+  EXPECT_CALL(data_, ReadRegister(0x4568, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xDEAD), Return(true)));
+  EXPECT_CALL(data_, ReadRegister(0x4569, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0xBEAF), Return(true)));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, ReadInputRegisterMaximum) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x7D,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[253] = {
+      0x01,  // Slave address
+      0x04,  // Function code
+      0xFA,  // Byte Count
+             // All zeros follow
+  };
+
+  EXPECT_CALL(data_, ReadRegister(_, _))
+      .Times(125)
+      .WillRepeatedly(DoAll(SetArgPointee<1>(0x0000), Return(true)));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
+  const uint8_t request1[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x00,  // Quantity of Input Registers
+  };
+
+  const uint8_t request2[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x01, 0x00,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[] = {
+      0x01,  // Slave address
+      0x84,  // Error code
+      0x03,  // Exception code
+  };
+
+  RequestResponse(FrameData{request1}, FrameData{response});
+  RequestResponse(FrameData{request2}, FrameData{response});
+}
+
+TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[] = {
+      0x01,  // Slave address
+      0x84,  // Error code
+      0x02,  // Exception code
+  };
+
+  EXPECT_CALL(data_, ReadRegister(0x4567, _)).WillOnce(Return(false));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, ReadInputRegisterMalformed) {
+  // Byte missing
+  const uint8_t request1[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00,        // Quantity of Input Registers
+  };
+
+  // Additional byte
+  const uint8_t request2[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+      0x00,
+  };
+
+  const uint8_t response[] = {
+      0x01,  // Slave address
+      0x84,  // Error code
+      0x01,  // Exception code
+  };
+
+  RequestNoResponse(FrameData{request1});
+  RequestNoResponse(FrameData{request2});
+}
+
+}  // namespace modbus

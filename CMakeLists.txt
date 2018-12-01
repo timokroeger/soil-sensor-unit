@@ -15,6 +15,7 @@ set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
 add_executable(firmware
+  src/modbus/modbus.cc
   src/assert_impl.cc
   src/config_storage.cc
   src/globals.cc
@@ -29,6 +30,8 @@ add_executable(firmware
   src/setup.cc
   src/startup.cc
 )
+
+target_include_directories(firmware PUBLIC src)
 
 target_compile_options(firmware PUBLIC
     -fno-exceptions -fno-non-call-exceptions -fno-rtti
