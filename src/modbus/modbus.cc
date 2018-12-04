@@ -40,7 +40,7 @@ bool Modbus::Execute() {
       break;
 
     case FunctionCode::kWriteMultipleRegisters:
-      // TODO
+      exception = WriteMultipleRegisters(data);
       break;
 
     default:
@@ -51,7 +51,7 @@ bool Modbus::Execute() {
 
   if (exception != ExceptionCode::kInvalidFrame) {
     if (exception != ExceptionCode::kOk) {
-      resp_buffer_.clear();             // Discard all of the invalid response.
+      resp_buffer_.clear();  // Discard all of the invalid response.
       ResponseAddByte(addr);
       ResponseAddByte(fn_code | 0x80);  // Flag response as exception.
       ResponseAddByte(static_cast<uint8_t>(exception));
@@ -117,6 +117,38 @@ Modbus::ExceptionCode Modbus::WriteSingleRegister(FrameData data) {
 
   ResponseAddWord(wr_addr);
   ResponseAddWord(wr_data);
+  return ExceptionCode::kOk;
+}
+
+Modbus::ExceptionCode Modbus::WriteMultipleRegisters(FrameData data) {
+  if (data.size() < 5) {
+    return ExceptionCode::kInvalidFrame;
+  }
+
+  uint16_t starting_addr = BufferToWordBE(&data[0]);
+  uint16_t quantity_regs = BufferToWordBE(&data[2]);
+  uint8_t byte_count = data[4];
+
+  if (quantity_regs < 1 || quantity_regs > 0x7B ||
+      byte_count != (quantity_regs * 2)) {
+    return ExceptionCode::kIllegalDataValue;
+  }
+
+  if (data.size() != (byte_count + 5u)) {
+    return ExceptionCode::kInvalidFrame;
+  }
+
+  for (int i = 0; i < quantity_regs; i++) {
+    uint16_t addr = static_cast<uint16_t>(starting_addr + i);
+    uint16_t reg_value = BufferToWordBE(&data[5 + 2 * i]);
+    bool ok = data_.WriteRegister(addr, reg_value);
+    if (!ok) {
+      return ExceptionCode::kIllegalDataAddress;
+    }
+  }
+
+  ResponseAddWord(starting_addr);
+  ResponseAddWord(quantity_regs);
   return ExceptionCode::kOk;
 }
 

@@ -52,6 +52,7 @@ class Modbus {
 
   ExceptionCode ReadInputRegister(FrameData data);
   ExceptionCode WriteSingleRegister(FrameData data);
+  ExceptionCode WriteMultipleRegisters(FrameData data);
 
   int address_;
   ProtocolInterface& protocol_;

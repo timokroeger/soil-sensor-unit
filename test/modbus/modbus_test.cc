@@ -248,4 +248,135 @@ TEST_F(ModbusTest, WriteSingleRegisterMalformed) {
   RequestNoResponse(FrameData{request2});
 }
 
+TEST_F(ModbusTest, WriteMultipleRegisters) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xDE, 0xAD,  // Register Value 1
+      0xBE, 0xEF,  // Register Value 2
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+  };
+
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(true));
+  EXPECT_CALL(data_, WriteRegister(0x4568, 0xBEEF)).WillOnce(Return(true));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersMaximum) {
+  const uint8_t request[253] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x7B,  // Quantity of Registers
+      0xF6,        // Byte Count
+                   // Register Values all zero
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x7B,  // Quantity of Registers
+  };
+
+  EXPECT_CALL(data_, WriteRegister(_, 0x0000))
+      .Times(123)
+      .WillRepeatedly(Return(true));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersInvalidAddress) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xDE, 0xAD,  // Register Value 1
+      0xBE, 0xEF,  // Register Value 2
+  };
+
+  const uint8_t response[] = {
+      0x01,  // Slave address
+      0x90,  // Error code
+      0x02,  // Exception code
+  };
+
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(false));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersInvalidQuantity) {
+  const uint8_t request_invalid_quantity1[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x00,  // Quantity of Registers
+      0x00,        // Byte Count
+  };
+
+  const uint8_t request_invalid_quantity2[255] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x7C,  // Quantity of Registers
+      0xF8,        // Byte Count
+                   // Register Values all zero
+  };
+
+  const uint8_t request_invalid_bytecount[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xAB, 0xCD,  // Registers Value
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x90,        // Error code
+      0x03,        // Exception code
+  };
+
+  RequestResponse(FrameData{request_invalid_quantity1}, FrameData{response});
+  //RequestResponse(FrameData{request_invalid_quantity2}, FrameData{response});
+  //RequestResponse(FrameData{request_invalid_bytecount}, FrameData{response});
+}
+
+TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
+  const uint8_t request1[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xDE, 0xAD,  // Register Value 1
+      0xBE,        // Register Value 2
+  };
+
+    const uint8_t request2[] = {
+      0x01,        // Slave address
+      0x10,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x02,  // Quantity of Registers
+      0x04,        // Byte Count
+      0xDE, 0xAD,  // Register Value 1
+      0xBE, 0xAF,  // Register Value 2
+      0x00,
+  };
+
+  RequestNoResponse(FrameData{request1});
+  RequestNoResponse(FrameData{request2});
+}
+
 }  // namespace modbus
