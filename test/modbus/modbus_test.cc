@@ -198,4 +198,54 @@ TEST_F(ModbusTest, ReadInputRegisterMalformed) {
   RequestNoResponse(FrameData{request2});
 }
 
+TEST_F(ModbusTest, WriteSingleRegister) {
+  const uint8_t request_response[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Register Value
+  };
+
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(true));
+  RequestResponse(FrameData{request_response}, FrameData{request_response});
+}
+
+TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Register Value
+  };
+
+  const uint8_t response[] = {
+      0x01,  // Slave address
+      0x86,  // Error code
+      0x02,  // Exception code
+  };
+
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(false));
+  RequestResponse(FrameData{request}, FrameData{response});
+}
+
+TEST_F(ModbusTest, WriteSingleRegisterMalformed) {
+  const uint8_t request1[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB,        // Register Value
+  };
+
+  const uint8_t request2[] = {
+      0x01,        // Slave address
+      0x06,        // Function code
+      0x45, 0x67,  // Starting Address
+      0xAB, 0xCD,  // Register Value
+      0x00,
+  };
+
+  RequestNoResponse(FrameData{request1});
+  RequestNoResponse(FrameData{request2});
+}
+
 }  // namespace modbus

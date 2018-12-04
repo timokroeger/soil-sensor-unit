@@ -36,7 +36,7 @@ bool Modbus::Execute() {
       break;
 
     case FunctionCode::kWriteSingleRegister:
-      // TODO
+      exception = WriteSingleRegister(data);
       break;
 
     case FunctionCode::kWriteMultipleRegisters:
@@ -92,13 +92,31 @@ Modbus::ExceptionCode Modbus::ReadInputRegister(FrameData data) {
     uint16_t reg_content = 0;
     uint16_t addr = starting_addr + i;
     bool ok = data_.ReadRegister(addr, &reg_content);
-    if (ok) {
-      ResponseAddWord(reg_content);
-    } else {
+    if (!ok) {
       return ExceptionCode::kIllegalDataAddress;
     }
+
+    ResponseAddWord(reg_content);
   }
 
+  return ExceptionCode::kOk;
+}
+
+Modbus::ExceptionCode Modbus::WriteSingleRegister(FrameData data) {
+  if (data.size() != 4) {
+    return ExceptionCode::kInvalidFrame;
+  }
+
+  uint16_t wr_addr = BufferToWordBE(&data[0]);
+  uint16_t wr_data = BufferToWordBE(&data[2]);
+
+  bool ok = data_.WriteRegister(wr_addr, wr_data);
+  if (!ok) {
+    return ExceptionCode::kIllegalDataAddress;
+  }
+
+  ResponseAddWord(wr_addr);
+  ResponseAddWord(wr_data);
   return ExceptionCode::kOk;
 }
 

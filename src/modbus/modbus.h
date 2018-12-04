@@ -51,6 +51,7 @@ class Modbus {
   void ResponseAddWord(uint16_t word);
 
   ExceptionCode ReadInputRegister(FrameData data);
+  ExceptionCode WriteSingleRegister(FrameData data);
 
   int address_;
   ProtocolInterface& protocol_;
