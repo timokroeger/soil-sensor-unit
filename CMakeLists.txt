@@ -42,7 +42,7 @@ target_compile_options(firmware PUBLIC
     -Woverloaded-virtual -Wreorder)
 target_compile_features(firmware PUBLIC cxx_std_14)
 
-target_link_libraries(firmware LPC8xx SEGGER_RTT etl
+target_link_libraries(firmware LPC8xx SEGGER_RTT etl sml
     -specs=nosys.specs -specs=nano.specs -Wl,--gc-sections,-T${LINKER_SCRIPT})
 set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
