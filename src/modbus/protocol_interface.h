@@ -26,8 +26,8 @@ class ProtocolInterface {
   // Behavior is undefined when no frame is available. 
   virtual FrameData ReadFrame() = 0;
 
-  // Returns true when the frame was written successfully.
-  virtual bool WriteFrame(FrameData fd) = 0;
+  // Write a frame to the protocol layer.
+  virtual void WriteFrame(FrameData fd) = 0;
 };
 
 }  // namespace modbus

@@ -17,7 +17,7 @@ class ProtocolMock : public ProtocolInterface {
  public:
   MOCK_METHOD0(FrameAvailable, bool());
   MOCK_METHOD0(ReadFrame, FrameData());
-  MOCK_METHOD1(WriteFrame, bool(FrameData));
+  MOCK_METHOD1(WriteFrame, void(FrameData));
 };
 
 class DataMock : public DataInterface {
