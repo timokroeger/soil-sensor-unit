@@ -3,12 +3,8 @@
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
-#include "modbus.h"
-#include "modbus_data.h"
-#include "modbus_hw.h"
+#include "modbus_serial.h"
 
-extern ModbusData modbus_data;
-extern ModbusHw modbus_hardware;
-extern Modbus modbus;
+extern ModbusSerial modbus_serial;
 
 #endif  // GLOBALS_H_

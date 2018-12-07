@@ -10,8 +10,9 @@
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
-#include "modbus.h"
+#include "modbus/modbus.h"
 #include "modbus_data.h"
+#include "modbus_serial.h"
 
 // Required by the vendor chip library.
 const uint32_t OscRateIn = CPU_FREQ;
@@ -37,11 +38,21 @@ int main() {
 
   uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
   assert(sensor_id >= 1 && sensor_id <= 247);
-  modbus.StartOperation(static_cast<uint8_t>(sensor_id));
+
+  // Link global serial interface implementation to protocol.
+  modbus::RtuProtocol modbus_rtu(modbus_serial);
+  modbus_serial.set_modbus_rtu(&modbus_rtu);
+
+  ModbusData modbus_data;
+
+  modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
+  modbus_stack.set_address(sensor_id);
+
+  modbus_rtu.Enable();
 
   // Main loop.
   for (;;) {
-    modbus.Update();
+    modbus_stack.Execute();
 
     uint32_t ev = modbus_data.GetEvents();
     if (ev & ModbusData::kWriteConfiguration) {

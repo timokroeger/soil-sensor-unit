@@ -24,9 +24,8 @@ add_executable(firmware
   src/led.cc
   src/main.cc
   src/measure.cc
-  src/modbus.cc
   src/modbus_data.cc
-  src/modbus_hw.cc
+  src/modbus_serial.cc
   src/setup.cc
   src/startup.cc
 )
