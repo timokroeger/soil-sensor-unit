@@ -64,12 +64,6 @@ TEST_F(RtuProtocolTest, ReceiveLongFrame) {
   ASSERT_EQ(rtu_.ReadFrame(), FrameData{data});
 }
 
-TEST_F(RtuProtocolTest, ReceiveTooLongFrame) {
-  const uint8_t data[257] = {0x12, 0x34};
-  RxFrame(FrameData{data});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
-}
-
 TEST_F(RtuProtocolTest, ReceiveParityError) {
   const uint8_t data[] = {0x12, 0x34};
 

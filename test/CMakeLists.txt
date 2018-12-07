@@ -6,12 +6,16 @@ project(ssu_test)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 add_subdirectory(../lib/etl ./lib/etl)
+add_subdirectory(../lib/sml ./lib/sml)
 add_subdirectory(../lib/googletest ./lib/googletest EXCLUDE_FROM_ALL)
 
 # Build test executable.
 include_directories(../src)
-add_executable(ssu_test ${SRC_BASE} modbus/modbus_test.cc ../src/modbus/modbus.cc)
-target_link_libraries(ssu_test etl gmock_main)
+add_executable(ssu_test
+  modbus/modbus_test.cc
+  modbus/rtu_protocol_test.cc
+  ../src/modbus/modbus.cc)
+target_link_libraries(ssu_test etl sml gmock_main)
 
 option(ASAN_UBSAN "Enable address & undefined behavior sanitizer." OFF)
 

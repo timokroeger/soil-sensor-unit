@@ -16,7 +16,7 @@ namespace sml = boost::sml;
 
 class RtuProtocol final : public ProtocolInterface {
  public:
-  explicit RtuProtocol(SerialInterface& serial) : serial_(serial) {}
+  explicit RtuProtocol(SerialInterface& serial) : impl_(serial, buffer_, frame_available_) {}
 
   void Enable() { impl_.process_event(internal::Enable{}); }
   void Disable() { impl_.process_event(internal::Disable{}); }
@@ -34,15 +34,13 @@ class RtuProtocol final : public ProtocolInterface {
   };
 
   virtual void WriteFrame(FrameData fd) override {
-    buffer_.assign(fd.begin(), fd.end());
-    impl_.process_event(internal::TxStart{});
+    impl_.process_event(internal::TxStart{fd});
   };
 
  private:
-  SerialInterface& serial_;
   internal::RtuBuffer buffer_;
   bool frame_available_ = false;
-  sml::sm<internal::RtuProtocol> impl_{serial_, buffer_, frame_available_};
+  sml::sm<internal::RtuProtocol> impl_;
 };
 
 }  // namespace modbus
