@@ -47,6 +47,10 @@ class SerialInterface : public SerialInterfaceEvents {
   virtual void Disable() = 0;
 
   // Sends a modbus frame via the serial interface.
+  // The data is valid and won’t be changed by the modbus stack until the
+  // completion of the transmission is notified by a TxDone event.
+  // This allows to implement DMA based transfer without the need to copy
+  // message data to an additional buffer.
   virtual void Send(const uint8_t *data, size_t length) = 0;
 };
 

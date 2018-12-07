@@ -3,6 +3,8 @@
 #ifndef MODBUS_RTU_PROTOCOL_INTERNAL_H_
 #define MODBUS_RTU_PROTOCOL_INTERNAL_H_
 
+#include "assert.h"
+
 #include "boost/sml.hpp"
 #include "etl/vector.h"
 
@@ -16,7 +18,9 @@ namespace sml = boost::sml;
 using RtuBuffer = etl::vector<uint8_t, ProtocolInterface::kMaxFrameSize>;
 
 // Events (externel events are inherited from SerialInterfaceEvents)
-struct TxStart {};
+struct TxStart {
+  FrameData data;
+};
 struct Enable {};
 struct Disable {};
 
@@ -45,7 +49,10 @@ struct RtuProtocol : public SerialInterfaceEvents {
       };
       auto frame_ok = [](bool& ok) { ok = true; };
       auto frame_nok = [](bool& ok) { ok = false; };
-      auto send_frame = [](SerialInterface& s, const RtuBuffer& b) {
+      auto send_frame = [](RtuBuffer& b, const TxStart& txs,
+                           SerialInterface& s) {
+        assert(txs.data.size() <= b.capacity());
+        b.assign(txs.data.begin(), txs.data.end());
         s.Send(b.data(), b.size());
       };
 
@@ -56,13 +63,13 @@ struct RtuProtocol : public SerialInterfaceEvents {
 
         // Receiving a valid frame
         ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
-        ,state<Receiving>  + event<RxByte> [parity_ok]                      = state<Receiving>
-        ,state<Receiving>  + on_entry<RxByte> [!buffer_full] / add_byte
+        ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
+        ,state<Receiving>  + on_entry<RxByte>                / add_byte
         ,state<Receiving>  + event<BusIdle>                  / frame_ok     = state<Idle>
 
         // Receiving an invalid frame
         ,state<Idle>       + event<RxByte> [!parity_ok]                     = state<Ignoring>
-        ,state<Receiving>  + event<RxByte> [!parity_ok]                     = state<Ignoring>
+        ,state<Receiving>  + event<RxByte> [!parity_ok || buffer_full]      = state<Ignoring>
         ,state<Ignoring>   + event<BusIdle>                                 = state<Idle>
 
         // Sending a frame
