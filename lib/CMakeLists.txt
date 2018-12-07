@@ -45,3 +45,4 @@ target_include_directories(SEGGER_RTT
 )
 
 add_subdirectory(etl)
+add_subdirectory(sml)

@@ -105,6 +105,35 @@ Modbus::ExceptionType Modbus::WriteSingleRegister(const uint8_t *data,
   }
 }
 
+Modbus::ExceptionType Modbus::WriteMultipleRegisters(const uint8_t *data,
+                                                     size_t length) {
+  if (length < 7) {
+    return kIllegalDataValue;
+  }
+
+  uint16_t starting_addr = BufferToWordBE(&data[0]);
+  uint16_t quantity_regs = BufferToWordBE(&data[2]);
+  uint8_t byte_count = data[4];
+
+  if (quantity_regs < 1 || quantity_regs > 0x7D ||
+      byte_count != (quantity_regs * 2) || length != (byte_count + 5u)) {
+    return kIllegalDataValue;
+  }
+
+  for (int i = 0; i < quantity_regs; i++) {
+    uint16_t addr = static_cast<uint16_t>(starting_addr + i);
+    uint16_t reg_value = BufferToWordBE(&data[5 + 2 * i]);
+    bool ok = data_interface_->WriteRegister(addr, reg_value);
+    if (!ok) {
+      return kIllegalDataAddress;
+    }
+  }
+
+  ResponseAddWord(starting_addr);
+  ResponseAddWord(quantity_regs);
+  return kOk;
+}
+
 void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
                            size_t length) {
   ExceptionType exception = kOk;
@@ -116,6 +145,10 @@ void Modbus::HandleRequest(uint8_t fn_code, const uint8_t *data,
 
     case 0x06:
       exception = WriteSingleRegister(data, length);
+      break;
+
+    case 0x10:
+      exception = WriteMultipleRegisters(data, length);
       break;
 
     default:

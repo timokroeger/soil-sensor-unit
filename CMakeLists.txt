@@ -15,6 +15,7 @@ set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
 add_executable(firmware
+  src/modbus/modbus.cc
   src/assert_impl.cc
   src/config_storage.cc
   src/globals.cc
@@ -30,6 +31,8 @@ add_executable(firmware
   src/startup.cc
 )
 
+target_include_directories(firmware PUBLIC src)
+
 target_compile_options(firmware PUBLIC
     -fno-exceptions -fno-non-call-exceptions -fno-rtti
     -Wall -Wextra -Wno-unused -Wsign-promo
@@ -39,7 +42,7 @@ target_compile_options(firmware PUBLIC
     -Woverloaded-virtual -Wreorder)
 target_compile_features(firmware PUBLIC cxx_std_14)
 
-target_link_libraries(firmware LPC8xx SEGGER_RTT etl
+target_link_libraries(firmware LPC8xx SEGGER_RTT etl sml
     -specs=nosys.specs -specs=nano.specs -Wl,--gc-sections,-T${LINKER_SCRIPT})
 set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
