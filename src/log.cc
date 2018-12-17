@@ -2,9 +2,9 @@
 
 #include "log.h"
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdarg>
+#include <cstdint>
 
 #include "cmsis.h"
 #include "SEGGER_RTT.h"

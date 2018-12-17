@@ -4,11 +4,6 @@ Soil Sensor Unit
 Build Instructions
 ------------------
 
-### Atollic Studio
-
-The free version of atollic studio has no code size limitation and can be used
-for debugging. No further dependenceis are needed.
-
 ### CMake + arm-none-eabi Toolchain
 
 On windows a msys2 installation is recommended.

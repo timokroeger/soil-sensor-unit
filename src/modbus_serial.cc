@@ -2,12 +2,9 @@
 
 #include "modbus_serial.h"
 
-#include <assert.h>
-
 #include "chip.h"
 
 #include "config.h"
-#include "globals.h"
 
 void ModbusSerial::Enable() {
   assert(rtu_ != nullptr);
@@ -54,8 +51,6 @@ void ModbusSerial::UartIsr() {
   }
 
   if (uart_ints & UART_STAT_RXRDY) {
-    bool parity_ok = true;
-
     // Start inter frame-delay timer.
     Chip_MRT_SetInterval(LPC_MRT_CH0,
                          ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);

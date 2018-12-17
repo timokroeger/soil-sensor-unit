@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
 
 #include "chip.h"
 
@@ -12,7 +12,6 @@
 #include "measure.h"
 #include "modbus/modbus.h"
 #include "modbus_data.h"
-#include "modbus_serial.h"
 
 // Required by the vendor chip library.
 const uint32_t OscRateIn = CPU_FREQ;
@@ -66,7 +65,4 @@ int main() {
                            ((CPU_FREQ / 1000000) * 15000) | MRT_INTVAL_LOAD);
     }
   }
-
-  // Never reached.
-  return 0;
 }

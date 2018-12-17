@@ -2,7 +2,7 @@
 
 #include "led.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "chip.h"
 #include "config.h"

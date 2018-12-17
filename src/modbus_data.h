@@ -3,7 +3,7 @@
 #ifndef MODBUS_DATA_H_
 #define MODBUS_DATA_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "modbus/data_interface.h"
 
