@@ -4,7 +4,7 @@ extern int main();
 
 extern "C" {
 
-extern void _estack(void);         // Provided by linker script.
+extern void _stack_start(void);    // Provided by linker script.
 extern void __libc_init_array();   // Provided by libc.
 
 void Reset_Handler(void);   // Required for ENTRY() in linker script.
@@ -58,7 +58,7 @@ void PIN_INT7_Handler()  __attribute__((weak, alias("Unused_Handler")));
 
 // Put all interrupt handlers in the vector table.
 __attribute__((used, section(".isr_vector"))) void (*vectors[])(void) = {
-    _estack,          Reset_Handler,    NMI_Handler,       HardFault_Handler,
+    _stack_start,     Reset_Handler,    NMI_Handler,       HardFault_Handler,
     Unused_Handler,   Unused_Handler,   Unused_Handler,    Unused_Handler,
     Unused_Handler,   Unused_Handler,   Unused_Handler,    SVC_Handler,
     Unused_Handler,   Unused_Handler,   PendSV_Handler,    SysTick_Handler,

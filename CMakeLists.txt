@@ -6,10 +6,23 @@ project(GaMoSy-SSU C CXX)
 
 # Set target architecture settings for everything.
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/src/config/lpc_flash1.ld)
-set(CORTEX_M0_FLAGS "-mcpu=cortex-m0 -mthumb -fno-common -ffunction-sections -fdata-sections")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORTEX_M0_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORTEX_M0_FLAGS}")
-set(CMAKE_EXECUTABLE_SUFFIX ".elf")
+set(CPU_FLAGS -mthumb -mcpu=cortex-m0plus)
+set(CMAKE_EXECUTABLE_SUFFIX .elf)
+
+add_compile_options(
+  ${CPU_FLAGS}
+  -ffunction-sections -fdata-sections
+
+  # Minimize C++ runtime overhead.
+  $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
+  $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+  $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit> # Disable static destructors.
+)
+
+add_link_options(
+  ${CPU_FLAGS}
+  -Wl,--gc-sections
+)
 
 set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
@@ -32,20 +45,25 @@ add_executable(firmware
 target_include_directories(firmware PUBLIC src)
 
 target_compile_options(firmware PUBLIC
-    -fno-exceptions -fno-non-call-exceptions -fno-rtti
-    -Wall -Wextra -Wno-unused -Wsign-promo
+  -Wall -Wextra -Wno-unused -Wsign-promo
 # Reenable those warnings when the -Isystem include bug is fixed in
 # arm-none-eabi-gcc (likely) or all warnings are fixed in etl (unlikely)
-#    -Wold-style-cast -Wsign-conversion
-    -Woverloaded-virtual -Wreorder)
+#  -Wold-style-cast -Wsign-conversion
+  -Woverloaded-virtual -Wreorder
+
+  # Template heave code require a little optimization even in debug builds.
+  $<$<CONFIG:DEBUG>:-Og>
+)
 target_compile_features(firmware PUBLIC cxx_std_14)
 
-target_link_libraries(firmware LPC8xx SEGGER_RTT etl sml
-    -specs=nosys.specs -specs=nano.specs -Wl,--gc-sections,-T${LINKER_SCRIPT})
-set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(firmware
+  LPC8xx SEGGER_RTT etl sml
+  -specs=nosys.specs -specs=nano.specs
+  -Wl,-T${LINKER_SCRIPT}
+)
+#set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)
 firmware_size(firmware)
-generate_object(firmware .bin binary)
 generate_object(firmware .hex ihex) 
