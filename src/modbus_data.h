@@ -11,7 +11,6 @@ class ModbusData final : public modbus::DataInterface {
  public:
   enum EventFlags {
     kResetDevice        = 0x01,
-    kWriteConfiguration = 0x02,
   };
 
   ModbusData() : event_flags_(0) {}

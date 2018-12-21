@@ -3,7 +3,6 @@
 #include "modbus_data.h"
 
 #include "config.h"
-#include "config_storage.h"
 #include "led.h"
 #include "measure.h"
 
@@ -39,10 +38,6 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
     *data_out = device_identification[address - INFO_OFFSET];
   } else if (address == VERSION_OFFSET) {
     *data_out = (FW_VERSION_MAJOR << 8 | FW_VERSION_MINOR);
-  } else if (address >= CONFIG_OFFSET &&
-             address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
-    *data_out = ConfigStorage::Instance().Get(
-        static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET));
   } else {
     return false;
   }
@@ -53,12 +48,7 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
 bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
   LedBlink(2);
 
-  if (address >= CONFIG_OFFSET &&
-      address < ConfigStorage::kMaxConfigIndex + CONFIG_OFFSET) {
-    ConfigStorage& cs = ConfigStorage::Instance();
-    cs.Set(static_cast<ConfigStorage::ConfigIndex>(address - CONFIG_OFFSET), data);
-    event_flags_ |= kWriteConfiguration;
-  } else if (address == RESET_OFFSET) {
+  if (address == RESET_OFFSET) {
     if (data != 0) {
       event_flags_ |= kResetDevice;
     }

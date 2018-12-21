@@ -44,8 +44,7 @@ _Min_Stack_Size = 0x80; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-  FLASH (rx)        : ORIGIN = 0x00000000, LENGTH = 31K
-  FLASH_CONFIG (rx) : ORIGIN = 0x00007C00, LENGTH = 1K
+  FLASH (rx)        : ORIGIN = 0x00000000, LENGTH = 32K
   RAM (xrw)         : ORIGIN = 0x10000000, LENGTH = 8K
 }
 
@@ -61,13 +60,6 @@ SECTIONS
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
-
-  .config_flash :
-  {
-    . = ALIGN(64);
-    KEEP(*(.config_flash))
-    . = ALIGN(64);
-  } >FLASH_CONFIG
 
   /* The program code and other data goes into FLASH */
   .text :

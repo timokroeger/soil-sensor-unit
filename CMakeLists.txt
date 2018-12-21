@@ -17,7 +17,6 @@ add_subdirectory(lib)
 add_executable(firmware
   src/modbus/modbus.cc
   src/assert_impl.cc
-  src/config_storage.cc
   src/globals.cc
   src/isr.cc
   src/log.cc
