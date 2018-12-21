@@ -21,9 +21,10 @@ bool Modbus::Execute() {
   if (addr != address_) {
     return false;
   }
-  ResponseAddByte(addr);
-
   uint8_t fn_code = fd[1];
+
+  resp_buffer_.clear();
+  ResponseAddByte(addr);
   ResponseAddByte(fn_code);
 
   // Discard adress and function code from data.

@@ -3,11 +3,11 @@
 #ifndef MODBUS_DATA_H_
 #define MODBUS_DATA_H_
 
-#include <stdint.h>
+#include <cstdint>
 
-#include "modbus_data_interface.h"
+#include "modbus/data_interface.h"
 
-class ModbusData final : public ModbusDataInterface {
+class ModbusData final : public modbus::DataInterface {
  public:
   enum EventFlags {
     kResetDevice        = 0x01,

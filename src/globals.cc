@@ -2,6 +2,4 @@
 
 #include "globals.h"
 
-ModbusData modbus_data;
-ModbusHw modbus_hardware;
-Modbus modbus(&modbus_data, &modbus_hardware);
+ModbusSerial modbus_serial;

@@ -3,7 +3,7 @@
 #ifndef MEASURE_H_
 #define MEASURE_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 // Starts the PWM and ADC peripheral.
 void MeasureStart();

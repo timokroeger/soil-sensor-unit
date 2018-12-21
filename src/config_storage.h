@@ -3,7 +3,7 @@
 #ifndef CONFIG_STORAGE_
 #define CONFIG_STORAGE_
 
-#include <stdint.h>
+#include <cstdint>
 
 class ConfigStorage {
  public:

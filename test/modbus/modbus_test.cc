@@ -343,14 +343,14 @@ TEST_F(ModbusTest, WriteMultipleRegistersInvalidQuantity) {
   };
 
   const uint8_t response[] = {
-      0x01,        // Slave address
-      0x90,        // Error code
-      0x03,        // Exception code
+      0x01,  // Slave address
+      0x90,  // Error code
+      0x03,  // Exception code
   };
 
   RequestResponse(FrameData{request_invalid_quantity1}, FrameData{response});
-  //RequestResponse(FrameData{request_invalid_quantity2}, FrameData{response});
-  //RequestResponse(FrameData{request_invalid_bytecount}, FrameData{response});
+  // RequestResponse(FrameData{request_invalid_quantity2}, FrameData{response});
+  // RequestResponse(FrameData{request_invalid_bytecount}, FrameData{response});
 }
 
 TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
@@ -364,7 +364,7 @@ TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
       0xBE,        // Register Value 2
   };
 
-    const uint8_t request2[] = {
+  const uint8_t request2[] = {
       0x01,        // Slave address
       0x10,        // Function code
       0x45, 0x67,  // Starting Address
@@ -377,6 +377,29 @@ TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
 
   RequestNoResponse(FrameData{request1});
   RequestNoResponse(FrameData{request2});
+}
+
+TEST_F(ModbusTest, MultipleRequests) {
+  const uint8_t request[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x45, 0x67,  // Starting Address
+      0x00, 0x01,  // Quantity of Input Registers
+  };
+
+  const uint8_t response[] = {
+      0x01,        // Slave address
+      0x04,        // Function code
+      0x02,        // Byte Count
+      0xAB, 0xCD,  // Register Content
+  };
+
+  EXPECT_CALL(data_, ReadRegister(0x4567, _))
+      .Times(3)
+      .WillRepeatedly(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+  for (int i = 0; i < 3; i++) {
+    RequestResponse(FrameData{request}, FrameData{response});
+  }
 }
 
 }  // namespace modbus

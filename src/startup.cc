@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-extern int main(void);
+extern int main();
 
 extern "C" {
 
@@ -87,7 +87,7 @@ void Reset_Handler(void) {
   __libc_init_array();
 
   main();
-  while (1);
+  for (;;);
 }
 
-void Unused_Handler(void) { while(1); }
+void Unused_Handler(void) { for(;;); }

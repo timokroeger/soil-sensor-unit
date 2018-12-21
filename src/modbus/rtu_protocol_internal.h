@@ -6,6 +6,7 @@
 #include "assert.h"
 
 #include "boost/sml.hpp"
+#include "etl/crc16_modbus.h"
 #include "etl/vector.h"
 
 #include "modbus/serial_interface.h"
@@ -47,25 +48,41 @@ struct RtuProtocol : public SerialInterfaceEvents {
       auto add_byte = [](RtuBuffer& b, const RxByte& e) {
         b.push_back(e.byte);
       };
-      auto frame_ok = [](bool& ok) { ok = true; };
-      auto frame_nok = [](bool& ok) { ok = false; };
+      auto check_frame = [](RtuBuffer& b, bool& frame_available) {
+        if (b.size() > 2) {
+          uint16_t crc_recv = b[b.size() - 2] | b[b.size() - 1] << 8;
+          uint16_t crc_calc = etl::crc16_modbus(b.begin(), b.end() - 2).value();
+
+          if (crc_recv == crc_calc) {
+            // Remove valid CRC from frame data.
+            b.pop_back();
+            b.pop_back();
+            frame_available = true;
+          }
+        }
+      };
+      auto invalidate = [](bool& frame_available) { frame_available = false; };
       auto send_frame = [](RtuBuffer& b, const TxStart& txs,
                            SerialInterface& s) {
-        assert(txs.data.size() <= b.capacity());
+        assert(txs.data.size() + 2 <= b.capacity());
+        uint16_t crc =
+            etl::crc16_modbus(txs.data.begin(), txs.data.end()).value();
         b.assign(txs.data.begin(), txs.data.end());
+        b.push_back(crc & 0xFF);
+        b.push_back(crc >> 8);
         s.Send(b.data(), b.size());
       };
 
       // clang-format off
       return make_transition_table(
         *state<Init>       + event<BusIdle>                                 = state<Idle>
-        ,state<Idle>       + sml::on_exit<_>                 / frame_nok
+        ,state<Idle>       + sml::on_exit<_>                 / invalidate
 
         // Receiving a valid frame
         ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
         ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
         ,state<Receiving>  + on_entry<RxByte>                / add_byte
-        ,state<Receiving>  + event<BusIdle>                  / frame_ok     = state<Idle>
+        ,state<Receiving>  + event<BusIdle>                  / check_frame  = state<Idle>
 
         // Receiving an invalid frame
         ,state<Idle>       + event<RxByte> [!parity_ok]                     = state<Ignoring>

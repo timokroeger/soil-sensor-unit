@@ -3,7 +3,7 @@
 #ifndef SETUP_H_
 #define SETUP_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 // Enables LED output and sets ADC pin to analog mode.
 void SetupGpio();

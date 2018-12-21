@@ -2,7 +2,7 @@
 
 #include "config_storage.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "chip.h"
 #include "config/config_defaults.h"

@@ -9,9 +9,9 @@ namespace modbus {
 
 class DataInterface {
  public:
-  virtual ~DataInterface() {}
+  virtual ~DataInterface() = default;
 
-  // Reads the contents of a register at address and writes it to data_out.
+    // Reads the contents of a register at address and writes it to data_out.
   // Returns true on success or false when the register is not available.
   virtual bool ReadRegister(uint16_t address, uint16_t *data_out) = 0;
 
