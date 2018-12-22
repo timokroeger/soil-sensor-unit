@@ -23,9 +23,25 @@ add_link_options(
   -Wl,--gc-sections
 )
 
+# Path of linker scripts
+link_directories(src/config/linker)
+
 set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
+# Bootloader
+add_executable(boot
+  src/startup.cc
+  src/boot/main.c
+)
+
+target_link_libraries(boot
+  LPC8xx
+  -specs=nosys.specs -specs=nano.specs
+  -Wl,-Tboot.ld
+)
+
+# Actual firmware
 add_executable(firmware
   src/modbus/modbus.cc
   src/assert_impl.cc
@@ -64,5 +80,8 @@ target_link_libraries(firmware
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)
-firmware_size(firmware)
+
+generate_object(boot .hex ihex) 
 generate_object(firmware .hex ihex) 
+
+firmware_size(firmware)
