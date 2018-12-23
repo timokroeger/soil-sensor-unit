@@ -1,9 +1,3 @@
-MEMORY
-{
-  FLASH : ORIGIN = 0x00000000, LENGTH = 32K
-  RAM   : ORIGIN = 0x10000000, LENGTH = 8K
-}
-
 ENTRY(Reset_Handler)
 
 /* # Sections */

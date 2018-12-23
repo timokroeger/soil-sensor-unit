@@ -1,0 +1,3 @@
+INCLUDE memory.ld
+REGION_ALIAS("FLASH", FLASH_SLOT0);
+INCLUDE common.ld

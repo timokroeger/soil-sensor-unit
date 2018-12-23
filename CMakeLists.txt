@@ -5,7 +5,6 @@ set(CMAKE_TOOLCHAIN_FILE cmake/arm-cmake-toolchains/arm-gcc-toolchain.cmake)
 project(GaMoSy-SSU C CXX)
 
 # Set target architecture settings for everything.
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/src/config/lpc_flash1.ld)
 set(CPU_FLAGS -mthumb -mcpu=cortex-m0plus)
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 
@@ -59,7 +58,7 @@ target_compile_features(firmware PUBLIC cxx_std_14)
 target_link_libraries(firmware
   LPC8xx SEGGER_RTT etl sml
   -specs=nosys.specs -specs=nano.specs
-  -Wl,-T${LINKER_SCRIPT}
+  -Wl,-Tfirmware.ld
 )
 #set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
