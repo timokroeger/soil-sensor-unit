@@ -31,17 +31,33 @@ add_subdirectory(lib)
 
 # Bootloader
 add_executable(boot
-  src/startup.cc
+  lib/mcuboot/boot/bootutil/src/bootutil_misc.c
+  lib/mcuboot/boot/bootutil/src/caps.c
+  lib/mcuboot/boot/bootutil/src/image_validate.c
+  lib/mcuboot/boot/bootutil/src/loader.c
+  lib/mcuboot/ext/mbedtls/src/asn1parse.c
+  lib/mcuboot/ext/tinycrypt/lib/source/sha256.c
+  lib/mcuboot/ext/tinycrypt/lib/source/utils.c
+  src/boot/flash_map_backend.c
   src/boot/main.c
+  src/startup.cc
 )
 
-target_include_directories(boot PRIVATE lib/mcuboot/boot/bootutil/include)
+target_include_directories(boot PRIVATE
+  ${CONFIG_INCLUDE}
+  lib/mcuboot/ext/mbedtls/include
+  lib/mcuboot/ext/tinycrypt/lib/include
+  lib/mcuboot/boot/bootutil/include
+  src/boot/include
+)
 
 target_link_libraries(boot
   LPC8xx
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tboot.ld
 )
+
+set_property(TARGET boot PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 # Actual firmware
 add_executable(firmware
@@ -78,7 +94,7 @@ target_link_libraries(firmware
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )
-#set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)

@@ -1,11 +1,9 @@
 // Copyright (c) 2018 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include <stdint.h>
-
+#include "bootutil/bootutil.h"
 #include "bootutil/image.h"
 #include "cmsis.h"
-
-extern uint8_t _flash_slot0;
+#include "flash_map_backend/flash_map_backend.h"
 
 struct arm_vector_table {
   uint32_t msp;
@@ -13,18 +11,24 @@ struct arm_vector_table {
 };
 
 int main() {
-  struct image_header *ih = (struct image_header *)&_flash_slot0;
-  struct arm_vector_table *vt =
-      (struct arm_vector_table *)(&_flash_slot0 + ih->ih_hdr_size);
+  flash_areas_init();
 
-  // Update vector table.
-  SCB->VTOR = (uint32_t)vt;
+  struct boot_rsp rsp;
+  int rc = boot_go(&rsp);
 
-  // Load new stack pointer.
-  __set_MSP(vt->msp);
+  if (rc == 0) {
+    struct arm_vector_table *vt =
+        (struct arm_vector_table *)(rsp.br_image_off + rsp.br_hdr->ih_hdr_size);
 
-  // Jump to actual reset handler.
-  ((void (*)(void))vt->reset)();
+    // Update vector table.
+    SCB->VTOR = (uint32_t)vt;
+
+    // Load new stack pointer.
+    __set_MSP(vt->msp);
+
+    // Jump to actual reset handler.
+    ((void (*)(void))vt->reset)();
+  }
 
   for (;;)
     ;
