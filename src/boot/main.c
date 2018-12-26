@@ -20,9 +20,6 @@ int main() {
     struct arm_vector_table *vt =
         (struct arm_vector_table *)(rsp.br_image_off + rsp.br_hdr->ih_hdr_size);
 
-    // Update vector table.
-    SCB->VTOR = (uint32_t)vt;
-
     // Load new stack pointer.
     __set_MSP(vt->msp);
 

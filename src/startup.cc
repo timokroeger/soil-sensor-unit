@@ -1,5 +1,9 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
+#include <stdint.h>
+
+#include "cmsis.h"
+
 extern int main();
 
 extern "C" {
@@ -11,11 +15,11 @@ void Reset_Handler(void);   // Required for ENTRY() in linker script.
 void Unused_Handler(void);  // Required for alias attribute.
 
 // Code locations provided by the linker script.
-extern unsigned int _sidata;
-extern unsigned int _sdata;
-extern unsigned int _edata;
-extern unsigned int _sbss;
-extern unsigned int _ebss;
+extern uint32_t _sidata;
+extern uint32_t _sdata;
+extern uint32_t _edata;
+extern uint32_t _sbss;
+extern uint32_t _ebss;
 
 }
 
@@ -73,7 +77,7 @@ __attribute__((used, section(".isr_vector"))) void (*vectors[])(void) = {
 };
 
 void Reset_Handler(void) {
-  unsigned int *src, *dst;
+  uint32_t *src, *dst;
 
   src = &_sidata;
   dst = &_sdata;
@@ -85,6 +89,9 @@ void Reset_Handler(void) {
     *dst++ = 0;
 
   __libc_init_array();
+
+  // Relocate vector table.
+  SCB->VTOR = (uint32_t)vectors;
 
   main();
   for (;;);
