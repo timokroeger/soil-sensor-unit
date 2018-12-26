@@ -1,6 +1,11 @@
 // Copyright (c) 2018 Timo Kröger <timokroeger93+code@gmail.com>
 
+#include <stdint.h>
+
+#include "bootutil/image.h"
 #include "cmsis.h"
+
+extern uint8_t _flash_slot0;
 
 struct arm_vector_table {
   uint32_t msp;
@@ -8,8 +13,9 @@ struct arm_vector_table {
 };
 
 int main() {
-  // Hardcode slot0 address for now.
-  struct arm_vector_table *vt = (struct arm_vector_table *)0x00002100;
+  struct image_header *ih = (struct image_header *)&_flash_slot0;
+  struct arm_vector_table *vt =
+      (struct arm_vector_table *)(&_flash_slot0 + ih->ih_hdr_size);
 
   // Update vector table.
   SCB->VTOR = (uint32_t)vt;

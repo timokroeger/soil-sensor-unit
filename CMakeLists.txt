@@ -35,6 +35,8 @@ add_executable(boot
   src/boot/main.c
 )
 
+target_include_directories(boot PRIVATE lib/mcuboot/boot/bootutil/include)
+
 target_link_libraries(boot
   LPC8xx
   -specs=nosys.specs -specs=nano.specs
@@ -80,8 +82,9 @@ target_link_libraries(firmware
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)
+include(cmake/mcuboot.cmake)
 
-generate_object(boot .hex ihex) 
-generate_object(firmware .hex ihex) 
-
+generate_object(boot .hex ihex)
+generate_object(firmware .hex ihex)
+mcuboot_image(firmware)
 firmware_size(firmware)
