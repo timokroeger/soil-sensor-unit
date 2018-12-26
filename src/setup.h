@@ -21,9 +21,7 @@ void SetupPwm();
 
 // Sets up 4 timer channels (clocked by FREQ_OSC) which generate an interrupt
 // after timeout (see isr.c).
-// Channel 0 and 1 are used for MODBUS timing.
-// Channel 2 is used to delay system reset.
-// Channel 3 is used to blink the LED.
+// Channel 0 is used for MODBUS timing.
 void SetupTimers();
 
 // Sets up UART0 with RTS pin as drive enable for the RS485 receiver.

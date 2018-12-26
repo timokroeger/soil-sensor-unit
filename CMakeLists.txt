@@ -66,7 +66,6 @@ add_executable(firmware
   src/globals.cc
   src/isr.cc
   src/log.cc
-  src/led.cc
   src/main.cc
   src/measure.cc
   src/modbus_data.cc

@@ -3,9 +3,9 @@
 #ifndef MODBUS_DATA_INTERFACE_H_
 #define MODBUS_DATA_INTERFACE_H_
 
-namespace modbus {
-
 #include <stdint.h>
+
+namespace modbus {
 
 class DataInterface {
  public:
