@@ -3,11 +3,12 @@ ENTRY(Reset_Handler)
 /* # Sections */
 SECTIONS
 {
+  PROVIDE(_image_header_size = 0);
   PROVIDE(_stack_start = ORIGIN(RAM) + LENGTH(RAM));
 
   /* ## Sections in FLASH */
   /* ### Vector table */
-  .isr_vector :
+  .isr_vector ORIGIN(FLASH) + _image_header_size :
   {
     KEEP(*(.isr_vector));
   } >FLASH

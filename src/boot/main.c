@@ -9,7 +9,7 @@ struct arm_vector_table {
 
 int main() {
   // Hardcode slot0 address for now.
-  struct arm_vector_table *vt = (struct arm_vector_table *)0x00002000;
+  struct arm_vector_table *vt = (struct arm_vector_table *)0x00002100;
 
   // Update vector table.
   SCB->VTOR = (uint32_t)vt;
