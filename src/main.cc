@@ -6,7 +6,6 @@
 #include "chip.h"
 
 #include "config.h"
-#include "config_storage.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
@@ -24,7 +23,7 @@ static void SystemInit() {
   SetupAdc();
   SetupPwm();
   SetupTimers();
-  SetupUart(ConfigStorage::Instance().Get(ConfigStorage::kBaudrate));
+  SetupUart(19200);
   SetupSwichMatrix();
   SetupNVIC();
 }
@@ -35,9 +34,6 @@ int main() {
   SystemInit();
   MeasureStart();
 
-  uint32_t sensor_id = ConfigStorage::Instance().Get(ConfigStorage::kSlaveId);
-  assert(sensor_id >= 1 && sensor_id <= 247);
-
   // Link global serial interface implementation to protocol.
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
@@ -45,7 +41,7 @@ int main() {
   ModbusData modbus_data;
 
   modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
-  modbus_stack.set_address(sensor_id);
+  modbus_stack.set_address(247);
 
   modbus_rtu.Enable();
 
@@ -54,10 +50,6 @@ int main() {
     modbus_stack.Execute();
 
     uint32_t ev = modbus_data.GetEvents();
-    if (ev & ModbusData::kWriteConfiguration) {
-      ConfigStorage::Instance().WriteConfigToFlash();
-    }
-
     if (ev & ModbusData::kResetDevice) {
       // Delay reset by 15ms so that a valid modbus response can be sent.
       // Actual reset is executed in the MRT ISR in isr.c
