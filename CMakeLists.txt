@@ -6,10 +6,12 @@ project(GaMoSy-SSU C CXX)
 
 # Set target architecture settings for everything.
 set(CPU_FLAGS -mthumb -mcpu=cortex-m0plus)
+set(LTO_FLAGS $<$<OR:$<CONFIG:MinSizeRel>,$<CONFIG:Release>>:-flto>)
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 
 add_compile_options(
   ${CPU_FLAGS}
+  ${LTO_FLAGS}
   -ffunction-sections -fdata-sections
 
   # Minimize C++ runtime overhead.
@@ -20,6 +22,7 @@ add_compile_options(
 
 add_link_options(
   ${CPU_FLAGS}
+  ${LTO_FLAGS}
   -Wl,--gc-sections
 )
 
@@ -57,8 +60,6 @@ target_link_libraries(boot
   -Wl,-Tboot.ld
 )
 
-set_property(TARGET boot PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-
 # Actual firmware
 add_executable(firmware
   src/modbus/modbus.cc
@@ -93,7 +94,6 @@ target_link_libraries(firmware
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )
-set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)

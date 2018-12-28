@@ -1,4 +1,4 @@
-add_library(LPC8xx
+add_library(LPC8xx OBJECT
   lpc_chip_82x/src/acmp_8xx.c
   lpc_chip_82x/src/adc_8xx.c
   lpc_chip_82x/src/chip_8xx.c
@@ -35,7 +35,7 @@ target_include_directories(LPC8xx SYSTEM
 
 target_compile_definitions(LPC8xx PUBLIC -DCORE_M0PLUS)
 
-add_library(SEGGER_RTT
+add_library(SEGGER_RTT OBJECT
   SEGGER/SEGGER_RTT.c
   SEGGER/SEGGER_RTT_printf.c
 )
