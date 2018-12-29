@@ -5,7 +5,9 @@
 
 #include "chip.h"
 
+#include "boot/bootloader.h"
 #include "config.h"
+#include "fw_update.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
@@ -38,7 +40,9 @@ int main() {
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
 
-  ModbusData modbus_data;
+  Bootloader bootloader;
+  FwUpdate fw_update(bootloader);
+  ModbusData modbus_data(fw_update);
 
   modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
   modbus_stack.set_address(247);

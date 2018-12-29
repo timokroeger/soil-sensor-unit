@@ -81,6 +81,9 @@ SECTIONS
   _sbss = ADDR(.bss);
   _ebss = ADDR(.bss) + SIZEOF(.bss);
 
+  /* Required by the newlib _sbrk() implemenation */
+  end = _ebss;
+
   /* ## Discarded sections */
   /DISCARD/ :
   {
