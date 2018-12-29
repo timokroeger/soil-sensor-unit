@@ -54,18 +54,28 @@ int flash_area_read(const struct flash_area *area, uint32_t off, void *dst,
 int flash_area_write(const struct flash_area *area, uint32_t off,
                      const void *src, uint32_t len) {
   uint8_t rc;
-  assert(len == SECTOR_SIZE);
 
-  uint32_t sector_addr = area->fa_off + off;
-  assert(sector_addr % SECTOR_SIZE == 0);
+  assert(area && src && len > 0 && (len % 4 == 0));
 
-  uint32_t sector_start = sector_addr / SECTOR_SIZE;
-  uint32_t sector_stop = sector_start + len / SECTOR_SIZE;
+  uint32_t addr = (area->fa_off + off);
+  uint32_t sector = addr / SECTOR_SIZE;
+  uint32_t sector_offset = addr % SECTOR_SIZE;
+  if (sector_offset + len > SECTOR_SIZE) {
+    return -1;
+  }
 
-  rc = Chip_IAP_PreSectorForReadWrite(sector_start, sector_stop);
+  rc = Chip_IAP_PreSectorForReadWrite(sector, sector);
   assert(rc == IAP_CMD_SUCCESS);
 
-  rc = Chip_IAP_CopyRamToFlash(area->fa_off + off, (uint32_t *)src, len);
+  uint8_t sector_buf[SECTOR_SIZE];
+
+  // Get previous data at this location so it won’t be overwritten.
+  if (len < SECTOR_SIZE) {
+    memcpy(sector_buf, (void *)(sector * SECTOR_SIZE), SECTOR_SIZE);
+  }
+  memcpy(&sector_buf[sector_offset], src, len);
+
+  rc = Chip_IAP_CopyRamToFlash(addr, (uint32_t *)&sector_buf[0], SECTOR_SIZE);
   assert(rc == IAP_CMD_SUCCESS);
 
   return 0;
@@ -93,8 +103,12 @@ int flash_area_erase(const struct flash_area *area, uint32_t off,
 
 int flash_area_read_is_empty(const struct flash_area *area, uint32_t off,
                              void *dst, uint32_t len) {
-  uint8_t *u8dst = (uint8_t *)dst;
+  int rc = flash_area_read(area, off, dst, len);
+  if (rc) {
+    return -1;
+  }
 
+  uint8_t *u8dst = (uint8_t *)dst;
   for (uint32_t i = 0; i < len; i++) {
     if (u8dst[i] != 0xFF) {
       return 0;
@@ -118,7 +132,7 @@ int flash_area_get_sectors(int fa_id, uint32_t *count,
   return 0;
 }
 
-uint8_t flash_area_align(const struct flash_area *area) { return 64; }
+uint8_t flash_area_align(const struct flash_area *area) { return 4; }
 
 uint8_t flash_area_erased_val(const struct flash_area *area) { return 0xFF; }
 
