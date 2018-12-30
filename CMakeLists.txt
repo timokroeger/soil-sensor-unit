@@ -6,10 +6,12 @@ project(GaMoSy-SSU C CXX)
 
 # Set target architecture settings for everything.
 set(CPU_FLAGS -mthumb -mcpu=cortex-m0plus)
+set(LTO_FLAGS $<$<OR:$<CONFIG:MinSizeRel>,$<CONFIG:Release>>:-flto>)
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 
 add_compile_options(
   ${CPU_FLAGS}
+  ${LTO_FLAGS}
   -ffunction-sections -fdata-sections
 
   # Minimize C++ runtime overhead.
@@ -20,6 +22,7 @@ add_compile_options(
 
 add_link_options(
   ${CPU_FLAGS}
+  ${LTO_FLAGS}
   -Wl,--gc-sections
 )
 
@@ -29,8 +32,8 @@ link_directories(src/config/linker)
 set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
-# Bootloader
-add_executable(boot
+# Boot library
+add_library(bootutil OBJECT
   lib/mcuboot/boot/bootutil/src/bootutil_misc.c
   lib/mcuboot/boot/bootutil/src/caps.c
   lib/mcuboot/boot/bootutil/src/image_validate.c
@@ -39,34 +42,40 @@ add_executable(boot
   lib/mcuboot/ext/tinycrypt/lib/source/sha256.c
   lib/mcuboot/ext/tinycrypt/lib/source/utils.c
   src/boot/flash_map_backend.c
-  src/boot/main.c
-  src/startup.cc
 )
 
-target_include_directories(boot PRIVATE
+target_include_directories(bootutil
+  PRIVATE
   ${CONFIG_INCLUDE}
   lib/mcuboot/ext/mbedtls/include
   lib/mcuboot/ext/tinycrypt/lib/include
+  PUBLIC
   lib/mcuboot/boot/bootutil/include
   src/boot/include
 )
 
+target_link_libraries(bootutil LPC8xx)
+
+# Bootloader
+add_executable(boot
+  src/boot/main.c
+  src/startup.cc
+)
+
 target_link_libraries(boot
-  LPC8xx
+  bootutil LPC8xx
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tboot.ld
 )
 
-set_property(TARGET boot PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-
 # Actual firmware
 add_executable(firmware
+  src/boot/bootloader.cc
   src/modbus/modbus.cc
   src/assert_impl.cc
   src/globals.cc
   src/isr.cc
   src/log.cc
-  src/led.cc
   src/main.cc
   src/measure.cc
   src/modbus_data.cc
@@ -77,6 +86,7 @@ add_executable(firmware
 
 target_include_directories(firmware PUBLIC src)
 
+target_compile_features(firmware PUBLIC cxx_std_14)
 target_compile_options(firmware PUBLIC
   -Wall -Wextra -Wno-unused -Wsign-promo
 # Reenable those warnings when the -Isystem include bug is fixed in
@@ -87,14 +97,12 @@ target_compile_options(firmware PUBLIC
   # Template heave code require a little optimization even in debug builds.
   $<$<CONFIG:DEBUG>:-Og>
 )
-target_compile_features(firmware PUBLIC cxx_std_14)
 
 target_link_libraries(firmware
-  LPC8xx SEGGER_RTT etl sml
+  bootutil LPC8xx SEGGER_RTT etl sml
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )
-set_property(TARGET firmware PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
 
 # Postprocessing
 include(cmake/arm-cmake-toolchains/utils.cmake)
