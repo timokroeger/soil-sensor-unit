@@ -22,24 +22,24 @@ extern uint8_t _flash_scratch_end;
 static struct flash_area areas[NUM_FLASH_AREAS];
 
 void flash_areas_init(void) {
-  areas[0].fa_id = 0;
+  areas[0].fa_id = 1;
   areas[0].fa_device_id = 0;
   areas[0].fa_off = (uint32_t)&_flash_slot0;
   areas[0].fa_size = (uint32_t)(&_flash_slot0_end - &_flash_slot0);
 
-  areas[1].fa_id = 1;
+  areas[1].fa_id = 2;
   areas[1].fa_device_id = 0;
   areas[1].fa_off = (uint32_t)&_flash_slot1;
   areas[1].fa_size = (uint32_t)(&_flash_slot1_end - &_flash_slot1);
 
-  areas[2].fa_id = 2;
+  areas[2].fa_id = 3;
   areas[2].fa_device_id = 0;
   areas[2].fa_off = (uint32_t)&_flash_scratch;
   areas[2].fa_size = (uint32_t)(&_flash_scratch_end - &_flash_scratch);
 }
 
 int flash_area_open(uint8_t id, const struct flash_area **area) {
-  *area = &areas[id];
+  *area = &areas[id - 1];
   return 0;
 }
 
@@ -120,7 +120,7 @@ int flash_area_read_is_empty(const struct flash_area *area, uint32_t off,
 
 int flash_area_get_sectors(int fa_id, uint32_t *count,
                            struct flash_sector *sectors) {
-  const struct flash_area *fa = &areas[fa_id];
+  const struct flash_area *fa = &areas[fa_id - 1];
 
   uint32_t num_sectors = fa->fa_size / SECTOR_SIZE;
   for (uint32_t i = 0; i < num_sectors; i++) {
@@ -136,5 +136,5 @@ uint8_t flash_area_align(const struct flash_area *area) { return 4; }
 
 uint8_t flash_area_erased_val(const struct flash_area *area) { return 0xFF; }
 
-int flash_area_id_from_image_slot(int slot) { return slot; }
-int flash_area_id_to_image_slot(int area_id) { return area_id; }
+int flash_area_id_from_image_slot(int slot) { return slot + 1; }
+int flash_area_id_to_image_slot(int area_id) { return area_id - 1; }
