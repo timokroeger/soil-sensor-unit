@@ -6,11 +6,15 @@ Build Instructions
 
 ### Dependencies
 
-* GNU Arm Embedded Toolchain 7-2018-q2-update
-  (with 8-2018-q4-major code does not fit into bootloader section anymore)
+* GNU Arm Embedded Toolchain
 * Python 3
-* CMake 3.12 or higher
+* CMake 3.13 or higher
 * Ninja (optional)
+
+Alternatively you can use docker to setup a build environment:
+
+    docker build -t gamosybuild .
+    docker run -it -v $(pwd):/source gamosybuild # For Git Bash on Windows use $(pwd -W)
 
 ### Firmware
 
