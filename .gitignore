@@ -1,6 +1,2 @@
-\.settings/
+.vscode/
 build/
-Debug/
-/Release/
-
-*.sublime-workspace
