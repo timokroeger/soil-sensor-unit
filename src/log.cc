@@ -9,10 +9,6 @@
 #include "cmsis.h"
 #include "SEGGER_RTT.h"
 
-// Not exported in the "SEGGER_RTT.h" header file but perfectly usable.
-extern "C" int SEGGER_RTT_vprintf(unsigned BufferIndex, const char *sFormat,
-                                  va_list *pParamList);
-
 static const char *log_level_strings[kLogLevelMax] = {
     "ERROR  ",
     "WARNING",
