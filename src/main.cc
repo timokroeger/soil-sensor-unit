@@ -7,12 +7,12 @@
 
 #include "boot/bootloader.h"
 #include "config.h"
-#include "fw_update.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
 #include "modbus/modbus.h"
 #include "modbus_data.h"
+#include "modbus_data_fw_update.h"
 
 // Required by the vendor chip library.
 const uint32_t OscRateIn = CPU_FREQ;
@@ -41,7 +41,7 @@ int main() {
   modbus_serial.set_modbus_rtu(&modbus_rtu);
 
   Bootloader bootloader;
-  FwUpdate fw_update(bootloader);
+  ModbusDataFwUpdate fw_update(bootloader);
   ModbusData modbus_data(fw_update);
 
   modbus::Modbus modbus_stack(modbus_rtu, modbus_data);

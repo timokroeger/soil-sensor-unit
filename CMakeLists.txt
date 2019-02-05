@@ -70,16 +70,17 @@ target_link_libraries(boot
 
 # Actual firmware
 add_executable(firmware
-  src/boot/bootloader.cc
-  src/modbus/modbus.cc
   src/assert_impl.cc
+  src/boot/bootloader.cc
   src/globals.cc
   src/isr.cc
   src/log.cc
   src/main.cc
   src/measure.cc
+  src/modbus_data_fw_update.cc
   src/modbus_data.cc
   src/modbus_serial.cc
+  src/modbus/modbus.cc
   src/setup.cc
   src/startup.cc
 )
