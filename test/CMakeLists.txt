@@ -12,9 +12,12 @@ add_subdirectory(../lib/googletest ./lib/googletest EXCLUDE_FROM_ALL)
 # Build test executable.
 include_directories(../src)
 add_executable(ssu_test
+  ../src/modbus_data_fw_update.cc
+  ../src/modbus/modbus.cc
+  modbus_data_fw_update_test.cc
   modbus/modbus_test.cc
   modbus/rtu_protocol_test.cc
-  ../src/modbus/modbus.cc)
+)
 target_link_libraries(ssu_test etl sml gmock_main)
 
 option(ASAN_UBSAN "Enable address & undefined behavior sanitizer." OFF)
