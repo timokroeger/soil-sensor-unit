@@ -5,6 +5,13 @@
 
 #include <cstdint>
 
+// Frequency of the main and system clock.
+#define MAIN_FREQ 60000000
+#define SYSTEM_FREQ 30000000
+
+// Configures system clock to 30MHz with the PLL fed by the internal oscillator.
+void SetupClock();
+
 // Enables LED output and sets ADC pin to analog mode.
 void SetupGpio();
 

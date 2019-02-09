@@ -4,7 +4,7 @@
 
 #include "chip.h"
 
-#include "config.h"
+#include "setup.h"
 
 void ModbusSerial::Enable() {
   assert(rtu_ != nullptr);
@@ -16,7 +16,7 @@ void ModbusSerial::Enable() {
   // Wait for a inter-frame timeout which then puts the stack in operational
   // (idle) state.
   Chip_MRT_SetInterval(LPC_MRT_CH0,
-                       ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
+                       ((SYSTEM_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 }
 
 void ModbusSerial::Disable() {
@@ -53,7 +53,7 @@ void ModbusSerial::UartIsr() {
   if (uart_ints & UART_STAT_RXRDY) {
     // Start inter frame-delay timer.
     Chip_MRT_SetInterval(LPC_MRT_CH0,
-                         ((CPU_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
+                         ((SYSTEM_FREQ / 1000000) * 1750) | MRT_INTVAL_LOAD);
 
     uint8_t rxdata = Chip_UART_ReadByte(LPC_USART0);
     rtu_->Notify(RxByte{rxdata, !(uart_ints & UART_STAT_PAR_ERRINT)});

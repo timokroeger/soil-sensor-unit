@@ -6,7 +6,6 @@
 #include "chip.h"
 
 #include "boot/bootloader.h"
-#include "config.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
@@ -14,13 +13,8 @@
 #include "modbus_data.h"
 #include "modbus_data_fw_update.h"
 
-// Required by the vendor chip library.
-const uint32_t OscRateIn = CPU_FREQ;
-const uint32_t ExtRateIn = 0;  // External clock input not used.
-
-static void SystemInit() {
-  SystemCoreClockUpdate();
-
+static void Setup() {
+  SetupClock();
   SetupGpio();
   SetupAdc();
   SetupPwm();
@@ -30,10 +24,9 @@ static void SystemInit() {
   SetupNVIC();
 }
 
-// The switch matrix and system clock (12Mhz by external crystal) were already
-// configured by SystemInit() before main was called.
 int main() {
-  SystemInit();
+  Setup();
+
   MeasureStart();
 
   // Link global serial interface implementation to protocol.

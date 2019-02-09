@@ -4,8 +4,6 @@
 
 #include "chip.h"
 
-#include "config.h"
-
 #define ISR_PRIO_UART 1
 #define ISR_PRIO_TIMER 1
 
@@ -13,6 +11,20 @@
 #define ISR_PRIO_SCT 0
 
 #define PWM_FREQ 200000u
+
+// Required by the vendor chip library.
+const uint32_t OscRateIn = 0;  // External oscillator not used.
+const uint32_t ExtRateIn = 0;  // External clock input not used.
+
+void SetupClock() {
+  // Use vendor provided routine in ROM memory to setup the system clock.
+  // It uses alsmost 1kb less flash compared to the version Chip_IRC_SetFreq()
+  // shipped in the lpc_chip_82x libraries.
+  bool ok = Chip_IRC_SetFreq(MAIN_FREQ, SYSTEM_FREQ);
+
+  // Update CMSIS clock frequency variable which is used in iap.c
+  SystemCoreClock = SYSTEM_FREQ;
+}
 
 void SetupGpio() {
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
@@ -129,8 +141,12 @@ void SetupTimers() {
 }
 
 void SetupUart(uint32_t baudrate) {
-  // Enable global UART clock.
-  Chip_Clock_SetUARTClockDiv(1);
+  // Enable global UART clock. Divide clock down as much as possible.
+  // HACKME: CLock precision could be improved by properly rounding.
+  //         When rounding up Chip_UART_SetBaud() misbehaves though,
+  //         because does not expect the input clock to be minimally
+  //         slower than 16 times the baudrate.
+  Chip_Clock_SetUARTClockDiv(MAIN_FREQ / (16 * 19200) - 1);
 
   // Configure peripheral.
   Chip_UART_Init(LPC_USART0);
