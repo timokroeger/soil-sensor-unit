@@ -7,9 +7,6 @@
 #define ISR_PRIO_UART 1
 #define ISR_PRIO_TIMER 1
 
-// Must have highest priority so that the ADC trigger can be reset in time.
-#define ISR_PRIO_SCT 0
-
 #define PWM_FREQ 200000u
 
 // Required by the vendor chip library.
@@ -34,6 +31,7 @@ void SetupGpio() {
   LPC_GPIO_PORT->CLR[0] = (1 << 11) | (1 << 10);
 
   // Analog mode for ADC input pin.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO17, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
 
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_IOCON);
@@ -44,9 +42,9 @@ void SetupSwichMatrix() {
   Chip_SWM_Init();
 
   // UART0
-  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 17);
-  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 12);
-  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 13);
+  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 15);
+  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 9);
+  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
 
   // PWM output
   Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);   // FREQ_LO
@@ -54,6 +52,7 @@ void SetupSwichMatrix() {
 
   // ADC input
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
+  Chip_SWM_EnableFixedPin(SWM_FIXED_ADC9);
 
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();
@@ -72,10 +71,10 @@ void SetupAdc() {
   // Only scan channel 3 when timer triggers the ADC.
   // A conversation takes 25 cycles. Ideally the sampling phase ends right
   // before the PWM output state changes.
-  Chip_ADC_SetupSequencer(
-      LPC_ADC, ADC_SEQA_IDX,
-      ADC_SEQ_CTRL_CHANSEL(3) | (3 << 12) |  // SCT Output 3 as trigger source.
-          ADC_SEQ_CTRL_HWTRIG_POLPOS | ADC_SEQ_CTRL_HWTRIG_SYNCBYPASS);
+  Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
+                          ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
+                              ADC_SEQ_CTRL_HWTRIG_POLPOS);
+  Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
 }
 
 void SetupPwm() {
@@ -85,14 +84,9 @@ void SetupPwm() {
   // to the match register with each limit event.
   // The timer must expire two times during one PWM cycle (PWM_FREQ * 2) to
   // create complementary outputs with two timer states.
-  const uint16_t timer_counts = (CPU_FREQ / (PWM_FREQ * 2));
-  static_assert(timer_counts >= 25, "PWM too fast for ADC.");
-  LPC_SCT->MATCHREL[0].L = timer_counts - 1;
-
-  // Set ADC trigger 8 cycles (approximate sampling time) before PWM output
-  // switches
-  // Found by experimenting with different values.
-  LPC_SCT->MATCHREL[1].L = timer_counts - 8;
+  // Use the fastet possible pwm frequency by setting the reload value to 0:
+  // 30MHz / 2 = 15MHz
+  LPC_SCT->MATCHREL[0].L = 0;
 
   // Link events to states.
   LPC_SCT->EV[0].STATE = (1 << 0);  // Event 0 only happens in state 0
@@ -100,17 +94,15 @@ void SetupPwm() {
 
   // Add alternating states which are switched by each match event
   LPC_SCT->EV[0].CTRL =
+      (0 << 0) |   // Use match register 0 for comparison
       (1 << 12) |  // COMBMODE[13:12] = Change state on match
       (1 << 14) |  // STATELD[14] = STATEV is loaded into state
       (1 << 15);   // STATEV[19:15] = New state is 1
   LPC_SCT->EV[1].CTRL =
+      (0 << 0) |   // Use match register 0 for comparison
       (1 << 12) |  // COMBMODE[13:12] = Change state on match
       (1 << 14) |  // STATELD[14] = STATEV is loaded into state
       (0 << 15);   // STATEV[19:15] = New state is 0
-
-  // Generate ADC trigger event for each match
-  LPC_SCT->EV[3].CTRL = (1 << 0) |  // Use match register 1 for comparison
-                        (1 << 12);  // COMBMODE[13:12] = Use only match
 
   // FREQ_LO: LOW during first half of period, HIGH for the second half.
   LPC_SCT->OUT[0].SET = (1 << 0);  // Event 0 sets
@@ -120,16 +112,11 @@ void SetupPwm() {
   LPC_SCT->OUT[1].SET = (1 << 1);  // Event 1 sets
   LPC_SCT->OUT[1].CLR = (1 << 0);  // Event 0 clears
 
-  // ADC_TRIGGER
-  LPC_SCT->OUT[3].SET = (1 << 3);             // Event 3 sets
-  LPC_SCT->OUT[3].CLR = (1 << 0) | (1 << 1);  // Event 0 and 1 clears
-
-  // Enable interrupt for event 3 (ADC trigger) to reset disable the trigger
-  // again.
-  LPC_SCT->EVEN = (1 << 3);
-
   // Restart counter on event 0 and 1 (match occurred)
   LPC_SCT->LIMIT_L = (1 << 0) | (1 << 1);
+
+  // Start the timer
+  LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
 void SetupTimers() {
@@ -167,7 +154,4 @@ void SetupNVIC() {
 
   NVIC_SetPriority(MRT_IRQn, ISR_PRIO_TIMER);
   NVIC_EnableIRQ(MRT_IRQn);
-
-  NVIC_SetPriority(SCT_IRQn, ISR_PRIO_SCT);
-  NVIC_EnableIRQ(SCT_IRQn);
 }

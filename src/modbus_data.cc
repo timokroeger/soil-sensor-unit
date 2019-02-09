@@ -4,15 +4,13 @@
 #include "measure.h"
 
 static uint16_t AverageMeasurement() {
-  uint32_t low = 0;
-  uint32_t high = 0;
+  uint32_t acc = 0;
 
   for (int i = 0; i < (1 << 10); i++) {
-    low += MeasureRaw(false);
-    high += MeasureRaw(true);
+    acc += MeasureRaw();
   }
 
-  return (high - low) >> 10;
+  return acc >> 10;
 }
 
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {

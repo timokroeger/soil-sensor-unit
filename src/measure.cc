@@ -4,29 +4,18 @@
 
 #include "chip.h"
 
-void MeasureStart() {
-  Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
-  LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
-}
+uint16_t MeasureRaw() {
+  Chip_ADC_StartSequencer(LPC_ADC, ADC_SEQA_IDX);
 
-uint16_t MeasureRaw(bool high) {
-  // ADC Trigger is event 3 of the timer. Select state the event occurs.
-  LPC_SCT->EV[3].STATE = high ? (1 << 0)   // Sample on HI level: State 0
-                              : (1 << 1);  // Sample on LO level: State 1
+  uint32_t raw_high, raw_low;
 
-  // Wait for ADC conversion to finish.
-  uint32_t adc_value_raw;
   do {
-    adc_value_raw = Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX);
-  } while ((adc_value_raw & ADC_SEQ_GDAT_DATAVALID) == 0);
+    raw_high = Chip_ADC_GetDataReg(LPC_ADC, 3);
+  } while ((raw_high & ADC_SEQ_GDAT_DATAVALID) == 0);
 
-  return ADC_DR_RESULT(adc_value_raw);
-}
+  do {
+    raw_low = Chip_ADC_GetDataReg(LPC_ADC, 9);
+  } while ((raw_low & ADC_SEQ_GDAT_DATAVALID) == 0);
 
-void MeasureResetTrigger() {
-  // Disable ADC trigger immediately so it is not re-triggered accidentally.
-  LPC_SCT->EV[3].STATE = 0;
-
-  // Clear interrupt flag.
-  LPC_SCT->EVFLAG = (1 << 3);
+  return ADC_DR_RESULT(raw_high) - ADC_DR_RESULT(raw_low);
 }

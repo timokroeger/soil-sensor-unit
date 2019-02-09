@@ -27,8 +27,6 @@ static void Setup() {
 int main() {
   Setup();
 
-  MeasureStart();
-
   // Link global serial interface implementation to protocol.
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
