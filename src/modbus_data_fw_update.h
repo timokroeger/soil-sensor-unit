@@ -15,7 +15,7 @@ class ModbusDataFwUpdate final : public modbus::DataInterface {
   static constexpr uint16_t kCommandRegister = 0x7FFF;
 
   enum Command : uint16_t {
-    kPrepare,
+    kPrepare = 0,
     kSetPending,
     kConfirm,
   };

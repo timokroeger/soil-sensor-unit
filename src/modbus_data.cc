@@ -16,17 +16,24 @@ static uint16_t AverageMeasurement() {
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = AverageMeasurement();
-    return true;
+  } else if (address == 0x100) {
+    *data_out = reset_;
+  } else {
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
   // Firmware update is mapped to the second half of the address range.
   if (address >= 0x8000) {
     fw_update_.WriteRegister(address - 0x8000, data);
+  } else if (address == 0x100) {
+    reset_ = data;
+  } else {
+    return false;
   }
 
-  return false;
+  return true;
 }

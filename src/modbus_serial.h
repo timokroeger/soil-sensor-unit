@@ -16,9 +16,12 @@ class ModbusSerial final : public modbus::SerialInterface {
   void UartIsr();
 
   void set_modbus_rtu(modbus::RtuProtocol *modbus_rtu) { rtu_ = modbus_rtu; }
+  bool tx_active() const { return tx_active_; }
 
  private:
   modbus::RtuProtocol *rtu_;
+
+  bool tx_active_;
   const uint8_t *tx_data_;
   const uint8_t *tx_data_end_;
 };

@@ -12,8 +12,11 @@ class ModbusData final : public modbus::DataInterface {
   bool ReadRegister(uint16_t address, uint16_t *data_out) override;
   bool WriteRegister(uint16_t address, uint16_t data) override;
 
+  bool reset() const { return reset_; }
+
  private:
   modbus::DataInterface &fw_update_;
+  bool reset_ = false;
 };
 
 #endif  // MODBUS_DATA_H_

@@ -43,5 +43,9 @@ int main() {
   // Main loop.
   for (;;) {
     modbus_stack.Execute();
+
+    if (modbus_data.reset() && !modbus_serial.tx_active()) {
+      NVIC_SystemReset();
+    }
   }
 }

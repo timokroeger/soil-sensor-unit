@@ -30,6 +30,7 @@ void ModbusSerial::Disable() {
 }
 
 void ModbusSerial::Send(const uint8_t* data, size_t length) {
+  tx_active_ = true;
   tx_data_ = data;
   tx_data_end_ = data + length;
   Chip_UART_IntEnable(LPC_USART0, UART_INTEN_TXRDY);
@@ -72,6 +73,7 @@ void ModbusSerial::UartIsr() {
   }
 
   if (uart_ints & UART_STAT_TXIDLE) {
+    tx_active_ = false;
     rtu_->Notify(TxDone{});
     Chip_UART_IntDisable(LPC_USART0, UART_STAT_TXIDLE);
   }
