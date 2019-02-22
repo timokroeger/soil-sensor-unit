@@ -59,7 +59,8 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
 
   uint32_t addr = (area->fa_off + off);
   uint32_t sector = addr / SECTOR_SIZE;
-  uint32_t sector_offset = addr % SECTOR_SIZE;
+  uint32_t sector_addr = sector * SECTOR_SIZE;
+  uint32_t sector_offset = addr - sector_addr;
   if (sector_offset + len > SECTOR_SIZE) {
     return -1;
   }
@@ -71,11 +72,12 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
 
   // Get previous data at this location so it won’t be overwritten.
   if (len < SECTOR_SIZE) {
-    memcpy(sector_buf, (void *)(sector * SECTOR_SIZE), SECTOR_SIZE);
+    memcpy(sector_buf, (void *)sector_addr, SECTOR_SIZE);
   }
   memcpy(&sector_buf[sector_offset], src, len);
 
-  rc = Chip_IAP_CopyRamToFlash(addr, (uint32_t *)&sector_buf[0], SECTOR_SIZE);
+  rc = Chip_IAP_CopyRamToFlash(sector_addr, (uint32_t *)&sector_buf[0],
+                               SECTOR_SIZE);
   assert(rc == IAP_CMD_SUCCESS);
 
   return 0;
