@@ -92,7 +92,7 @@ int flash_area_erase(const struct flash_area *area, uint32_t off,
   assert(sector_addr % SECTOR_SIZE == 0);
 
   uint32_t sector_start = sector_addr / SECTOR_SIZE;
-  uint32_t sector_stop = sector_start + len / SECTOR_SIZE;
+  uint32_t sector_stop = sector_start + len / SECTOR_SIZE - 1;
 
   rc = Chip_IAP_PreSectorForReadWrite(sector_start, sector_stop);
   assert(rc == IAP_CMD_SUCCESS);
