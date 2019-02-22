@@ -28,10 +28,10 @@ function(firmware_size target)
 endfunction()
 
 # Add a command to generate firmare in a provided format
-function(generate_object target suffix type)
+function(generate_object target input intype output outtype)
     add_custom_command(TARGET ${target} POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O${type}
-        "${CMAKE_CURRENT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/${target}${suffix}"
+        COMMAND ${CMAKE_OBJCOPY} -I${intype} -O${outtype}
+        "${CMAKE_CURRENT_BINARY_DIR}/${input}" "${CMAKE_CURRENT_BINARY_DIR}/${output}"
     )
 endfunction()
 

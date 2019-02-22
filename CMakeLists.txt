@@ -109,7 +109,10 @@ target_link_libraries(firmware
 include(cmake/arm-cmake-toolchains/utils.cmake)
 include(cmake/mcuboot.cmake)
 
-generate_object(boot .hex ihex)
-generate_object(firmware .hex ihex)
-mcuboot_image(firmware)
+generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
+
+generate_object(firmware firmware.elf elf32-littlearm firmware.hex ihex)
+mcuboot_image(firmware firmware.hex firmware_image.hex)
+generate_object(firmware firmware_image.hex ihex firmware_image.bin binary)
+
 firmware_size(firmware)
