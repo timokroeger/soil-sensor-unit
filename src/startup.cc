@@ -91,7 +91,7 @@ void Reset_Handler(void) {
   __libc_init_array();
 
   // Relocate vector table.
-  SCB->VTOR = (uint32_t)vectors;
+  SCB->VTOR = reinterpret_cast<uint32_t>(vectors);
 
   main();
   for (;;);

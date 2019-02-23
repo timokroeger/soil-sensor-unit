@@ -139,7 +139,7 @@ Modbus::ExceptionCode Modbus::WriteMultipleRegisters(FrameData data) {
     return ExceptionCode::kInvalidFrame;
   }
 
-  for (int i = 0; i < quantity_regs; i++) {
+  for (uint16_t i = 0; i < quantity_regs; i++) {
     uint16_t addr = static_cast<uint16_t>(starting_addr + i);
     uint16_t reg_value = BufferToWordBE(&data[5 + 2 * i]);
     bool ok = data_.WriteRegister(addr, reg_value);
