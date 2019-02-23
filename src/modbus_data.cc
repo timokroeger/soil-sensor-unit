@@ -1,6 +1,8 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
 #include "modbus_data.h"
+
+#include "config/version.h"
 #include "measure.h"
 
 static uint16_t AverageMeasurement() {
@@ -16,6 +18,8 @@ static uint16_t AverageMeasurement() {
 bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = AverageMeasurement();
+  } else if (address == 0x80) {
+    *data_out = (VERSION_MAJOR << 8) | VERSION_MINOR;
   } else if (address == 0x100) {
     *data_out = reset_;
   } else {
