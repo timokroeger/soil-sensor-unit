@@ -6,6 +6,7 @@
 #include "chip.h"
 
 #include "boot/bootloader.h"
+#include "config/config.h"
 #include "globals.h"
 #include "setup.h"
 #include "measure.h"
@@ -19,7 +20,7 @@ static void Setup() {
   SetupAdc();
   SetupPwm();
   SetupTimers();
-  SetupUart(19200);
+  SetupUart(CONFIG_BAUDRATE);
   SetupSwichMatrix();
   SetupNVIC();
 }
@@ -36,7 +37,7 @@ int main() {
   ModbusData modbus_data(fw_update);
 
   modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
-  modbus_stack.set_address(247);
+  modbus_stack.set_address(CONFIG_SENSOR_ID);
 
   modbus_rtu.Enable();
 
