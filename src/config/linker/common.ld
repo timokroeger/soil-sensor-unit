@@ -10,6 +10,7 @@ SECTIONS
   /* ### Vector table */
   .isr_vector ORIGIN(FLASH) + _image_header_size :
   {
+    _isr_vector_start = .;
     KEEP(*(.isr_vector));
   } >FLASH
 
@@ -95,3 +96,5 @@ SECTIONS
     libm.a(*)
   }
 }
+
+ASSERT(_isr_vector_start % 256 == 0, "The vector table must be 256-byte aligned.");
