@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_TOOLCHAIN_FILE cmake/arm-cmake-toolchains/arm-gcc-toolchain.cmake)
 
-project(GaMoSy-SSU VERSION 0.255 LANGUAGES C CXX)
+project(GaMoSy-SSU VERSION 0.255 LANGUAGES ASM C CXX)
 
 configure_file(src/config/version.h.in src/config/version.h)
 
@@ -59,7 +59,7 @@ target_link_libraries(bootutil LPC8xx)
 # Bootloader
 add_executable(boot
   src/boot/main.c
-  src/startup.cc
+  src/startup_stm32g071xx.s
 )
 
 target_link_libraries(boot
@@ -82,7 +82,7 @@ add_executable(firmware
   src/modbus_serial.cc
   src/modbus/modbus.cc
   src/setup.cc
-  src/startup.cc
+  src/startup_stm32g071xx.s
 )
 
 target_include_directories(firmware PUBLIC src ${CMAKE_CURRENT_BINARY_DIR}/src)

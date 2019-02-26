@@ -6,7 +6,7 @@ function(mcuboot_image TARGET INFILE OUTFILE)
       --align 4
       --version ${PROJECT_VERSION}
       --header-size 256 --pad-header
-      --slot-size 12288
+      --slot-size 24576
       ${INFILE} ${OUTFILE}
   )
 endfunction()

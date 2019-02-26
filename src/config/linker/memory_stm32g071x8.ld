@@ -1,0 +1,8 @@
+MEMORY {
+  FLASH_BOOT    : ORIGIN = 0x00000000, LENGTH = 12K
+  FLASH_SCRATCH : ORIGIN = 0x00003000, LENGTH = 2K
+  /* 2KiB reserved for possible future configuration storage */
+  FLASH_SLOT0   : ORIGIN = 0x00004000, LENGTH = 24K
+  FLASH_SLOT1   : ORIGIN = 0x0000A000, LENGTH = 24K
+  RAM           : ORIGIN = 0x10000000, LENGTH = 36K
+}

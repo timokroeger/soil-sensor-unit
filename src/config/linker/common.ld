@@ -4,7 +4,7 @@ ENTRY(Reset_Handler)
 SECTIONS
 {
   PROVIDE(_image_header_size = 0);
-  PROVIDE(_stack_start = ORIGIN(RAM) + LENGTH(RAM));
+  PROVIDE(_estack = ORIGIN(RAM) + LENGTH(RAM));
 
   /* ## Sections in FLASH */
   /* ### Vector table */
