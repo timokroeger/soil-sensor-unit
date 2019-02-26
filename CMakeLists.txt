@@ -22,6 +22,9 @@ add_compile_options(
   $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit> # Disable static destructors.
 )
 
+# Select the target MCU. This define is used by CMSIS, HAL and LL drivers.
+add_compile_definitions(STM32G071xx)
+
 add_link_options(
   ${CPU_FLAGS}
   ${LTO_FLAGS}
@@ -60,10 +63,11 @@ target_link_libraries(bootutil LPC8xx)
 add_executable(boot
   src/boot/main.c
   src/startup_stm32g071xx.s
+  src/system_stm32g0xx.c
 )
 
 target_link_libraries(boot
-  bootutil LPC8xx
+  bootutil STM32G0xx_CMSIS LPC8xx
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tboot.ld
 )
@@ -83,24 +87,25 @@ add_executable(firmware
   src/modbus/modbus.cc
   src/setup.cc
   src/startup_stm32g071xx.s
+  src/system_stm32g0xx.c
 )
 
 target_include_directories(firmware PUBLIC src ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 target_compile_features(firmware PUBLIC cxx_std_14)
 target_compile_options(firmware PUBLIC
-  -Wall -Wextra -Wno-unused -Wsign-promo
+  -Wall -Wextra -Wno-unused
 # Reenable those warnings when the -Isystem include bug is fixed in
 # arm-none-eabi-gcc (likely) or all warnings are fixed in etl (unlikely)
 #  -Wold-style-cast -Wsign-conversion
-  -Woverloaded-virtual -Wreorder
+  $<$<COMPILE_LANGUAGE:CXX>:-Wsign-promo -Woverloaded-virtual -Wreorder>
 
   # Template heave code require a little optimization even in debug builds.
   $<$<CONFIG:DEBUG>:-Og>
 )
 
 target_link_libraries(firmware
-  bootutil LPC8xx SEGGER_RTT etl sml
+  bootutil STM32G0xx_CMSIS LPC8xx SEGGER_RTT etl sml
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )

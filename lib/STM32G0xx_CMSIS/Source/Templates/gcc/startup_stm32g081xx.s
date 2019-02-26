@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32g071xx.s
+  * @file      startup_stm32g081xx.s
   * @author    MCD Application Team
-  * @brief     STM32G071xx devices vector table for Atollic TrueSTUDIO toolchain.
+  * @brief     STM32G051xx devices vector table for Atollic TrueSTUDIO toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -168,6 +168,7 @@ g_pfnVectors:
   .word  USART2_IRQHandler                 /* USART2                       */
   .word  USART3_4_LPUART1_IRQHandler       /* USART3, USART4 and LPUART1   */
   .word  CEC_IRQHandler                    /* CEC                          */
+  .word  AES_RNG_IRQHandler                /* AES and RNG                  */
 
 /*******************************************************************************
 *
@@ -284,6 +285,9 @@ g_pfnVectors:
 
   .weak      CEC_IRQHandler
   .thumb_set CEC_IRQHandler,Default_Handler
+
+  .weak      AES_RNG_IRQHandler
+  .thumb_set AES_RNG_IRQHandler,Default_Handler
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

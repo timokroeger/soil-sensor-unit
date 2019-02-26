@@ -1,7 +1,14 @@
+add_library(CMSIS INTERFACE)
+target_include_directories(CMSIS INTERFACE CMSIS/Include)
+
+add_library(STM32G0xx_CMSIS INTERFACE)
+target_include_directories(STM32G0xx_CMSIS INTERFACE STM32G0xx_CMSIS/Include)
+target_link_libraries(STM32G0xx_CMSIS INTERFACE CMSIS)
+
 add_library(LPC8xx OBJECT
   lpc_chip_82x/src/acmp_8xx.c
   lpc_chip_82x/src/adc_8xx.c
-  lpc_chip_82x/src/chip_8xx.c
+#  lpc_chip_82x/src/chip_8xx.c
   lpc_chip_82x/src/clock_8xx.c
   lpc_chip_82x/src/crc_8xx.c
   lpc_chip_82x/src/dma_8xx.c
