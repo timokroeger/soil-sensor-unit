@@ -42,5 +42,23 @@ add_library(SEGGER_RTT OBJECT
 
 target_include_directories(SEGGER_RTT PUBLIC SEGGER)
 
+add_library(mcuboot OBJECT
+  mcuboot/boot/bootutil/src/bootutil_misc.c
+  mcuboot/boot/bootutil/src/caps.c
+  mcuboot/boot/bootutil/src/image_validate.c
+  mcuboot/boot/bootutil/src/loader.c
+  mcuboot/ext/mbedtls/src/asn1parse.c
+  mcuboot/ext/tinycrypt/lib/source/sha256.c
+  mcuboot/ext/tinycrypt/lib/source/utils.c
+)
+
+target_include_directories(mcuboot
+  PRIVATE
+  mcuboot/ext/mbedtls/include
+  mcuboot/ext/tinycrypt/lib/include
+  PUBLIC
+  mcuboot/boot/bootutil/include
+)
+
 add_subdirectory(etl)
 add_subdirectory(sml)

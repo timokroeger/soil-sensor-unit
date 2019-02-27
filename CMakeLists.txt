@@ -33,28 +33,10 @@ link_directories(src/config/linker)
 
 add_subdirectory(lib)
 
-# Boot library
-add_library(bootutil OBJECT
-  lib/mcuboot/boot/bootutil/src/bootutil_misc.c
-  lib/mcuboot/boot/bootutil/src/caps.c
-  lib/mcuboot/boot/bootutil/src/image_validate.c
-  lib/mcuboot/boot/bootutil/src/loader.c
-  lib/mcuboot/ext/mbedtls/src/asn1parse.c
-  lib/mcuboot/ext/tinycrypt/lib/source/sha256.c
-  lib/mcuboot/ext/tinycrypt/lib/source/utils.c
-  src/boot/flash_map_backend.c
-)
-
-target_include_directories(bootutil
-  PRIVATE
-  lib/mcuboot/ext/mbedtls/include
-  lib/mcuboot/ext/tinycrypt/lib/include
-  PUBLIC
-  lib/mcuboot/boot/bootutil/include
-  src/boot/include
-)
-
-target_link_libraries(bootutil LPC8xx)
+# MCUboot requires some headers to be provided by the user
+target_include_directories(mcuboot PUBLIC src/boot/include) # HACKME: Make private
+target_sources(mcuboot PRIVATE src/boot/flash_map_backend.c)
+target_link_libraries(mcuboot PRIVATE LPC8xx)
 
 # Bootloader
 add_executable(boot
@@ -62,13 +44,11 @@ add_executable(boot
   src/startup.cc
 )
 
-target_link_libraries(boot
-  bootutil LPC8xx
+target_link_libraries(boot mcuboot LPC8xx
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tboot.ld
 )
 
-# Actual firmware
 add_executable(firmware
   src/assert_impl.cc
   src/bootloader.cc
@@ -100,7 +80,7 @@ target_compile_options(firmware PUBLIC
 )
 
 target_link_libraries(firmware
-  bootutil LPC8xx SEGGER_RTT etl sml
+  mcuboot LPC8xx SEGGER_RTT etl sml
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )
