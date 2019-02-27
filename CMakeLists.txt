@@ -57,7 +57,7 @@ target_include_directories(bootutil
   src/boot/include
 )
 
-target_link_libraries(bootutil LPC8xx)
+target_link_libraries(bootutil PRIVATE STM32G0xx_CMSIS)
 
 # Bootloader
 add_executable(boot
@@ -67,7 +67,7 @@ add_executable(boot
 )
 
 target_link_libraries(boot
-  bootutil STM32G0xx_CMSIS LPC8xx
+  bootutil STM32G0xx_CMSIS
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tboot.ld
 )

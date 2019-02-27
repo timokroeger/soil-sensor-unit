@@ -2,8 +2,8 @@
 
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
-#include "cmsis.h"
 #include "flash_map_backend/flash_map_backend.h"
+#include "stm32g0xx.h"
 
 struct arm_vector_table {
   uint32_t msp;
