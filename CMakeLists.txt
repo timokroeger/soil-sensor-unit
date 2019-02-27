@@ -4,7 +4,7 @@ set(CMAKE_TOOLCHAIN_FILE cmake/arm-cmake-toolchains/arm-gcc-toolchain.cmake)
 
 project(GaMoSy-SSU VERSION 0.255 LANGUAGES ASM C CXX)
 
-configure_file(src/config/version.h.in src/config/version.h)
+configure_file(src/version.h.in src/version.h)
 
 # Set target architecture settings for everything.
 set(CPU_FLAGS -mthumb -mcpu=cortex-m0plus)
@@ -75,7 +75,7 @@ target_link_libraries(boot
 # Actual firmware
 add_executable(firmware
   src/assert_impl.cc
-  src/boot/bootloader.cc
+  src/bootloader.cc
   src/globals.cc
   src/isr.cc
   src/log.cc
