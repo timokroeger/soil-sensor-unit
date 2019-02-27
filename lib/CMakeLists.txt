@@ -40,9 +40,7 @@ add_library(SEGGER_RTT OBJECT
   SEGGER/SEGGER_RTT_printf.c
 )
 
-target_include_directories(SEGGER_RTT
-  PUBLIC SEGGER ${CONFIG_INCLUDE}
-)
+target_include_directories(SEGGER_RTT PUBLIC SEGGER)
 
 add_subdirectory(etl)
 add_subdirectory(sml)

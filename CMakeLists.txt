@@ -31,7 +31,6 @@ add_link_options(
 # Path of linker scripts
 link_directories(src/config/linker)
 
-set(CONFIG_INCLUDE ${CMAKE_SOURCE_DIR}/src/config)
 add_subdirectory(lib)
 
 # Boot library
@@ -48,7 +47,6 @@ add_library(bootutil OBJECT
 
 target_include_directories(bootutil
   PRIVATE
-  ${CONFIG_INCLUDE}
   lib/mcuboot/ext/mbedtls/include
   lib/mcuboot/ext/tinycrypt/lib/include
   PUBLIC
