@@ -2,7 +2,7 @@
 
 #include "modbus_data.h"
 
-#include "config/version.h"
+#include "version.h"
 #include "measure.h"
 
 static uint16_t AverageMeasurement() {

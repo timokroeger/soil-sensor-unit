@@ -5,8 +5,8 @@
 
 #include "chip.h"
 
-#include "boot/bootloader.h"
-#include "config/config.h"
+#include "bootloader.h"
+#include "config.h"
 #include "globals.h"
 #include "measure.h"
 #include "modbus/slave.h"
