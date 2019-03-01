@@ -7,8 +7,6 @@
 
 class Bootloader final : public BootloaderInterface {
  public:
-  Bootloader();
-
   bool PrepareUpdate() override;
   bool WriteImageData(size_t offset, uint8_t* data, size_t length) override;
   bool SetUpdatePending() override;

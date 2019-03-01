@@ -2,7 +2,6 @@
 
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
-#include "flash_map_backend/flash_map_backend.h"
 #include "stm32g0xx.h"
 
 struct arm_vector_table {
@@ -11,8 +10,6 @@ struct arm_vector_table {
 };
 
 int main() {
-  flash_areas_init();
-
   struct boot_rsp rsp;
   int rc = boot_go(&rsp);
 

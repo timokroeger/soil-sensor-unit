@@ -94,8 +94,6 @@ struct flash_sector {
     uint32_t fs_size;
 };
 
-void flash_areas_init(void);
-
 /*
  * Retrieve a memory-mapped flash device's base address.
  *

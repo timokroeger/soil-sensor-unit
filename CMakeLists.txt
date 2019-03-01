@@ -33,7 +33,7 @@ add_subdirectory(lib)
 
 # MCUboot requires some headers to be provided by the user
 target_include_directories(mcuboot PUBLIC src/boot/include) # HACKME: Make private
-target_sources(mcuboot PRIVATE src/boot/flash_map_backend.c)
+target_sources(mcuboot PRIVATE src/boot/flash_map_backend.cc)
 target_link_libraries(mcuboot PRIVATE STM32G0xx_CMSIS)
 
 # Select target MCU for the CMSIS headers

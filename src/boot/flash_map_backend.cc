@@ -4,39 +4,35 @@
 
 #include <assert.h>
 #include <string.h>
+#include <array>
 
 #include "stm32g0xx.h"
 
-#define NUM_FLASH_AREAS 3
-#define SECTOR_SIZE 2048
-#define WRITE_SIZE 8
+// Number of flash areas, always 3 with MCBboot: 
+constexpr int kNumFlashAreas = 3;
 
-// Provided by flash_map.ld linker script in src/config folder.
-extern uint8_t _flash_slot0;
-extern uint8_t _flash_slot0_end;
-extern uint8_t _flash_slot1;
-extern uint8_t _flash_slot1_end;
-extern uint8_t _flash_scratch;
-extern uint8_t _flash_scratch_end;
+// Smallest erasable flash block size.
+constexpr size_t kPageSize = 2048;
 
-static struct flash_area areas[NUM_FLASH_AREAS];
+// Minimum aligment and size of a flash write operation.
+constexpr uint8_t kWriteSize = 8;
 
-void flash_areas_init(void) {
-  areas[0].fa_id = 1;
-  areas[0].fa_device_id = 0;
-  areas[0].fa_off = (uint32_t)&_flash_slot0;
-  areas[0].fa_size = (uint32_t)(&_flash_slot0_end - &_flash_slot0);
+// Provided by flash_map.ld linker script in src/config/linker folder.
+extern uint32_t _flash_slot0[];
+extern uint32_t _flash_slot0_length[];
+extern uint32_t _flash_slot1[];
+extern uint32_t _flash_slot1_length[];
+extern uint32_t _flash_scratch[];
+extern uint32_t _flash_scratch_length[];
 
-  areas[1].fa_id = 2;
-  areas[1].fa_device_id = 0;
-  areas[1].fa_off = (uint32_t)&_flash_slot1;
-  areas[1].fa_size = (uint32_t)(&_flash_slot1_end - &_flash_slot1);
-
-  areas[2].fa_id = 3;
-  areas[2].fa_device_id = 0;
-  areas[2].fa_off = (uint32_t)&_flash_scratch;
-  areas[2].fa_size = (uint32_t)(&_flash_scratch_end - &_flash_scratch);
-}
+constexpr struct flash_area areas[kNumFlashAreas] = {
+    {0, 0, 0, reinterpret_cast<uint32_t>(_flash_slot0),
+     reinterpret_cast<uint32_t>(_flash_slot0_length)},
+    {1, 0, 0, reinterpret_cast<uint32_t>(_flash_slot1),
+     reinterpret_cast<uint32_t>(_flash_slot1_length)},
+    {2, 0, 0, reinterpret_cast<uint32_t>(_flash_scratch),
+     reinterpret_cast<uint32_t>(_flash_scratch_length)},
+};
 
 int flash_area_open(uint8_t id, const struct flash_area **area) {
   assert(area);
@@ -70,8 +66,8 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
   assert(dst_addr % WRITE_SIZE == 0);
   assert(len % WRITE_SIZE == 0);
 
-  uint32_t *dst = (uint32_t *)dst;
-  uint32_t *src = (uint32_t *)src;
+  uint32_t *dst = static_cast<uint32_t *>(dst);
+  uint32_t *src = static_cast<uint32_t *>(src);
 
   assert(FLASH->SR == 0);  // No running flash operation or previous error
 
@@ -96,11 +92,11 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
 int flash_area_erase(const struct flash_area *area, uint32_t off,
                      uint32_t len) {
   uint32_t addr = area->fa_off + off;
-  assert(addr % SECTOR_SIZE == 0);
-  assert(len % SECTOR_SIZE == 0);
+  assert(addr % kPageSize == 0);
+  assert(len % kPageSize == 0);
 
-  uint32_t start_page = addr / SECTOR_SIZE;
-  uint32_t num_pages = len / SECTOR_SIZE;
+  uint32_t start_page = addr / kPageSize;
+  uint32_t num_pages = len / kPageSize;
 
   for (uint32_t i = 0; i < num_pages; i++) {
     assert(FLASH->SR == 0);  // No running flash operation or previous error
@@ -139,17 +135,17 @@ int flash_area_get_sectors(int fa_id, uint32_t *count,
 
   const struct flash_area *fa = &areas[fa_id - 1];
 
-  uint32_t num_sectors = fa->fa_size / SECTOR_SIZE;
+  uint32_t num_sectors = fa->fa_size / kPageSize;
   for (uint32_t i = 0; i < num_sectors; i++) {
-    sectors[i].fs_off = SECTOR_SIZE * i;
-    sectors[i].fs_size = SECTOR_SIZE;
+    sectors[i].fs_off = kPageSize * i;
+    sectors[i].fs_size = kPageSize;
   }
   *count = num_sectors;
 
   return 0;
 }
 
-uint8_t flash_area_align(const struct flash_area *area) { return WRITE_SIZE; }
+uint8_t flash_area_align(const struct flash_area *area) { return kWriteSize; }
 
 uint8_t flash_area_erased_val(const struct flash_area *area) { return 0xFF; }
 
