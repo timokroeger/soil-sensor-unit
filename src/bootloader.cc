@@ -6,8 +6,6 @@
 #include "flash_map_backend/flash_map_backend.h"
 #include "sysflash/sysflash.h"
 
-Bootloader::Bootloader() { flash_areas_init(); }
-
 bool Bootloader::PrepareUpdate() {
   const struct flash_area *fa;
   int rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);

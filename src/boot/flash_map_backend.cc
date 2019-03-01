@@ -1,42 +1,39 @@
-// Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
+ // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
 #include "flash_map_backend/flash_map_backend.h"
 
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <array>
 
 #include "chip.h"
 
-#define NUM_FLASH_AREAS 3
-#define SECTOR_SIZE 1024
+// Number of flash areas, always 3 with MCBboot: 
+constexpr int kNumFlashAreas = 3;
 
-// Provided by boot.ld linker script in src/config folder.
-extern uint8_t _flash_slot0;
-extern uint8_t _flash_slot0_end;
-extern uint8_t _flash_slot1;
-extern uint8_t _flash_slot1_end;
-extern uint8_t _flash_scratch;
-extern uint8_t _flash_scratch_end;
+// Smallest erasable flash block size.
+constexpr uint32_t kPageSize = 1024;
 
-static struct flash_area areas[NUM_FLASH_AREAS];
+// Minimum aligment and size of a flash write operation.
+constexpr uint8_t kWriteSize = 4;
 
-void flash_areas_init(void) {
-  areas[0].fa_id = 1;
-  areas[0].fa_device_id = 0;
-  areas[0].fa_off = (uint32_t)&_flash_slot0;
-  areas[0].fa_size = (uint32_t)(&_flash_slot0_end - &_flash_slot0);
+// Provided by flash_map.ld linker script in src/config/linker folder.
+extern uint32_t _flash_slot0[];
+extern uint32_t _flash_slot0_length[];
+extern uint32_t _flash_slot1[];
+extern uint32_t _flash_slot1_length[];
+extern uint32_t _flash_scratch[];
+extern uint32_t _flash_scratch_length[];
 
-  areas[1].fa_id = 2;
-  areas[1].fa_device_id = 0;
-  areas[1].fa_off = (uint32_t)&_flash_slot1;
-  areas[1].fa_size = (uint32_t)(&_flash_slot1_end - &_flash_slot1);
-
-  areas[2].fa_id = 3;
-  areas[2].fa_device_id = 0;
-  areas[2].fa_off = (uint32_t)&_flash_scratch;
-  areas[2].fa_size = (uint32_t)(&_flash_scratch_end - &_flash_scratch);
-}
+constexpr struct flash_area areas[kNumFlashAreas] = {
+    {0, 0, 0, reinterpret_cast<uint32_t>(_flash_slot0),
+     reinterpret_cast<uint32_t>(_flash_slot0_length)},
+    {1, 0, 0, reinterpret_cast<uint32_t>(_flash_slot1),
+     reinterpret_cast<uint32_t>(_flash_slot1_length)},
+    {2, 0, 0, reinterpret_cast<uint32_t>(_flash_scratch),
+     reinterpret_cast<uint32_t>(_flash_scratch_length)},
+};
 
 int flash_area_open(uint8_t id, const struct flash_area **area) {
   *area = &areas[id - 1];
@@ -58,26 +55,26 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
   assert(area && src && len > 0 && (len % 4 == 0));
 
   uint32_t addr = (area->fa_off + off);
-  uint32_t sector = addr / SECTOR_SIZE;
-  uint32_t sector_addr = sector * SECTOR_SIZE;
+  uint32_t sector = addr / kPageSize;
+  uint32_t sector_addr = sector * kPageSize;
   uint32_t sector_offset = addr - sector_addr;
-  if (sector_offset + len > SECTOR_SIZE) {
+  if (sector_offset + len > kPageSize) {
     return -1;
   }
 
   rc = Chip_IAP_PreSectorForReadWrite(sector, sector);
   assert(rc == IAP_CMD_SUCCESS);
 
-  uint8_t sector_buf[SECTOR_SIZE];
+  uint8_t sector_buf[kPageSize];
 
   // Get previous data at this location so it won’t be overwritten.
-  if (len < SECTOR_SIZE) {
-    memcpy(sector_buf, (void *)sector_addr, SECTOR_SIZE);
+  if (len < kPageSize) {
+    memcpy(sector_buf, (void *)sector_addr, kPageSize);
   }
   memcpy(&sector_buf[sector_offset], src, len);
 
   rc = Chip_IAP_CopyRamToFlash(sector_addr, (uint32_t *)&sector_buf[0],
-                               SECTOR_SIZE);
+                               kPageSize);
   assert(rc == IAP_CMD_SUCCESS);
 
   return 0;
@@ -86,13 +83,13 @@ int flash_area_write(const struct flash_area *area, uint32_t off,
 int flash_area_erase(const struct flash_area *area, uint32_t off,
                      uint32_t len) {
   uint8_t rc;
-  assert(len == SECTOR_SIZE);
+  assert(len == kPageSize);
 
   uint32_t sector_addr = area->fa_off + off;
-  assert(sector_addr % SECTOR_SIZE == 0);
+  assert(sector_addr % kPageSize == 0);
 
-  uint32_t sector_start = sector_addr / SECTOR_SIZE;
-  uint32_t sector_stop = sector_start + len / SECTOR_SIZE - 1;
+  uint32_t sector_start = sector_addr / kPageSize;
+  uint32_t sector_stop = sector_start + len / kPageSize - 1;
 
   rc = Chip_IAP_PreSectorForReadWrite(sector_start, sector_stop);
   assert(rc == IAP_CMD_SUCCESS);
@@ -107,7 +104,7 @@ int flash_area_read_is_empty(const struct flash_area *area, uint32_t off,
                              void *dst, uint32_t len) {
   int rc = flash_area_read(area, off, dst, len);
   if (rc) {
-    return -1;
+    return rc;
   }
 
   uint8_t *u8dst = (uint8_t *)dst;
@@ -124,17 +121,17 @@ int flash_area_get_sectors(int fa_id, uint32_t *count,
                            struct flash_sector *sectors) {
   const struct flash_area *fa = &areas[fa_id - 1];
 
-  uint32_t num_sectors = fa->fa_size / SECTOR_SIZE;
+  uint32_t num_sectors = fa->fa_size / kPageSize;
   for (uint32_t i = 0; i < num_sectors; i++) {
-    sectors[i].fs_off = SECTOR_SIZE * i;
-    sectors[i].fs_size = SECTOR_SIZE;
+    sectors[i].fs_off = kPageSize * i;
+    sectors[i].fs_size = kPageSize;
   }
   *count = num_sectors;
 
   return 0;
 }
 
-uint8_t flash_area_align(const struct flash_area *area) { return 4; }
+uint8_t flash_area_align(const struct flash_area *area) { return kWriteSize; }
 
 uint8_t flash_area_erased_val(const struct flash_area *area) { return 0xFF; }
 
