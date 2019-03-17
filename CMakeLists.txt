@@ -91,7 +91,7 @@ target_compile_options(firmware PUBLIC
 )
 
 target_link_libraries(firmware
-  mcuboot STM32G0xx_CMSIS SEGGER_RTT etl sml
+  mcuboot STM32G0xx_CMSIS STM32G0xx_LL SEGGER_RTT etl sml
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )

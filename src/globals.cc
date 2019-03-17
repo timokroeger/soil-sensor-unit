@@ -2,4 +2,4 @@
 
 #include "globals.h"
 
-ModbusSerial modbus_serial;
+ModbusSerial modbus_serial(USART2);
