@@ -6,11 +6,11 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2018 STMicroelectronics. 
+  * <h2><center>&copy; Copyright (c) 2018 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
+  * the "License"; You may not use this file except in compliance with the
   * License. You may obtain a copy of the License at:
   *                        opensource.org/licenses/BSD-3-Clause
   *
@@ -322,8 +322,8 @@ typedef struct
 /** @defgroup RTC_LL_EC_ALARM_OUTPUTTYPE  ALARM OUTPUT TYPE
   * @{
   */
-#define LL_RTC_ALARM_OUTPUTTYPE_OPENDRAIN  0x00000000U            /*!< RTC_ALARM is open-drain output */
-#define LL_RTC_ALARM_OUTPUTTYPE_PUSHPULL   RTC_CR_TAMPALRM_TYPE   /*!< RTC_ALARM is push-pull output */
+#define LL_RTC_ALARM_OUTPUTTYPE_OPENDRAIN  RTC_CR_TAMPALRM_TYPE  /*!< RTC_ALARM is open-drain output */
+#define LL_RTC_ALARM_OUTPUTTYPE_PUSHPULL   0x00000000U           /*!< RTC_ALARM is push-pull output */
 /**
   * @}
   */
@@ -3056,7 +3056,7 @@ __STATIC_INLINE void LL_RTC_BKP_SetRegister(TAMP_TypeDef *TAMPx, uint32_t Backup
 
   tmp = &(TAMPx->BKP0R) + BackupRegister;
 
-  /* Write the specified register */ 
+  /* Write the specified register */
   *tmp = Data;
 }
 

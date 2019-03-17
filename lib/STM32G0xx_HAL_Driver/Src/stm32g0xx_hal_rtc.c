@@ -258,7 +258,7 @@ HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc)
     /* Allocate lock resource and initialize it */
     hrtc->Lock = HAL_UNLOCKED;
 
-    /* Process TAMP ip offset from RTC one */
+    /* Process TAMP peripheral offset from RTC one */
     hrtc->TampOffset = (TAMP_BASE - RTC_BASE);
 
 #if (USE_HAL_RTC_REGISTER_CALLBACKS == 1)

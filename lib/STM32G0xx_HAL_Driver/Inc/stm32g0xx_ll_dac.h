@@ -136,7 +136,7 @@ extern "C" {
   */
 typedef struct
 {
-  uint32_t TriggerSource;               /*!< Set the conversion trigger source for the selected DAC channel: internal (SW start) or from external IP (timer event, external interrupt line).
+  uint32_t TriggerSource;               /*!< Set the conversion trigger source for the selected DAC channel: internal (SW start) or from external peripheral (timer event, external interrupt line).
                                              This parameter can be a value of @ref DAC_LL_EC_TRIGGER_SOURCE
 
                                              This feature can be modified afterwards using unitary function @ref LL_DAC_SetTriggerSource(). */
@@ -230,15 +230,15 @@ typedef struct
   * @{
   */
 #define LL_DAC_TRIG_SOFTWARE               0x00000000U                                                         /*!< DAC channel conversion trigger internal (SW start) */
-#define LL_DAC_TRIG_EXT_TIM1_TRGO          (                                                   DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external IP: TIM1 TRGO. */
-#define LL_DAC_TRIG_EXT_TIM2_TRGO          (                                  DAC_CR_TSEL1_1                 ) /*!< DAC channel conversion trigger from external IP: TIM2 TRGO. */
-#define LL_DAC_TRIG_EXT_TIM3_TRGO          (                                  DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external IP: TIM3 TRGO. */
-#define LL_DAC_TRIG_EXT_TIM6_TRGO          (                 DAC_CR_TSEL1_2                  | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external IP: TIM6 TRGO. */
-#define LL_DAC_TRIG_EXT_TIM7_TRGO          (                 DAC_CR_TSEL1_2 | DAC_CR_TSEL1_1                 ) /*!< DAC channel conversion trigger from external IP: TIM7 TRGO. */
-#define LL_DAC_TRIG_EXT_TIM15_TRGO         (DAC_CR_TSEL1_3                                                   ) /*!< DAC channel conversion trigger from external IP: TIM15 TRGO. */
-#define LL_DAC_TRIG_EXT_LPTIM1_OUT         (DAC_CR_TSEL1_3                  | DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external IP: LPTIM1 TRGO. */
-#define LL_DAC_TRIG_EXT_LPTIM2_OUT         (DAC_CR_TSEL1_3 | DAC_CR_TSEL1_2                                  ) /*!< DAC channel conversion trigger from external IP: LPTIM2 TRGO. */
-#define LL_DAC_TRIG_EXT_EXTI_LINE9         (DAC_CR_TSEL1_3 | DAC_CR_TSEL1_2                  | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external IP: external interrupt line 9. */
+#define LL_DAC_TRIG_EXT_TIM1_TRGO          (                                                   DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external peripheral: TIM1 TRGO. */
+#define LL_DAC_TRIG_EXT_TIM2_TRGO          (                                  DAC_CR_TSEL1_1                 ) /*!< DAC channel conversion trigger from external peripheral: TIM2 TRGO. */
+#define LL_DAC_TRIG_EXT_TIM3_TRGO          (                                  DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external peripheral: TIM3 TRGO. */
+#define LL_DAC_TRIG_EXT_TIM6_TRGO          (                 DAC_CR_TSEL1_2                  | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external peripheral: TIM6 TRGO. */
+#define LL_DAC_TRIG_EXT_TIM7_TRGO          (                 DAC_CR_TSEL1_2 | DAC_CR_TSEL1_1                 ) /*!< DAC channel conversion trigger from external peripheral: TIM7 TRGO. */
+#define LL_DAC_TRIG_EXT_TIM15_TRGO         (DAC_CR_TSEL1_3                                                   ) /*!< DAC channel conversion trigger from external peripheral: TIM15 TRGO. */
+#define LL_DAC_TRIG_EXT_LPTIM1_OUT         (DAC_CR_TSEL1_3                  | DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external peripheral: LPTIM1 TRGO. */
+#define LL_DAC_TRIG_EXT_LPTIM2_OUT         (DAC_CR_TSEL1_3 | DAC_CR_TSEL1_2                                  ) /*!< DAC channel conversion trigger from external peripheral: LPTIM2 TRGO. */
+#define LL_DAC_TRIG_EXT_EXTI_LINE9         (DAC_CR_TSEL1_3 | DAC_CR_TSEL1_2                  | DAC_CR_TSEL1_0) /*!< DAC channel conversion trigger from external peripheral: external interrupt line 9. */
 /**
   * @}
   */
@@ -341,7 +341,7 @@ typedef struct
   */
 
 /** @defgroup DAC_LL_EC_HW_DELAYS  Definitions of DAC hardware constraints delays
-  * @note   Only DAC IP HW delays are defined in DAC LL driver driver,
+  * @note   Only DAC peripheral HW delays are defined in DAC LL driver driver,
   *         not timeout values.
   *         For details on delays values, refer to descriptions in source code
   *         above each literal definition.

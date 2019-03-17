@@ -76,7 +76,11 @@ typedef enum
 /** @defgroup RNG_Exported_Types_Group3 RNG Handle Structure definition
   * @{
   */
+#if (USE_HAL_RNG_REGISTER_CALLBACKS == 1)
 typedef struct  __RNG_HandleTypeDef
+#else
+typedef struct
+#endif
 {
   RNG_TypeDef                 *Instance;    /*!< Register base address   */
 
