@@ -6,7 +6,7 @@
 #include <cstdarg>
 #include <cstdint>
 
-#include "cmsis.h"
+#include "stm32g0xx.h"
 #include "SEGGER_RTT.h"
 
 static const char *log_level_strings[kLogLevelMax] = {

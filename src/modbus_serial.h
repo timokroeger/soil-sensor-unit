@@ -12,8 +12,7 @@ class ModbusSerial final : public modbus::SerialInterface {
   void Disable() override;
   void Send(const uint8_t *data, size_t length) override;
 
-  void TimerIsr();
-  void UartIsr();
+  void Isr();
 
   void set_modbus_rtu(modbus::RtuProtocol *modbus_rtu) { rtu_ = modbus_rtu; }
   bool tx_active() const { return tx_active_; }
@@ -22,8 +21,6 @@ class ModbusSerial final : public modbus::SerialInterface {
   modbus::RtuProtocol *rtu_;
 
   bool tx_active_;
-  const uint8_t *tx_data_;
-  const uint8_t *tx_data_end_;
 };
 
 #endif  // MODBUS_SERIAL_H_

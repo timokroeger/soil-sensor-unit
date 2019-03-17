@@ -2,11 +2,6 @@
 
 #include "globals.h"
 
-// MODBUS Timeouts
-void MRT_Handler() {
-  modbus_serial.TimerIsr();
-}
-
-void UART0_Handler() {
-  modbus_serial.UartIsr();
+void USART2_IRQHandler() {
+  modbus_serial.Isr();
 }

@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cstdint>
 
-#include "chip.h"
+#include "stm32g0xx.h"
 
 #include "bootloader.h"
 #include "config.h"
@@ -13,17 +13,6 @@
 #include "modbus/modbus.h"
 #include "modbus_data.h"
 #include "modbus_data_fw_update.h"
-
-static void Setup() {
-  SetupClock();
-  SetupGpio();
-  SetupAdc();
-  SetupPwm();
-  SetupTimers();
-  SetupUart(CONFIG_BAUDRATE);
-  SetupSwichMatrix();
-  SetupNVIC();
-}
 
 int main() {
   Setup();
