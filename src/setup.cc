@@ -7,8 +7,12 @@
 #include "stm32g0xx_ll_bus.h"
 #include "stm32g0xx_ll_pwr.h"
 #include "stm32g0xx_ll_rcc.h"
+#include "stm32g0xx_ll_tim.h"
 
 namespace {
+
+constexpr uint32_t kTimerClkFrequency = 128'000'000;
+constexpr uint32_t kTimerPwmFrequency = 64'000'000;
 
 // Configures PLLQCLK to output 128MHz for TIM1.
 void SetupPll() {
@@ -31,8 +35,37 @@ void SetupPll() {
   LL_RCC_SetTIMClockSource(LL_RCC_TIM1_CLKSOURCE_PLL);
 }
 
+void SetupTim1() {
+  assert(LL_RCC_GetTIMClockFreq(LL_RCC_TIM1_CLKSOURCE) == kTimerClkFrequency);
+
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
+
+  LL_TIM_InitTypeDef tim1_init;
+  LL_TIM_StructInit(&tim1_init);
+  tim1_init.Autoreload = (kTimerClkFrequency / kTimerPwmFrequency) - 1;
+  LL_TIM_Init(TIM1, &tim1_init);
+
+  // Setup a complementary 50% duty cycle PWM.
+  LL_TIM_OC_InitTypeDef tim1_oc_init;
+  LL_TIM_OC_StructInit(&tim1_oc_init);
+  tim1_oc_init.CompareValue = (kTimerClkFrequency / kTimerPwmFrequency) / 2;
+
+  tim1_oc_init.OCMode = LL_TIM_OCMODE_PWM1;
+  tim1_oc_init.OCState = LL_TIM_OCSTATE_ENABLE;
+  tim1_oc_init.OCNState = LL_TIM_OCSTATE_DISABLE;
+  LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH1, &tim1_oc_init);
+
+  tim1_oc_init.OCMode = LL_TIM_OCMODE_PWM2;
+  tim1_oc_init.OCState = LL_TIM_OCSTATE_DISABLE;
+  tim1_oc_init.OCNState = LL_TIM_OCSTATE_ENABLE;
+  LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &tim1_oc_init);
+
+  LL_TIM_EnableCounter(TIM1);
+}
+
 }  // namespace
 
 void Setup() {
   SetupPll();
+  SetupTim1();
 }
