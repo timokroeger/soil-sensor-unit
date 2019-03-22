@@ -10,7 +10,9 @@
 
 class ModbusSerial final : public modbus::SerialInterface {
  public:
-  explicit ModbusSerial(USART_TypeDef *usart);
+  explicit ModbusSerial(USART_TypeDef *usart) : usart_(usart) {}
+
+  void Init();
 
   void Enable() override;
   void Disable() override;

@@ -4,7 +4,7 @@
 
 #include "stm32g0xx_ll_usart.h"
 
-ModbusSerial::ModbusSerial(USART_TypeDef *usart) : usart_(usart) {
+void ModbusSerial::Init() {
   LL_USART_InitTypeDef usart_init{
       .PrescalerValue = LL_USART_PRESCALER_DIV1,
       .BaudRate = 19200,

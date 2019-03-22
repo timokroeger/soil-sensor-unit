@@ -10,6 +10,8 @@
 #include "stm32g0xx_ll_rcc.h"
 #include "stm32g0xx_ll_tim.h"
 
+#include "globals.h"
+
 namespace {
 
 constexpr uint32_t kTimerClkFrequency = 128'000'000;
@@ -113,5 +115,6 @@ void Setup() {
   SetupBus();
   SetupPll();
   SetupTim1();
+  modbus_serial.Init();
   SetupGpio();
 }
