@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "stm32g0xx_ll_bus.h"
+#include "stm32g0xx_ll_gpio.h"
 #include "stm32g0xx_ll_pwr.h"
 #include "stm32g0xx_ll_rcc.h"
 #include "stm32g0xx_ll_tim.h"
@@ -65,10 +66,52 @@ void SetupTim1() {
   LL_TIM_EnableCounter(TIM1);
 }
 
+void SetupGpio() {
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB | LL_IOP_GRP1_PERIPH_GPIOA);
+
+  // TIM
+  LL_GPIO_InitTypeDef gpio_tim_init;
+  gpio_tim_init.Mode = LL_GPIO_MODE_ALTERNATE;
+  gpio_tim_init.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  gpio_tim_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  gpio_tim_init.Pull = LL_GPIO_PULL_NO;
+  gpio_tim_init.Alternate = LL_GPIO_AF_2;
+
+  // TIM1_CH1 - PB1
+  gpio_tim_init.Pin = LL_GPIO_PIN_1;
+  LL_GPIO_Init(GPIOB, &gpio_tim_init);
+
+  // TIM1_CH3N - PA8
+  gpio_tim_init.Pin = LL_GPIO_PIN_8;
+  LL_GPIO_Init(GPIOA, &gpio_tim_init);
+
+  // USART
+  LL_GPIO_InitTypeDef gpio_usart_init;
+  gpio_usart_init.Mode = LL_GPIO_MODE_ALTERNATE;
+  gpio_usart_init.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  gpio_usart_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  gpio_usart_init.Pull = LL_GPIO_PULL_NO;
+  gpio_usart_init.Alternate = LL_GPIO_AF_1;
+
+  // USART2_DE - PA1
+  gpio_usart_init.Pin = LL_GPIO_PIN_1;
+  LL_GPIO_Init(GPIOA, &gpio_usart_init);
+
+  // USART2_TX - PA2
+  gpio_usart_init.Pin = LL_GPIO_PIN_2;
+  LL_GPIO_Init(GPIOA, &gpio_usart_init);
+
+  // USART2_RX - PA3
+  gpio_usart_init.Pin = LL_GPIO_PIN_3;
+  gpio_usart_init.Pull = LL_GPIO_PULL_UP;
+  LL_GPIO_Init(GPIOA, &gpio_usart_init);
+}
+
 }  // namespace
 
 void Setup() {
   SetupBus();
   SetupPll();
   SetupTim1();
+  SetupGpio();
 }
