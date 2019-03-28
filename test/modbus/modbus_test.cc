@@ -28,7 +28,10 @@ class DataMock : public DataInterface {
 
 class ModbusTest : public ::testing::Test {
  protected:
-  ModbusTest() : data_(), protocol_(), modbus_(protocol_, data_) {}
+  ModbusTest() : data_(), protocol_(), modbus_(protocol_, data_) {
+    ON_CALL(data_, ReadRegister(_, _)).WillByDefault(Return(true));
+    ON_CALL(data_, WriteRegister(_, _)).WillByDefault(Return(true));
+  }
 
   void SetUp() override { modbus_.set_address(1); }
 

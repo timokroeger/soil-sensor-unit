@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "etl/bit_stream.h"
 #include "etl/vector.h"
 
 #include "modbus/data_interface.h"
@@ -22,7 +23,7 @@ class Modbus {
 
   // Processes a request and sends a response.
   // Does nothing when no request is available.
-  // Returns true when a request was processed, false otherwise.
+  // Returns true when a request was processed successfully, false otherwise.
   bool Execute();
 
   // Valid range 1-247 inclusive.
@@ -50,9 +51,9 @@ class Modbus {
   void ResponseAddByte(uint8_t byte);
   void ResponseAddWord(uint16_t word);
 
-  ExceptionCode ReadInputRegister(etl::const_array_view<uint8_t> data);
-  ExceptionCode WriteSingleRegister(etl::const_array_view<uint8_t> data);
-  ExceptionCode WriteMultipleRegisters(etl::const_array_view<uint8_t> data);
+  ExceptionCode ReadInputRegister(etl::bit_stream& data);
+  ExceptionCode WriteSingleRegister(etl::bit_stream& data);
+  ExceptionCode WriteMultipleRegisters(etl::bit_stream& data);
 
   int address_;
   ProtocolInterface& protocol_;
