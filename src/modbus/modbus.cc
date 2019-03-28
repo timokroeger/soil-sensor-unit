@@ -7,23 +7,23 @@ bool Modbus::Execute() {
     return false;
   }
 
-  resp_buffer_.clear();
+  response_.restart();
 
   etl::const_array_view<uint8_t> fd = protocol_.ReadFrame();
-  etl::bit_stream request(const_cast<uint8_t *>(fd.begin()), fd.size());
+  etl::bit_stream request(const_cast<uint8_t*>(fd.begin()), fd.size());
 
   // TODO: Allow broadcasts (addr = 0)
   uint8_t addr;
   if (!request.get<uint8_t>(addr) && addr != address_) {
     return false;
   }
-  ResponseAddByte(addr);
+  response_.put(addr);
 
   uint8_t fn_code;
   if (!request.get<uint8_t>(fn_code)) {
     return false;
   }
-  ResponseAddByte(fn_code);
+  response_.put(fn_code);
 
   ExceptionCode exception = ExceptionCode::kOk;
   switch (static_cast<FunctionCode>(fn_code)) {
@@ -45,34 +45,21 @@ bool Modbus::Execute() {
       break;
   }
 
-  if (exception == ExceptionCode::kInvalidFrame) {
-    // Ignore malformed request data.
-    return false;
-  }
-
   if (exception == ExceptionCode::kOk) {
     if (!request.at_end()) {
-      // Additional bytes at the end also indicate 
+      // Additional bytes at the end also indicate
       return false;
     }
   } else {
     // Forge exception response.
-    resp_buffer_.clear();  // Discard all of the invalid response.
-    ResponseAddByte(addr);
-    ResponseAddByte(fn_code | 0x80);  // Flag response as exception.
-    ResponseAddByte(static_cast<uint8_t>(exception));
+    response_.restart();  // Discard all of the invalid response.
+    response_.put(addr);
+    response_.put<uint8_t>(fn_code | 0x80);  // Flag response as exception.
+    response_.put<uint8_t>(static_cast<uint8_t>(exception));
   }
 
-  protocol_.WriteFrame({resp_buffer_.begin(), resp_buffer_.end()});
+  protocol_.WriteFrame({response_.begin(), response_.end()});
   return true;
-}
-
-void Modbus::ResponseAddByte(uint8_t b) { resp_buffer_.push_back(b); }
-
-void Modbus::ResponseAddWord(uint16_t word) {
-  // Modbus uses big endian byte order.
-  resp_buffer_.push_back(static_cast<uint8_t>(word >> 8));
-  resp_buffer_.push_back(static_cast<uint8_t>(word));
 }
 
 Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
@@ -92,7 +79,7 @@ Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
     return ExceptionCode::kIllegalDataValue;
   }
 
-  ResponseAddByte(quantity_regs * 2);  // Byte Count
+  response_.put<uint8_t>(quantity_regs * 2);  // Byte Count
 
   // Add all requested registers to the response.
   for (int i = 0; i < quantity_regs; i++) {
@@ -103,7 +90,7 @@ Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
       return ExceptionCode::kIllegalDataAddress;
     }
 
-    ResponseAddWord(reg_content);
+    response_.put(reg_content);
   }
 
   return ExceptionCode::kOk;
@@ -125,8 +112,8 @@ Modbus::ExceptionCode Modbus::WriteSingleRegister(etl::bit_stream& data) {
     return ExceptionCode::kIllegalDataAddress;
   }
 
-  ResponseAddWord(wr_addr);
-  ResponseAddWord(wr_data);
+  response_.put(wr_addr);
+  response_.put(wr_data);
   return ExceptionCode::kOk;
 }
 
@@ -165,8 +152,8 @@ Modbus::ExceptionCode Modbus::WriteMultipleRegisters(etl::bit_stream& data) {
     }
   }
 
-  ResponseAddWord(starting_addr);
-  ResponseAddWord(quantity_regs);
+  response_.put(starting_addr);
+  response_.put(quantity_regs);
   return ExceptionCode::kOk;
 }
 

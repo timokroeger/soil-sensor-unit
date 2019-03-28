@@ -6,8 +6,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "etl/array.h"
 #include "etl/bit_stream.h"
-#include "etl/vector.h"
 
 #include "modbus/data_interface.h"
 #include "modbus/protocol_interface.h"
@@ -19,7 +19,10 @@ namespace modbus {
 class Modbus {
  public:
   Modbus(ProtocolInterface& protocol, DataInterface& data)
-      : address_(-1), protocol_(protocol), data_(data) {}
+      : address_(-1),
+        protocol_(protocol),
+        data_(data),
+        response_(resp_buffer_.begin(), resp_buffer_.end()) {}
 
   // Processes a request and sends a response.
   // Does nothing when no request is available.
@@ -48,9 +51,6 @@ class Modbus {
     kIllegalDataValue,
   };
 
-  void ResponseAddByte(uint8_t byte);
-  void ResponseAddWord(uint16_t word);
-
   ExceptionCode ReadInputRegister(etl::bit_stream& data);
   ExceptionCode WriteSingleRegister(etl::bit_stream& data);
   ExceptionCode WriteMultipleRegisters(etl::bit_stream& data);
@@ -58,7 +58,8 @@ class Modbus {
   int address_;
   ProtocolInterface& protocol_;
   DataInterface& data_;
-  etl::vector<uint8_t, ProtocolInterface::kMaxFrameSize> resp_buffer_;
+  etl::array<uint8_t, ProtocolInterface::kMaxFrameSize> resp_buffer_;
+  etl::bit_stream response_;
 };
 
 }  // namespace modbus
