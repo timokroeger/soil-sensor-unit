@@ -20,7 +20,7 @@ using RtuBuffer = etl::vector<uint8_t, ProtocolInterface::kMaxFrameSize>;
 
 // Events (externel events are inherited from SerialInterfaceEvents)
 struct TxStart {
-  FrameData data;
+  etl::const_array_view<uint8_t> data;
 };
 struct Enable {};
 struct Disable {};

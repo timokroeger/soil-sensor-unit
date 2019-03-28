@@ -11,7 +11,7 @@ bool Modbus::Execute() {
     return false;
   }
 
-  FrameData fd = protocol_.ReadFrame();
+  etl::const_array_view<uint8_t> fd = protocol_.ReadFrame();
   if (fd.size() < 2) {
     return false;
   }
@@ -28,7 +28,7 @@ bool Modbus::Execute() {
   ResponseAddByte(fn_code);
 
   // Discard adress and function code from data.
-  FrameData data(&fd[2], fd.size() - 2);
+  etl::const_array_view<uint8_t> data(&fd[2], fd.size() - 2);
 
   ExceptionCode exception = ExceptionCode::kOk;
   switch (static_cast<FunctionCode>(fn_code)) {
@@ -72,7 +72,7 @@ void Modbus::ResponseAddWord(uint16_t word) {
   resp_buffer_.push_back(static_cast<uint8_t>(word));
 }
 
-Modbus::ExceptionCode Modbus::ReadInputRegister(FrameData data) {
+Modbus::ExceptionCode Modbus::ReadInputRegister(etl::const_array_view<uint8_t> data) {
   if (data.size() != 4) {
     return ExceptionCode::kInvalidFrame;
   }
@@ -103,7 +103,7 @@ Modbus::ExceptionCode Modbus::ReadInputRegister(FrameData data) {
   return ExceptionCode::kOk;
 }
 
-Modbus::ExceptionCode Modbus::WriteSingleRegister(FrameData data) {
+Modbus::ExceptionCode Modbus::WriteSingleRegister(etl::const_array_view<uint8_t> data) {
   if (data.size() != 4) {
     return ExceptionCode::kInvalidFrame;
   }
@@ -121,7 +121,7 @@ Modbus::ExceptionCode Modbus::WriteSingleRegister(FrameData data) {
   return ExceptionCode::kOk;
 }
 
-Modbus::ExceptionCode Modbus::WriteMultipleRegisters(FrameData data) {
+Modbus::ExceptionCode Modbus::WriteMultipleRegisters(etl::const_array_view<uint8_t> data) {
   if (data.size() < 5) {
     return ExceptionCode::kInvalidFrame;
   }

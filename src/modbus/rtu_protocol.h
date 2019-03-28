@@ -28,12 +28,12 @@ class RtuProtocol final : public ProtocolInterface {
 
   virtual bool FrameAvailable() override { return frame_available_; };
 
-  virtual FrameData ReadFrame() override {
+  virtual etl::const_array_view<uint8_t> ReadFrame() override {
     frame_available_ = false;
     return {buffer_.data(), buffer_.size()};
   };
 
-  virtual void WriteFrame(FrameData fd) override {
+  virtual void WriteFrame(etl::const_array_view<uint8_t> fd) override {
     impl_.process_event(internal::TxStart{fd});
   };
 

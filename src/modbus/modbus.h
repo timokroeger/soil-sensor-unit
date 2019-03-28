@@ -50,9 +50,9 @@ class Modbus {
   void ResponseAddByte(uint8_t byte);
   void ResponseAddWord(uint16_t word);
 
-  ExceptionCode ReadInputRegister(FrameData data);
-  ExceptionCode WriteSingleRegister(FrameData data);
-  ExceptionCode WriteMultipleRegisters(FrameData data);
+  ExceptionCode ReadInputRegister(etl::const_array_view<uint8_t> data);
+  ExceptionCode WriteSingleRegister(etl::const_array_view<uint8_t> data);
+  ExceptionCode WriteMultipleRegisters(etl::const_array_view<uint8_t> data);
 
   int address_;
   ProtocolInterface& protocol_;

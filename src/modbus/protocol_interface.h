@@ -9,8 +9,6 @@
 
 namespace modbus {
 
-using FrameData = etl::const_array_view<uint8_t>;
-
 // Interface class for underlying Modbus protocol.
 // Possible specializations are RTU, ASCII or TCP.
 class ProtocolInterface {
@@ -24,10 +22,10 @@ class ProtocolInterface {
 
   // Read the last received frame.
   // Behavior is undefined when no frame is available. 
-  virtual FrameData ReadFrame() = 0;
+  virtual etl::const_array_view<uint8_t> ReadFrame() = 0;
 
   // Write a frame to the protocol layer.
-  virtual void WriteFrame(FrameData fd) = 0;
+  virtual void WriteFrame(etl::const_array_view<uint8_t> fd) = 0;
 };
 
 }  // namespace modbus
