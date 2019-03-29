@@ -22,7 +22,7 @@ class RtuProtocolTest : public ::testing::Test {
     rtu_.Enable();
 
     rtu_.Notify(SerialInterfaceEvents::BusIdle{});
-    ASSERT_EQ(rtu_.FrameAvailable(), false);
+    ASSERT_FALSE(rtu_.FrameAvailable());
   }
 
   void RxFrame(etl::const_array_view<uint8_t> data) {
@@ -46,26 +46,28 @@ TEST_F(RtuProtocolTest, IdleWithoutData) {
   // The interface implementor wrongly sends a timeout notification despite not
   // receiving any data beforehand.
   rtu_.Notify(SerialInterfaceEvents::BusIdle{});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+  ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, ReceiveFrameTooShort) {
   const uint8_t data[] = {0xFF};
   RxFrame(etl::const_array_view<uint8_t>{data});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+  ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, ReceiveFrameOnlyCrc) {
   const uint8_t data[] = {0xFF, 0xFF};
   RxFrame(etl::const_array_view<uint8_t>{data});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+  ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, ReceiveFrame) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
+
   RxFrame(etl::const_array_view<uint8_t>{data});
+  ASSERT_TRUE(rtu_.FrameAvailable());
+
   etl::const_array_view<uint8_t> out(data, 1);
-  ASSERT_EQ(rtu_.FrameAvailable(), true);
   ASSERT_EQ(rtu_.ReadFrame(), out);
 }
 
@@ -76,7 +78,7 @@ TEST_F(RtuProtocolTest, ReceiveLongFrame) {
 
   RxFrame(etl::array_view<uint8_t>{data});
   etl::array_view<uint8_t> out(data, 254);
-  ASSERT_EQ(rtu_.FrameAvailable(), true);
+  ASSERT_TRUE(rtu_.FrameAvailable());
   ASSERT_EQ(rtu_.ReadFrame(), out);
 }
 
@@ -87,7 +89,7 @@ TEST_F(RtuProtocolTest, ReceiveParityError) {
   rtu_.Notify(SerialInterfaceEvents::RxByte{data[0], true});
   rtu_.Notify(SerialInterfaceEvents::RxByte{data[1], false});
   rtu_.Notify(SerialInterfaceEvents::BusIdle{});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+  ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, SendFrame) {
@@ -115,14 +117,14 @@ TEST_F(RtuProtocolTest, TransmissionSequence) {
   etl::const_array_view<uint8_t> data_recv{data, 1};
 
   RxFrame(etl::const_array_view<uint8_t>{data});
-  ASSERT_EQ(rtu_.FrameAvailable(), true);
+  ASSERT_TRUE(rtu_.FrameAvailable());
   ASSERT_EQ(rtu_.ReadFrame(), data_recv);
 
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
   TxFrame(etl::const_array_view<uint8_t>{data, 1});
 
   RxFrame(etl::const_array_view<uint8_t>{data});
-  ASSERT_EQ(rtu_.FrameAvailable(), true);
+  ASSERT_TRUE(rtu_.FrameAvailable());
   ASSERT_EQ(rtu_.ReadFrame(), data_recv);
 
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
@@ -149,7 +151,7 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
 
   // Check received data
   rtu_.Notify(SerialInterfaceEvents::BusIdle{});
-  ASSERT_EQ(rtu_.FrameAvailable(), true);
+  ASSERT_TRUE(rtu_.FrameAvailable());
 
   etl::const_array_view<uint8_t> out(data_recv, 1);
   ASSERT_EQ(rtu_.ReadFrame(), out);
@@ -163,7 +165,7 @@ TEST_F(RtuProtocolTest, ReceiveDuringSend) {
   // Ignore received data.
   const uint8_t data_recv[] = {0x56, 0x3F, 0x7E};
   RxFrame(etl::const_array_view<uint8_t>{data_recv});
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+  ASSERT_FALSE(rtu_.FrameAvailable());
 
   // Finish send operation.
   rtu_.Notify(SerialInterfaceEvents::TxDone{});
@@ -174,9 +176,16 @@ TEST_F(RtuProtocolTest, DisabledBehaviour) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
   RxFrame(etl::const_array_view<uint8_t>{data});
 
-  // No frames can be read when disabled.
+  EXPECT_CALL(serial_, Disable());
   rtu_.Disable();
-  ASSERT_EQ(rtu_.FrameAvailable(), false);
+
+  // Frame received during enabled state is still availble.
+  ASSERT_TRUE(rtu_.FrameAvailable());
+  rtu_.ReadFrame();
+
+  // No further frames can be read when disabled.
+  RxFrame(etl::const_array_view<uint8_t>{data});
+  ASSERT_FALSE(rtu_.FrameAvailable());
 
   // No data can be sent when disabled.
   EXPECT_CALL(serial_, Send(_, _)).Times(0);

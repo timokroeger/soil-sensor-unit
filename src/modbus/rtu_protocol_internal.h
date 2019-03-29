@@ -77,12 +77,11 @@ struct RtuProtocol : public SerialInterfaceEvents {
       // clang-format off
       return make_transition_table(
         *state<Init>       + event<BusIdle>                                 = state<Idle>
-        ,state<Idle>       + sml::on_exit<_>                 / invalidate
 
         // Receiving a valid frame
         ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
         ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
-        ,state<Receiving>  + on_entry<RxByte>                / add_byte
+        ,state<Receiving>  + on_entry<RxByte>                / (invalidate, add_byte)
         ,state<Receiving>  + event<BusIdle>                  / check_frame  = state<Idle>
 
         // Receiving an invalid frame
