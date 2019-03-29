@@ -3,7 +3,6 @@
 
 #include "modbus/data_interface.h"
 #include "modbus/modbus.h"
-#include "modbus/protocol_interface.h"
 
 using ::testing::_;
 using ::testing::InSequence;
@@ -13,13 +12,6 @@ using ::testing::StrictMock;
 
 namespace modbus {
 
-class ProtocolMock : public ProtocolInterface {
- public:
-  MOCK_METHOD0(FrameAvailable, bool());
-  MOCK_METHOD0(ReadFrame, etl::const_array_view<uint8_t>());
-  MOCK_METHOD1(WriteFrame, void(etl::const_array_view<uint8_t>));
-};
-
 class DataMock : public DataInterface {
  public:
   MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
@@ -28,7 +20,7 @@ class DataMock : public DataInterface {
 
 class ModbusTest : public ::testing::Test {
  protected:
-  ModbusTest() : data_(), protocol_(), modbus_(protocol_, data_) {
+  ModbusTest() : data_(), modbus_(data_) {
     ON_CALL(data_, ReadRegister(_, _)).WillByDefault(Return(true));
     ON_CALL(data_, WriteRegister(_, _)).WillByDefault(Return(true));
   }
@@ -45,7 +37,6 @@ class ModbusTest : public ::testing::Test {
     ASSERT_FALSE(modbus_.Execute(req));
   }
 
-  ProtocolMock protocol_;
   DataMock data_;
   Modbus modbus_;
 };

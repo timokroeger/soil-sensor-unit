@@ -36,7 +36,7 @@ int main() {
   ModbusDataFwUpdate fw_update(bootloader);
   ModbusData modbus_data(fw_update);
 
-  modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
+  modbus::Modbus modbus_stack(modbus_data);
   modbus_stack.set_address(CONFIG_SENSOR_ID);
 
   modbus_rtu.Enable();

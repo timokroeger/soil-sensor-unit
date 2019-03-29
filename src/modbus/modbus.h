@@ -7,11 +7,11 @@
 #include <stdint.h>
 
 #include "etl/array.h"
+#include "etl/array_view.h"
 #include "etl/bit_stream.h"
 #include "etl/optional.h"
 
 #include "modbus/data_interface.h"
-#include "modbus/protocol_interface.h"
 
 namespace modbus {
 
@@ -19,9 +19,8 @@ namespace modbus {
 // data interface.
 class Modbus {
  public:
-  Modbus(ProtocolInterface& protocol, DataInterface& data)
+  explicit Modbus(DataInterface& data)
       : address_(-1),
-        protocol_(protocol),
         data_(data),
         response_(resp_buffer_.begin(), resp_buffer_.end()) {}
 
@@ -52,14 +51,15 @@ class Modbus {
     kIllegalDataValue,
   };
 
+  static constexpr size_t kMaxFrameSize = 256;
+
   ExceptionCode ReadInputRegister(etl::bit_stream& data);
   ExceptionCode WriteSingleRegister(etl::bit_stream& data);
   ExceptionCode WriteMultipleRegisters(etl::bit_stream& data);
 
   int address_;
-  ProtocolInterface& protocol_;
   DataInterface& data_;
-  etl::array<uint8_t, ProtocolInterface::kMaxFrameSize> resp_buffer_;
+  etl::array<uint8_t, kMaxFrameSize> resp_buffer_;
   etl::bit_stream response_;
 };
 

@@ -3,20 +3,20 @@
 #ifndef MODBUS_RTU_PROTOCOL_H_
 #define MODBUS_RTU_PROTOCOL_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
 #include "boost/sml.hpp"
 
-#include "modbus/protocol_interface.h"
 #include "modbus/rtu_protocol_internal.h"
 
 namespace modbus {
 
 namespace sml = boost::sml;
 
-class RtuProtocol final : public ProtocolInterface {
+class RtuProtocol {
  public:
-  explicit RtuProtocol(SerialInterface& serial) : impl_(serial, buffer_, frame_available_) {}
+  explicit RtuProtocol(SerialInterface& serial)
+      : impl_(serial, buffer_, frame_available_) {}
 
   void Enable() { impl_.process_event(internal::Enable{}); }
   void Disable() { impl_.process_event(internal::Disable{}); }
@@ -26,14 +26,14 @@ class RtuProtocol final : public ProtocolInterface {
     impl_.process_event(std::forward<Args>(args)...);
   }
 
-  virtual bool FrameAvailable() override { return frame_available_; };
+  bool FrameAvailable() { return frame_available_; };
 
-  virtual etl::const_array_view<uint8_t> ReadFrame() override {
+  etl::const_array_view<uint8_t> ReadFrame() {
     frame_available_ = false;
     return {buffer_.data(), buffer_.size()};
   };
 
-  virtual void WriteFrame(etl::const_array_view<uint8_t> fd) override {
+  void WriteFrame(etl::const_array_view<uint8_t> fd) {
     impl_.process_event(internal::TxStart{fd});
   };
 

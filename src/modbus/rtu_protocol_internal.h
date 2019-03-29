@@ -6,6 +6,7 @@
 #include "assert.h"
 
 #include "boost/sml.hpp"
+#include "etl/array_view.h"
 #include "etl/crc16_modbus.h"
 #include "etl/vector.h"
 
@@ -16,7 +17,7 @@ namespace internal {
 
 namespace sml = boost::sml;
 
-using RtuBuffer = etl::vector<uint8_t, ProtocolInterface::kMaxFrameSize>;
+using RtuBuffer = etl::vector<uint8_t, 256>;
 
 // Events (externel events are inherited from SerialInterfaceEvents)
 struct TxStart {
