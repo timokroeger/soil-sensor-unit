@@ -8,6 +8,7 @@
 
 #include "etl/array.h"
 #include "etl/bit_stream.h"
+#include "etl/optional.h"
 
 #include "modbus/data_interface.h"
 #include "modbus/protocol_interface.h"
@@ -24,10 +25,10 @@ class Modbus {
         data_(data),
         response_(resp_buffer_.begin(), resp_buffer_.end()) {}
 
-  // Processes a request and sends a response.
-  // Does nothing when no request is available.
-  // Returns true when a request was processed successfully, false otherwise.
-  bool Execute();
+  // Processes a request and creates a response.
+  // Returns some array_view of the response data.
+  etl::optional<etl::const_array_view<uint8_t>> Execute(
+      etl::const_array_view<uint8_t> fd);
 
   // Valid range 1-247 inclusive.
   int address() const { return address_; }

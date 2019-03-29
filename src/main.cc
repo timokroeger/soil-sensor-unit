@@ -43,7 +43,13 @@ int main() {
 
   // Main loop.
   for (;;) {
-    modbus_stack.Execute();
+    if (modbus_rtu.FrameAvailable()) {
+      auto req = modbus_rtu.ReadFrame();
+      auto resp = modbus_stack.Execute(req);
+      if (resp) {
+        modbus_rtu.WriteFrame(resp.value());
+      }
+    }
 
     if (modbus_data.reset() && !modbus_serial.tx_active()) {
       NVIC_SystemReset();

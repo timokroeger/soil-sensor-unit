@@ -36,32 +36,19 @@ class ModbusTest : public ::testing::Test {
   void SetUp() override { modbus_.set_address(1); }
 
   void RequestResponse(etl::const_array_view<uint8_t> req, etl::const_array_view<uint8_t> resp) {
-    InSequence sequence_dummy;
-    EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(true));
-    EXPECT_CALL(protocol_, ReadFrame()).WillOnce(Return(req));
-    EXPECT_CALL(protocol_, WriteFrame(resp));
-    modbus_.Execute();
+    auto resp_data = modbus_.Execute(req);
+    ASSERT_TRUE(resp_data);
+    ASSERT_EQ(resp_data.value(), resp);
   }
 
   void RequestNoResponse(etl::const_array_view<uint8_t> req) {
-    InSequence sequence_dummy;
-    EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(true));
-    EXPECT_CALL(protocol_, ReadFrame()).WillOnce(Return(req));
-    EXPECT_CALL(protocol_, WriteFrame(_)).Times(0);
-    modbus_.Execute();
+    ASSERT_FALSE(modbus_.Execute(req));
   }
 
   ProtocolMock protocol_;
   DataMock data_;
   Modbus modbus_;
 };
-
-TEST_F(ModbusTest, FrameNotAvailable) {
-  EXPECT_CALL(protocol_, FrameAvailable()).WillOnce(Return(false));
-  EXPECT_CALL(protocol_, ReadFrame()).Times(0);
-  EXPECT_CALL(protocol_, WriteFrame(_)).Times(0);
-  modbus_.Execute();
-}
 
 TEST_F(ModbusTest, ReadInputRegister) {
   const uint8_t request[] = {

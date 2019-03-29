@@ -2,26 +2,23 @@
 
 namespace modbus {
 
-bool Modbus::Execute() {
-  if (!protocol_.FrameAvailable()) {
-    return false;
-  }
+etl::optional<etl::const_array_view<uint8_t>> Modbus::Execute(
+    etl::const_array_view<uint8_t> fd) {
+  // const_cast: No modifying methods like bit_stream.put() can be used.
+  etl::bit_stream request(const_cast<uint8_t*>(fd.begin()), fd.size());
 
   response_.restart();
-
-  etl::const_array_view<uint8_t> fd = protocol_.ReadFrame();
-  etl::bit_stream request(const_cast<uint8_t*>(fd.begin()), fd.size());
 
   // TODO: Allow broadcasts (addr = 0)
   uint8_t addr;
   if (!request.get<uint8_t>(addr) && addr != address_) {
-    return false;
+    return etl::nullopt;
   }
   response_.put(addr);
 
   uint8_t fn_code;
   if (!request.get<uint8_t>(fn_code)) {
-    return false;
+    return etl::nullopt;
   }
   response_.put(fn_code);
 
@@ -47,10 +44,14 @@ bool Modbus::Execute() {
 
   if (exception == ExceptionCode::kOk) {
     if (!request.at_end()) {
-      // Additional bytes at the end also indicate
-      return false;
+      // Additional bytes at the end make a frame invalid.
+      return etl::nullopt;
     }
   } else {
+    if (exception == ExceptionCode::kInvalidFrame) {
+      return etl::nullopt;
+    }
+
     // Forge exception response.
     response_.restart();  // Discard all of the invalid response.
     response_.put(addr);
@@ -58,8 +59,7 @@ bool Modbus::Execute() {
     response_.put<uint8_t>(static_cast<uint8_t>(exception));
   }
 
-  protocol_.WriteFrame({response_.begin(), response_.end()});
-  return true;
+  return {{response_.begin(), response_.end()}};
 }
 
 Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
