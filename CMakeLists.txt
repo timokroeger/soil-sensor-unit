@@ -8,9 +8,11 @@ project(GaMoSy-SSU VERSION 0.255 LANGUAGES C CXX)
 
 # Global compiler and linker configuration ------------------------------------------------------ #
 
+set(CPU_FLAGS -mthumb -mcpu=cortex-m0)
+
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 add_compile_options(
-  -mthumb -mcpu=cortex-m0plus
+  ${CPU_FLAGS}
 
   # Won’t fit in memory if not optimized for size.
   -ffunction-sections -fdata-sections
@@ -30,7 +32,6 @@ add_compile_definitions(NDEBUG)
 link_directories(src/config/linker)  # Path of linker scripts
 add_link_options(
   ${CPU_FLAGS}
-  ${LTO_FLAGS}
   -Wl,--gc-sections
 )
 
