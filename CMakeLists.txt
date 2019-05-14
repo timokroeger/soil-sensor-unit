@@ -103,4 +103,4 @@ generate_object(firmware firmware_image.hex ihex firmware_image.bin binary)
 
 # If flashed accidentally it is rejected by the bootloader because it has no header or signature.
 # Remove it right after building to prevent accidental flashing.
-file(REMOVE firmware.hex)
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/firmware.hex)
