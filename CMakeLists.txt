@@ -11,14 +11,21 @@ project(GaMoSy-SSU VERSION 0.255 LANGUAGES C CXX)
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 add_compile_options(
   -mthumb -mcpu=cortex-m0plus
+
+  # Won’t fit in memory if not optimized for size.
   -ffunction-sections -fdata-sections
-  $<$<OR:$<CONFIG:MinSizeRel>,$<CONFIG:Release>>:-flto>
+  -Os -flto
+
+  # Debug information does not increase binary size (LTO strip it anyway)
+  -g
 
   # Minimize C++ runtime overhead.
   $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
   $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
   $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>  # Disable static destructors.
 )
+
+add_compile_definitions(NDEBUG)
 
 link_directories(src/config/linker)  # Path of linker scripts
 add_link_options(

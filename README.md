@@ -19,16 +19,14 @@ Alternatively you can use docker to setup a build environment:
 ### Firmware
 
 The project consists of a bootloader and the actual firmware image.
-A size optimized build must be used for the bootloader or it won’t fit in its
-reserved flash memory area.
 The firmware image is signed by the mcuboot imgtool scripts which adds a header
 and a signature to it. In additional to direct flashing with a programmer the
 resulting firmware_image.hex file can be used to update the firmware over
 modbus in the field.
 
     mkdir build && cd build
-    cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G Ninja ..
-    ninja boot # The bootloader only fits with CMAKE_BUILD_TYPE=MinSizeRel
+    cmake -G Ninja ..
+    ninja boot
     ninja firmware
 
 ### Unit tests
