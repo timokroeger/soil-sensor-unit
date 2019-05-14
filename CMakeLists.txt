@@ -48,6 +48,8 @@ target_link_libraries(boot mcuboot LPC8xx
   -Wl,-Tboot.ld
 )
 
+firmware_size(boot)
+
 generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
 
 # Firmware Target -------------------------------------------------------------------------------- #
@@ -90,6 +92,8 @@ target_link_libraries(firmware
   -specs=nosys.specs -specs=nano.specs
   -Wl,-Tfirmware.ld
 )
+
+firmware_size(firmware)
 
 # Generate firmware_image.hex for direct flashing with a programmer and firmware_image.bin for
 # updates via MODBUS.
