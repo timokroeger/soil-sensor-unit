@@ -34,6 +34,6 @@ modbus in the field.
 The unit tests use the google test/mock framework and run on the host computer.
 
     mkdir -p build/test && cd build/test
-    cmake -G Ninja ../test
+    cmake -G Ninja ../../test
     ninja
     ./ssu_test
