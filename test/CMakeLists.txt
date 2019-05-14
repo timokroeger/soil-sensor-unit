@@ -13,7 +13,7 @@ add_subdirectory(../lib/googletest ./lib/googletest EXCLUDE_FROM_ALL)
 include_directories(../src)
 add_executable(ssu_test
   ../src/modbus_data_fw_update.cc
-  ../src/modbus/modbus.cc
+  ../src/modbus/slave.cc
   modbus_data_fw_update_test.cc
   modbus/modbus_test.cc
   modbus/rtu_protocol_test.cc

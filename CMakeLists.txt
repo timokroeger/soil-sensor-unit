@@ -82,7 +82,7 @@ add_executable(firmware
   src/modbus_data_fw_update.cc
   src/modbus_data.cc
   src/modbus_serial.cc
-  src/modbus/modbus.cc
+  src/modbus/slave.cc
   src/setup.cc
   src/startup.cc
 )
