@@ -1,8 +1,8 @@
-#include "modbus/modbus.h"
+#include "modbus/slave.h"
 
 namespace modbus {
 
-etl::optional<etl::const_array_view<uint8_t>> Modbus::Execute(
+etl::optional<etl::const_array_view<uint8_t>> Slave::Execute(
     etl::const_array_view<uint8_t> fd) {
   // const_cast: No modifying methods like bit_stream.put() can be used.
   etl::bit_stream request(const_cast<uint8_t*>(fd.begin()), fd.size());
@@ -62,7 +62,7 @@ etl::optional<etl::const_array_view<uint8_t>> Modbus::Execute(
   return {{response_.begin(), response_.end()}};
 }
 
-Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
+ExceptionCode Slave::ReadInputRegister(etl::bit_stream& data) {
   uint16_t starting_addr;
   if (!data.get<uint16_t>(starting_addr)) {
     return ExceptionCode::kInvalidFrame;
@@ -96,7 +96,7 @@ Modbus::ExceptionCode Modbus::ReadInputRegister(etl::bit_stream& data) {
   return ExceptionCode::kOk;
 }
 
-Modbus::ExceptionCode Modbus::WriteSingleRegister(etl::bit_stream& data) {
+ExceptionCode Slave::WriteSingleRegister(etl::bit_stream& data) {
   uint16_t wr_addr;
   if (!data.get<uint16_t>(wr_addr)) {
     return ExceptionCode::kInvalidFrame;
@@ -117,7 +117,7 @@ Modbus::ExceptionCode Modbus::WriteSingleRegister(etl::bit_stream& data) {
   return ExceptionCode::kOk;
 }
 
-Modbus::ExceptionCode Modbus::WriteMultipleRegisters(etl::bit_stream& data) {
+ExceptionCode Slave::WriteMultipleRegisters(etl::bit_stream& data) {
   uint16_t starting_addr;
   if (!data.get<uint16_t>(starting_addr)) {
     return ExceptionCode::kInvalidFrame;

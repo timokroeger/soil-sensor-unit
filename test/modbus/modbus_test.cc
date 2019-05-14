@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 #include "modbus/data_interface.h"
-#include "modbus/modbus.h"
+#include "modbus/slave.h"
 
 using ::testing::_;
 using ::testing::InSequence;
@@ -38,7 +38,7 @@ class ModbusTest : public ::testing::Test {
   }
 
   DataMock data_;
-  Modbus modbus_;
+  Slave modbus_;
 };
 
 TEST_F(ModbusTest, ReadInputRegister) {

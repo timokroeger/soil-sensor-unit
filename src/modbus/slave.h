@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#ifndef MODBUS_MODBUS_H_
-#define MODBUS_MODBUS_H_
+#ifndef MODBUS_SLAVE_H_
+#define MODBUS_SLAVE_H_
 
 #include <assert.h>
 #include <stdint.h>
@@ -15,11 +15,25 @@
 
 namespace modbus {
 
+enum class FunctionCode {
+  kReadInputRegister = 4,
+  kWriteSingleRegister = 6,
+  kWriteMultipleRegisters = 16,
+};
+
+enum class ExceptionCode {
+  kInvalidFrame = -1,
+  kOk = 0,
+  kIllegalFunction,
+  kIllegalDataAddress,
+  kIllegalDataValue,
+};
+
 // Parses modbus requests and passes data on to the used defined
 // data interface.
-class Modbus {
+class Slave {
  public:
-  explicit Modbus(DataInterface& data)
+  explicit Slave(DataInterface& data)
       : address_(-1),
         data_(data),
         response_(resp_buffer_.begin(), resp_buffer_.end()) {}
@@ -37,20 +51,6 @@ class Modbus {
   }
 
  private:
-  enum class FunctionCode {
-    kReadInputRegister = 4,
-    kWriteSingleRegister = 6,
-    kWriteMultipleRegisters = 16,
-  };
-
-  enum class ExceptionCode {
-    kInvalidFrame = -1,
-    kOk = 0,
-    kIllegalFunction,
-    kIllegalDataAddress,
-    kIllegalDataValue,
-  };
-
   static constexpr size_t kMaxFrameSize = 256;
 
   ExceptionCode ReadInputRegister(etl::bit_stream& data);
@@ -65,4 +65,4 @@ class Modbus {
 
 }  // namespace modbus
 
-#endif  // MODBUS_MODBUS_H_
+#endif  // MODBUS_SLAVE_H_
