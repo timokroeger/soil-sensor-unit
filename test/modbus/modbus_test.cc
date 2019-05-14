@@ -41,6 +41,12 @@ class ModbusTest : public ::testing::Test {
   Slave modbus_;
 };
 
+TEST_F(ModbusTest, Empty) {
+  etl::const_array_view<uint8_t> req;
+  auto resp_data = modbus_.Execute(req);
+  ASSERT_FALSE(resp_data);
+}
+
 TEST_F(ModbusTest, ReadInputRegister) {
   const uint8_t request[] = {
       0x01,        // Slave address

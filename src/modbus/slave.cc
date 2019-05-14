@@ -11,7 +11,7 @@ etl::optional<etl::const_array_view<uint8_t>> Slave::Execute(
 
   // TODO: Allow broadcasts (addr = 0)
   uint8_t addr;
-  if (!request.get<uint8_t>(addr) && addr != address_) {
+  if (!request.get<uint8_t>(addr) || addr != address_) {
     return etl::nullopt;
   }
   response_.put(addr);
