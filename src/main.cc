@@ -8,11 +8,11 @@
 #include "boot/bootloader.h"
 #include "config/config.h"
 #include "globals.h"
-#include "setup.h"
 #include "measure.h"
-#include "modbus/modbus.h"
+#include "modbus/slave.h"
 #include "modbus_data.h"
 #include "modbus_data_fw_update.h"
+#include "setup.h"
 
 static void Setup() {
   SetupClock();
@@ -36,14 +36,20 @@ int main() {
   ModbusDataFwUpdate fw_update(bootloader);
   ModbusData modbus_data(fw_update);
 
-  modbus::Modbus modbus_stack(modbus_rtu, modbus_data);
-  modbus_stack.set_address(CONFIG_SENSOR_ID);
+  modbus::Slave modbus_slave(modbus_data);
+  modbus_slave.set_address(CONFIG_SENSOR_ID);
 
   modbus_rtu.Enable();
 
   // Main loop.
   for (;;) {
-    modbus_stack.Execute();
+    if (modbus_rtu.FrameAvailable()) {
+      auto req = modbus_rtu.ReadFrame();
+      auto resp = modbus_slave.Execute(req);
+      if (resp) {
+        modbus_rtu.WriteFrame(resp.value());
+      }
+    }
 
     if (modbus_data.reset() && !modbus_serial.tx_active()) {
       NVIC_SystemReset();

@@ -6,6 +6,7 @@
 #include "assert.h"
 
 #include "boost/sml.hpp"
+#include "etl/array_view.h"
 #include "etl/crc16_modbus.h"
 #include "etl/vector.h"
 
@@ -16,11 +17,11 @@ namespace internal {
 
 namespace sml = boost::sml;
 
-using RtuBuffer = etl::vector<uint8_t, ProtocolInterface::kMaxFrameSize>;
+using RtuBuffer = etl::vector<uint8_t, 256>;
 
 // Events (externel events are inherited from SerialInterfaceEvents)
 struct TxStart {
-  FrameData data;
+  etl::const_array_view<uint8_t> data;
 };
 struct Enable {};
 struct Disable {};
@@ -76,12 +77,11 @@ struct RtuProtocol : public SerialInterfaceEvents {
       // clang-format off
       return make_transition_table(
         *state<Init>       + event<BusIdle>                                 = state<Idle>
-        ,state<Idle>       + sml::on_exit<_>                 / invalidate
 
         // Receiving a valid frame
         ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
         ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
-        ,state<Receiving>  + on_entry<RxByte>                / add_byte
+        ,state<Receiving>  + on_entry<RxByte>                / (invalidate, add_byte)
         ,state<Receiving>  + event<BusIdle>                  / check_frame  = state<Idle>
 
         // Receiving an invalid frame
