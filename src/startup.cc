@@ -8,8 +8,8 @@ extern int main();
 
 extern "C" {
 
-extern void _stack_start(void);    // Provided by linker script.
-extern void __libc_init_array();   // Provided by libc.
+extern void _stack_start(void);        // Provided by linker script.
+extern void __libc_init_array(void);   // Provided by libc.
 
 void Reset_Handler(void);   // Required for ENTRY() in linker script.
 void Unused_Handler(void);  // Required for alias attribute.
