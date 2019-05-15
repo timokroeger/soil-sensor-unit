@@ -153,3 +153,10 @@ void BspSetup() {
 }
 
 void BspReset() { NVIC_SystemReset(); }
+
+// Implementaion for newlib assert()
+extern "C" void __assert_func(const char *, int, const char *, const char *) {
+  // TODO: Disable LED.
+  __disable_irq();
+  for (;;);
+}
