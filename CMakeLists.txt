@@ -48,7 +48,7 @@ target_link_libraries(mcuboot PRIVATE LPC8xx)
 
 add_executable(boot
   src/boot/main.c
-  src/startup.cc
+  src/bsp/startup.cc
 )
 
 target_link_libraries(boot mcuboot LPC8xx
@@ -67,11 +67,11 @@ add_executable(firmware
   src/bsp/bsp.cc
   src/bsp/log_rtt.cc
   src/bsp/modbus_serial.cc
+  src/bsp/startup.cc
   src/main.cc
   src/modbus_data_fw_update.cc
   src/modbus_data.cc
   src/modbus/slave.cc
-  src/startup.cc
 )
 
 # Generate header that defines the version number
