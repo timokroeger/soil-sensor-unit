@@ -68,7 +68,6 @@ add_executable(firmware
   src/bsp/log_rtt.cc
   src/bsp/modbus_serial.cc
   src/main.cc
-  src/measure.cc
   src/modbus_data_fw_update.cc
   src/modbus_data.cc
   src/modbus/slave.cc
