@@ -5,8 +5,10 @@
 
 #include <cstdint>
 
+#include "bsp/bootloader.h"
 #include "bsp/modbus_serial.h"
 
+extern Bootloader bootloader;
 extern ModbusSerial modbus_serial;
 
 void BspSetup();

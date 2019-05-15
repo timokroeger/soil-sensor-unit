@@ -63,7 +63,7 @@ generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
 # Firmware Target -------------------------------------------------------------------------------- #
 
 add_executable(firmware
-  src/bootloader.cc
+  src/bsp/bootloader.cc
   src/bsp/bsp.cc
   src/bsp/log_rtt.cc
   src/bsp/modbus_serial.cc

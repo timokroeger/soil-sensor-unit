@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdint>
 
-#include "bootloader.h"
 #include "bsp/bsp.h"
 #include "config.h"
 #include "modbus/slave.h"
@@ -19,7 +18,6 @@ int main() {
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
 
-  Bootloader bootloader;
   ModbusDataFwUpdate fw_update(bootloader);
   ModbusData modbus_data(fw_update);
 

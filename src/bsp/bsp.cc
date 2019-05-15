@@ -14,6 +14,7 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 
 }
 
+Bootloader bootloader;
 ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
 
 namespace {

@@ -1,6 +1,6 @@
 // Copyright (c) 2018 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include "bootloader.h"
+#include "bsp/bootloader.h"
 
 #include "bootutil/bootutil.h"
 #include "flash_map_backend/flash_map_backend.h"
