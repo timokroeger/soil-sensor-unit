@@ -158,5 +158,10 @@ void BspReset() { NVIC_SystemReset(); }
 extern "C" void __assert_func(const char *, int, const char *, const char *) {
   // TODO: Disable LED.
   __disable_irq();
-  for (;;);
+  for (;;)
+    ;
 }
+
+// Interrupt Service Routines
+void MRT_Handler() { modbus_serial.TimerIsr(); }
+void UART0_Handler() { modbus_serial.UartIsr(); }
