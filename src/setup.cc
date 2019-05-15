@@ -13,6 +13,8 @@
 const uint32_t OscRateIn = 0;  // External oscillator not used.
 const uint32_t ExtRateIn = 0;  // External clock input not used.
 
+ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
+
 void SetupClock() {
   // Use vendor provided routine in ROM memory to setup the system clock.
   // It uses alsmost 1kb less flash compared to the version Chip_IRC_SetFreq()

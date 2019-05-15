@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include "globals.h"
+#include "setup.h"
 
 // MODBUS Timeouts
 void MRT_Handler() {

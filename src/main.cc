@@ -7,7 +7,6 @@
 
 #include "bootloader.h"
 #include "config.h"
-#include "globals.h"
 #include "measure.h"
 #include "modbus/slave.h"
 #include "modbus_data.h"

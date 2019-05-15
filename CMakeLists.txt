@@ -65,7 +65,6 @@ generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
 add_executable(firmware
   src/assert_impl.cc
   src/bootloader.cc
-  src/globals.cc
   src/isr.cc
   src/log.cc
   src/main.cc

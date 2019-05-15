@@ -5,9 +5,13 @@
 
 #include <cstdint>
 
+#include "modbus_serial.h"
+
 // Frequency of the main and system clock.
 #define MAIN_FREQ 60000000
 #define SYSTEM_FREQ 30000000
+
+extern ModbusSerial modbus_serial;
 
 // Configures system clock to 30MHz with the PLL fed by the internal oscillator.
 void SetupClock();
