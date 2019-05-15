@@ -66,8 +66,8 @@ add_executable(firmware
   src/bootloader.cc
   src/bsp/bsp.cc
   src/bsp/isr.cc
+  src/bsp/log_rtt.cc
   src/bsp/modbus_serial.cc
-  src/log.cc
   src/main.cc
   src/measure.cc
   src/modbus_data_fw_update.cc

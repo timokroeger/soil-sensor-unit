@@ -1,12 +1,12 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include "log.h"
+#include "bsp/log.h"
 
 #include <cassert>
 #include <cstdarg>
 #include <cstdint>
 
-#include "cmsis.h"
+#include "chip.h"
 #include "SEGGER_RTT.h"
 
 static const char *log_level_strings[kLogLevelMax] = {
