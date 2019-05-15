@@ -1,28 +1,39 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include "setup.h"
+#include "bsp/bsp.h"
+
+#include <algorithm>
 
 #include "chip.h"
 
-#define ISR_PRIO_UART 1
-#define ISR_PRIO_TIMER 1
-
-#define PWM_FREQ 200000u
-
 // Required by the vendor chip library.
+extern "C" {
+
 const uint32_t OscRateIn = 0;  // External oscillator not used.
 const uint32_t ExtRateIn = 0;  // External clock input not used.
 
+}
+
+Bootloader bootloader;
+ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
+
+namespace {
+
+// Configures system clock to 30MHz with the PLL fed by the internal oscillator.
 void SetupClock() {
+  const uint32_t kMainFrequency = 60000000;
+  const uint32_t kSystemFrequency = 30000000;
+
   // Use vendor provided routine in ROM memory to setup the system clock.
   // It uses alsmost 1kb less flash compared to the version Chip_IRC_SetFreq()
   // shipped in the lpc_chip_82x libraries.
-  bool ok = Chip_IRC_SetFreq(MAIN_FREQ, SYSTEM_FREQ);
+  Chip_IRC_SetFreq(kMainFrequency, kSystemFrequency);
 
   // Update CMSIS clock frequency variable which is used in iap.c
-  SystemCoreClock = SYSTEM_FREQ;
+  SystemCoreClock = kSystemFrequency;
 }
 
+// Enables LED output and sets ADC pins to analog mode.
 void SetupGpio() {
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
 
@@ -37,6 +48,7 @@ void SetupGpio() {
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_IOCON);
 }
 
+// Assigns peripherals to pins.
 void SetupSwichMatrix() {
   // Enable switch matrix.
   Chip_SWM_Init();
@@ -58,6 +70,7 @@ void SetupSwichMatrix() {
   Chip_SWM_Deinit();
 }
 
+// Calibrates the ADC and sets up a measurement sequence.
 void SetupAdc() {
   Chip_ADC_Init(LPC_ADC, 0);
 
@@ -68,15 +81,14 @@ void SetupAdc() {
   // Set ADC clock: A value of 0 divides the system clock by 1.
   Chip_ADC_SetDivider(LPC_ADC, 0);
 
-  // Only scan channel 3 when timer triggers the ADC.
-  // A conversation takes 25 cycles. Ideally the sampling phase ends right
-  // before the PWM output state changes.
   Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
                           ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
                               ADC_SEQ_CTRL_HWTRIG_POLPOS);
   Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
 }
 
+// Sets up a PWM output with 50% duty cycle used as excitation signal for the
+// capacitive measurement.
 void SetupPwm() {
   Chip_SCT_Init(LPC_SCT);
 
@@ -119,39 +131,58 @@ void SetupPwm() {
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
-void SetupTimers() {
-  Chip_MRT_Init();
+// Use the multirate timer for various timing related like delays.
+void SetupTimers() { Chip_MRT_Init(); }
 
-  // Channel 0: MODBUS inter-frame timeout
-  Chip_MRT_SetMode(LPC_MRT_CH0, MRT_MODE_ONESHOT);
-  Chip_MRT_SetEnabled(LPC_MRT_CH0);
-}
-
-void SetupUart(uint32_t baudrate) {
-  // Enable global UART clock. Divide clock down as much as possible.
-  // HACKME: CLock precision could be improved by properly rounding.
-  //         When rounding up Chip_UART_SetBaud() misbehaves though,
-  //         because does not expect the input clock to be minimally
-  //         slower than 16 times the baudrate.
-  Chip_Clock_SetUARTClockDiv(MAIN_FREQ / (16 * 19200) - 1);
-
-  // Configure peripheral.
-  Chip_UART_Init(LPC_USART0);
-  Chip_UART_SetBaud(LPC_USART0, baudrate);
-  Chip_UART_ConfigData(LPC_USART0, UART_CFG_DATALEN_8 | UART_CFG_PARITY_EVEN |
-                                       UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
-                                       UART_CFG_OEPOL);
-
-  // Enable receive and start interrupt. No interrupts for frame, parity or
-  // noise errors are enabled because those are checked when reading a received
-  // byte.
-  Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_START);
-}
-
+// Configures and enables interrupts.
 void SetupNVIC() {
-  NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
+  NVIC_SetPriority(UART0_IRQn, 1);
   NVIC_EnableIRQ(UART0_IRQn);
 
-  NVIC_SetPriority(MRT_IRQn, ISR_PRIO_TIMER);
+  NVIC_SetPriority(MRT_IRQn, 1);
   NVIC_EnableIRQ(MRT_IRQn);
 }
+
+}  // namespace
+
+void BspSetup() {
+  SetupClock();
+  SetupGpio();
+  SetupAdc();
+  SetupPwm();
+  SetupTimers();
+  SetupSwichMatrix();
+  SetupNVIC();
+}
+
+void BspReset() { NVIC_SystemReset(); }
+
+uint16_t BspMeasureRaw() {
+  Chip_ADC_StartSequencer(LPC_ADC, ADC_SEQA_IDX);
+
+  uint32_t raw_high;
+  do {
+    raw_high = Chip_ADC_GetDataReg(LPC_ADC, 3);
+  } while ((raw_high & ADC_SEQ_GDAT_DATAVALID) == 0);
+  int high = ADC_DR_RESULT(raw_high);
+
+  uint32_t raw_low;
+  do {
+    raw_low = Chip_ADC_GetDataReg(LPC_ADC, 9);
+  } while ((raw_low & ADC_SEQ_GDAT_DATAVALID) == 0);
+  int low = ADC_DR_RESULT(raw_low);
+
+  return std::max(high - low, 0);
+}
+
+// Implementaion for newlib assert()
+extern "C" void __assert_func(const char *, int, const char *, const char *) {
+  // TODO: Disable LED.
+  __disable_irq();
+  for (;;)
+    ;
+}
+
+// Interrupt Service Routines
+void MRT_Handler() { modbus_serial.TimerIsr(); }
+void UART0_Handler() { modbus_serial.UartIsr(); }

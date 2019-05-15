@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#ifndef LOG_H_
-#define LOG_H_
+#ifndef BSP_LOG_H_
+#define BSP_LOG_H_
 
 #define LOG_ERROR(...)   LogFormat(kLogLevelError, __VA_ARGS__)
 #define LOG_WARNING(...) LogFormat(kLogLevelWarning, __VA_ARGS__)
@@ -23,4 +23,4 @@ typedef enum {
 /// @msg   Message to log.
 void LogFormat(LogLevel ll, const char *msg, ...);
 
-#endif  // LOG_H_
+#endif  // BSP_LOG_H_

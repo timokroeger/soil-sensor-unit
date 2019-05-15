@@ -2,14 +2,14 @@
 
 #include "modbus_data.h"
 
+#include "bsp/bsp.h"
 #include "version.h"
-#include "measure.h"
 
 static uint16_t AverageMeasurement() {
   uint32_t acc = 0;
 
   for (int i = 0; i < (1 << 10); i++) {
-    acc += MeasureRaw();
+    acc += BspMeasureRaw();
   }
 
   return acc >> 10;

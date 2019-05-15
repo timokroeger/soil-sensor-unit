@@ -1,7 +1,7 @@
 // Copyright (c) 2018 Timo Kröger <timokroeger93+code@gmail.com>
 
-#ifndef BOOT_BOOTLOADER_H_
-#define BOOT_BOOTLOADER_H_
+#ifndef BSP_BOOTLOADER_H_
+#define BSP_BOOTLOADER_H_
 
 #include "bootloader_interface.h"
 
@@ -13,4 +13,4 @@ class Bootloader final : public BootloaderInterface {
   bool SetUpdateConfirmed() override;
 };
 
-#endif  // BOOT_BOOTLOADER_H_
+#endif  // BSP_BOOTLOADER_H_

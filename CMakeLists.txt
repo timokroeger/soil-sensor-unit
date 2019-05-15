@@ -48,7 +48,7 @@ target_link_libraries(mcuboot PRIVATE LPC8xx)
 
 add_executable(boot
   src/boot/main.c
-  src/startup.cc
+  src/bsp/startup.cc
 )
 
 target_link_libraries(boot mcuboot LPC8xx
@@ -63,19 +63,15 @@ generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
 # Firmware Target -------------------------------------------------------------------------------- #
 
 add_executable(firmware
-  src/assert_impl.cc
-  src/bootloader.cc
-  src/globals.cc
-  src/isr.cc
-  src/log.cc
+  src/bsp/bootloader.cc
+  src/bsp/bsp.cc
+  src/bsp/log_rtt.cc
+  src/bsp/modbus_serial.cc
+  src/bsp/startup.cc
   src/main.cc
-  src/measure.cc
   src/modbus_data_fw_update.cc
   src/modbus_data.cc
-  src/modbus_serial.cc
   src/modbus/slave.cc
-  src/setup.cc
-  src/startup.cc
 )
 
 # Generate header that defines the version number
