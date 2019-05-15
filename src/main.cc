@@ -3,8 +3,6 @@
 #include <cassert>
 #include <cstdint>
 
-#include "chip.h"
-
 #include "bootloader.h"
 #include "bsp/bsp.h"
 #include "config.h"
@@ -42,7 +40,7 @@ int main() {
     }
 
     if (modbus_data.reset() && !modbus_serial.tx_active()) {
-      NVIC_SystemReset();
+      BspReset();
     }
   }
 }

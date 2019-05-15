@@ -151,3 +151,5 @@ void BspSetup() {
   SetupSwichMatrix();
   SetupNVIC();
 }
+
+void BspReset() { NVIC_SystemReset(); }

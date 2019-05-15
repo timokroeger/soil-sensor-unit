@@ -8,5 +8,6 @@
 extern ModbusSerial modbus_serial;
 
 void BspSetup();
+void BspReset();
 
 #endif  // BSP_BSP_H_
