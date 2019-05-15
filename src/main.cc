@@ -13,18 +13,8 @@
 #include "modbus_data_fw_update.h"
 #include "setup.h"
 
-static void Setup() {
-  SetupClock();
-  SetupGpio();
-  SetupAdc();
-  SetupPwm();
-  SetupTimers();
-  SetupSwichMatrix();
-  SetupNVIC();
-}
-
 int main() {
-  Setup();
+  BspSetup();
 
   modbus_serial.Init(CONFIG_BAUDRATE);
 

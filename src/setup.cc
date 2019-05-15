@@ -4,27 +4,33 @@
 
 #include "chip.h"
 
-#define ISR_PRIO_UART 1
-#define ISR_PRIO_TIMER 1
-
-#define PWM_FREQ 200000u
-
 // Required by the vendor chip library.
+extern "C" {
+
 const uint32_t OscRateIn = 0;  // External oscillator not used.
 const uint32_t ExtRateIn = 0;  // External clock input not used.
 
+}
+
 ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
 
+namespace {
+
+// Configures system clock to 30MHz with the PLL fed by the internal oscillator.
 void SetupClock() {
+  const uint32_t kMainFrequency = 60000000;
+  const uint32_t kSystemFrequency = 30000000;
+
   // Use vendor provided routine in ROM memory to setup the system clock.
   // It uses alsmost 1kb less flash compared to the version Chip_IRC_SetFreq()
   // shipped in the lpc_chip_82x libraries.
-  bool ok = Chip_IRC_SetFreq(MAIN_FREQ, SYSTEM_FREQ);
+  Chip_IRC_SetFreq(kMainFrequency, kSystemFrequency);
 
   // Update CMSIS clock frequency variable which is used in iap.c
-  SystemCoreClock = SYSTEM_FREQ;
+  SystemCoreClock = kSystemFrequency;
 }
 
+// Enables LED output and sets ADC pins to analog mode.
 void SetupGpio() {
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
 
@@ -39,6 +45,7 @@ void SetupGpio() {
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_IOCON);
 }
 
+// Assigns peripherals to pins.
 void SetupSwichMatrix() {
   // Enable switch matrix.
   Chip_SWM_Init();
@@ -60,6 +67,7 @@ void SetupSwichMatrix() {
   Chip_SWM_Deinit();
 }
 
+// Calibrates the ADC and sets up a measurement sequence.
 void SetupAdc() {
   Chip_ADC_Init(LPC_ADC, 0);
 
@@ -70,15 +78,14 @@ void SetupAdc() {
   // Set ADC clock: A value of 0 divides the system clock by 1.
   Chip_ADC_SetDivider(LPC_ADC, 0);
 
-  // Only scan channel 3 when timer triggers the ADC.
-  // A conversation takes 25 cycles. Ideally the sampling phase ends right
-  // before the PWM output state changes.
   Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
                           ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
                               ADC_SEQ_CTRL_HWTRIG_POLPOS);
   Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
 }
 
+// Sets up a PWM output with 50% duty cycle used as excitation signal for the
+// capacitive measurement.
 void SetupPwm() {
   Chip_SCT_Init(LPC_SCT);
 
@@ -121,12 +128,26 @@ void SetupPwm() {
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
+// Use the multirate timer for various timing related like delays.
 void SetupTimers() { Chip_MRT_Init(); }
 
+// Configures and enables interrupts.
 void SetupNVIC() {
-  NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);
+  NVIC_SetPriority(UART0_IRQn, 1);
   NVIC_EnableIRQ(UART0_IRQn);
 
-  NVIC_SetPriority(MRT_IRQn, ISR_PRIO_TIMER);
+  NVIC_SetPriority(MRT_IRQn, 1);
   NVIC_EnableIRQ(MRT_IRQn);
+}
+
+}  // namespace
+
+void BspSetup() {
+  SetupClock();
+  SetupGpio();
+  SetupAdc();
+  SetupPwm();
+  SetupTimers();
+  SetupSwichMatrix();
+  SetupNVIC();
 }
