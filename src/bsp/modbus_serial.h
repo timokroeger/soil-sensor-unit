@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#ifndef MODBUS_SERIAL_H_
-#define MODBUS_SERIAL_H_
+#ifndef BSP_MODBUS_SERIAL_H_
+#define BSP_MODBUS_SERIAL_H_
 
 #include "chip.h"
 
@@ -36,4 +36,4 @@ class ModbusSerial final : public modbus::SerialInterface {
   const uint8_t *tx_data_end_ = nullptr;
 };
 
-#endif  // MODBUS_SERIAL_H_
+#endif  // BSP_MODBUS_SERIAL_H_

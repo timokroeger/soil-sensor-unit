@@ -6,12 +6,12 @@
 #include "chip.h"
 
 #include "bootloader.h"
+#include "bsp/bsp.h"
 #include "config.h"
 #include "measure.h"
 #include "modbus/slave.h"
 #include "modbus_data.h"
 #include "modbus_data_fw_update.h"
-#include "setup.h"
 
 int main() {
   BspSetup();

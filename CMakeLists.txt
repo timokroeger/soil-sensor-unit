@@ -65,15 +65,15 @@ generate_object(boot boot.elf elf32-littlearm boot.hex ihex)
 add_executable(firmware
   src/assert_impl.cc
   src/bootloader.cc
-  src/isr.cc
+  src/bsp/bsp.cc
+  src/bsp/isr.cc
+  src/bsp/modbus_serial.cc
   src/log.cc
   src/main.cc
   src/measure.cc
   src/modbus_data_fw_update.cc
   src/modbus_data.cc
-  src/modbus_serial.cc
   src/modbus/slave.cc
-  src/setup.cc
   src/startup.cc
 )
 

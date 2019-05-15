@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Timo Kröger <timokroeger93+code@gmail.com>
 
-#include "modbus_serial.h"
+#include "bsp/modbus_serial.h"
 
 void ModbusSerial::Init(uint32_t baudrate) {
   assert(usart_ != nullptr);
