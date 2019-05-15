@@ -119,34 +119,7 @@ void SetupPwm() {
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
-void SetupTimers() {
-  Chip_MRT_Init();
-
-  // Channel 0: MODBUS inter-frame timeout
-  Chip_MRT_SetMode(LPC_MRT_CH0, MRT_MODE_ONESHOT);
-  Chip_MRT_SetEnabled(LPC_MRT_CH0);
-}
-
-void SetupUart(uint32_t baudrate) {
-  // Enable global UART clock. Divide clock down as much as possible.
-  // HACKME: CLock precision could be improved by properly rounding.
-  //         When rounding up Chip_UART_SetBaud() misbehaves though,
-  //         because does not expect the input clock to be minimally
-  //         slower than 16 times the baudrate.
-  Chip_Clock_SetUARTClockDiv(MAIN_FREQ / (16 * 19200) - 1);
-
-  // Configure peripheral.
-  Chip_UART_Init(LPC_USART0);
-  Chip_UART_SetBaud(LPC_USART0, baudrate);
-  Chip_UART_ConfigData(LPC_USART0, UART_CFG_DATALEN_8 | UART_CFG_PARITY_EVEN |
-                                       UART_CFG_STOPLEN_1 | UART_CFG_OESEL |
-                                       UART_CFG_OEPOL);
-
-  // Enable receive and start interrupt. No interrupts for frame, parity or
-  // noise errors are enabled because those are checked when reading a received
-  // byte.
-  Chip_UART_IntEnable(LPC_USART0, UART_INTEN_RXRDY | UART_INTEN_START);
-}
+void SetupTimers() { Chip_MRT_Init(); }
 
 void SetupNVIC() {
   NVIC_SetPriority(UART0_IRQn, ISR_PRIO_UART);

@@ -20,13 +20,14 @@ static void Setup() {
   SetupAdc();
   SetupPwm();
   SetupTimers();
-  SetupUart(CONFIG_BAUDRATE);
   SetupSwichMatrix();
   SetupNVIC();
 }
 
 int main() {
   Setup();
+
+  modbus_serial.Init(CONFIG_BAUDRATE);
 
   // Link global serial interface implementation to protocol.
   modbus::RtuProtocol modbus_rtu(modbus_serial);

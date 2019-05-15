@@ -31,9 +31,6 @@ void SetupPwm();
 // Channel 0 is used for MODBUS timing.
 void SetupTimers();
 
-// Sets up UART0 with RTS pin as drive enable for the RS485 receiver.
-void SetupUart(uint32_t baudrate);
-
 // Configures all interrupts.
 void SetupNVIC();
 
