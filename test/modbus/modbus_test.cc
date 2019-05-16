@@ -5,6 +5,7 @@
 #include "modbus/slave.h"
 
 using ::testing::_;
+using ::testing::ElementsAreArray;
 using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::SetArgPointee;
@@ -14,7 +15,7 @@ namespace modbus {
 
 class DataMock : public DataInterface {
  public:
-  MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t *data_out));
+  MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t* data_out));
   MOCK_METHOD2(WriteRegister, bool(uint16_t address, uint16_t data));
 };
 
@@ -27,14 +28,17 @@ class ModbusTest : public ::testing::Test {
 
   void SetUp() override { modbus_.set_address(1); }
 
-  void RequestResponse(etl::const_array_view<uint8_t> req, etl::const_array_view<uint8_t> resp) {
-    auto resp_data = modbus_.Execute(req);
-    ASSERT_TRUE(resp_data);
-    ASSERT_EQ(resp_data.value(), resp);
+  void RequestResponse(const uint8_t* req, size_t req_len, const uint8_t* resp,
+                       size_t resp_len) {
+    const Buffer req_buf{req, req + req_len};
+    auto resp_data = modbus_.Execute(&req_buf);
+    ASSERT_NE(resp_data, nullptr);
+    ASSERT_THAT(*resp_data, ElementsAreArray(resp, resp_len));
   }
 
-  void RequestNoResponse(etl::const_array_view<uint8_t> req) {
-    ASSERT_FALSE(modbus_.Execute(req));
+  void RequestNoResponse(const uint8_t* req, size_t req_len) {
+    const Buffer req_buf{req, req + req_len};
+    ASSERT_EQ(modbus_.Execute(&req_buf), nullptr);
   }
 
   DataMock data_;
@@ -42,8 +46,8 @@ class ModbusTest : public ::testing::Test {
 };
 
 TEST_F(ModbusTest, Empty) {
-  etl::const_array_view<uint8_t> req;
-  auto resp_data = modbus_.Execute(req);
+  Buffer req;
+  auto resp_data = modbus_.Execute(&req);
   ASSERT_FALSE(resp_data);
 }
 
@@ -64,7 +68,7 @@ TEST_F(ModbusTest, ReadInputRegister) {
 
   EXPECT_CALL(data_, ReadRegister(0x4567, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterMultiple) {
@@ -90,7 +94,7 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
       .WillOnce(DoAll(SetArgPointee<1>(0xDEAD), Return(true)));
   EXPECT_CALL(data_, ReadRegister(0x4569, _))
       .WillOnce(DoAll(SetArgPointee<1>(0xBEAF), Return(true)));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterMaximum) {
@@ -111,7 +115,7 @@ TEST_F(ModbusTest, ReadInputRegisterMaximum) {
   EXPECT_CALL(data_, ReadRegister(_, _))
       .Times(125)
       .WillRepeatedly(DoAll(SetArgPointee<1>(0x0000), Return(true)));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
@@ -135,8 +139,8 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidLength) {
       0x03,  // Exception code
   };
 
-  RequestResponse(etl::const_array_view<uint8_t>{request1}, etl::const_array_view<uint8_t>{response});
-  RequestResponse(etl::const_array_view<uint8_t>{request2}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request1, sizeof(request1), response, sizeof(response));
+  RequestResponse(request2, sizeof(request2), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
@@ -154,7 +158,7 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
   };
 
   EXPECT_CALL(data_, ReadRegister(0x4567, _)).WillOnce(Return(false));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, ReadInputRegisterMalformed) {
@@ -181,8 +185,8 @@ TEST_F(ModbusTest, ReadInputRegisterMalformed) {
       0x01,  // Exception code
   };
 
-  RequestNoResponse(etl::const_array_view<uint8_t>{request1});
-  RequestNoResponse(etl::const_array_view<uint8_t>{request2});
+  RequestNoResponse(request1, sizeof(request1));
+  RequestNoResponse(request2, sizeof(request2));
 }
 
 TEST_F(ModbusTest, WriteSingleRegister) {
@@ -194,7 +198,8 @@ TEST_F(ModbusTest, WriteSingleRegister) {
   };
 
   EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(true));
-  RequestResponse(etl::const_array_view<uint8_t>{request_response}, etl::const_array_view<uint8_t>{request_response});
+  RequestResponse(request_response, sizeof(request_response), request_response,
+                  sizeof(request_response));
 }
 
 TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
@@ -212,7 +217,7 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
   };
 
   EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(false));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, WriteSingleRegisterMalformed) {
@@ -231,8 +236,8 @@ TEST_F(ModbusTest, WriteSingleRegisterMalformed) {
       0x00,
   };
 
-  RequestNoResponse(etl::const_array_view<uint8_t>{request1});
-  RequestNoResponse(etl::const_array_view<uint8_t>{request2});
+  RequestNoResponse(request1, sizeof(request1));
+  RequestNoResponse(request2, sizeof(request2));
 }
 
 TEST_F(ModbusTest, WriteMultipleRegisters) {
@@ -255,7 +260,7 @@ TEST_F(ModbusTest, WriteMultipleRegisters) {
 
   EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(true));
   EXPECT_CALL(data_, WriteRegister(0x4568, 0xBEEF)).WillOnce(Return(true));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, WriteMultipleRegistersMaximum) {
@@ -278,7 +283,7 @@ TEST_F(ModbusTest, WriteMultipleRegistersMaximum) {
   EXPECT_CALL(data_, WriteRegister(_, 0x0000))
       .Times(123)
       .WillRepeatedly(Return(true));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, WriteMultipleRegistersInvalidAddress) {
@@ -299,7 +304,7 @@ TEST_F(ModbusTest, WriteMultipleRegistersInvalidAddress) {
   };
 
   EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(false));
-  RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
 TEST_F(ModbusTest, WriteMultipleRegistersInvalidQuantity) {
@@ -335,9 +340,12 @@ TEST_F(ModbusTest, WriteMultipleRegistersInvalidQuantity) {
       0x03,  // Exception code
   };
 
-  RequestResponse(etl::const_array_view<uint8_t>{request_invalid_quantity1}, etl::const_array_view<uint8_t>{response});
-  // RequestResponse(etl::const_array_view<uint8_t>{request_invalid_quantity2}, etl::const_array_view<uint8_t>{response});
-  // RequestResponse(etl::const_array_view<uint8_t>{request_invalid_bytecount}, etl::const_array_view<uint8_t>{response});
+  RequestResponse(request_invalid_quantity1, sizeof(request_invalid_quantity1),
+                  response, sizeof(response));
+  RequestResponse(request_invalid_quantity2, sizeof(request_invalid_quantity2),
+                  response, sizeof(response));
+  RequestResponse(request_invalid_bytecount, sizeof(request_invalid_bytecount),
+                  response, sizeof(response));
 }
 
 TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
@@ -362,8 +370,8 @@ TEST_F(ModbusTest, WriteMultipleRegistersMalformed) {
       0x00,
   };
 
-  RequestNoResponse(etl::const_array_view<uint8_t>{request1});
-  RequestNoResponse(etl::const_array_view<uint8_t>{request2});
+  RequestNoResponse(request1, sizeof(request1));
+  RequestNoResponse(request2, sizeof(request2));
 }
 
 TEST_F(ModbusTest, MultipleRequests) {
@@ -385,7 +393,7 @@ TEST_F(ModbusTest, MultipleRequests) {
       .Times(3)
       .WillRepeatedly(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
   for (int i = 0; i < 3; i++) {
-    RequestResponse(etl::const_array_view<uint8_t>{request}, etl::const_array_view<uint8_t>{response});
+    RequestResponse(request, sizeof(request), response, sizeof(response));
   }
 }
 

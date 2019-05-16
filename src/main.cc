@@ -31,8 +31,8 @@ int main() {
     if (modbus_rtu.FrameAvailable()) {
       auto req = modbus_rtu.ReadFrame();
       auto resp = modbus_slave.Execute(req);
-      if (resp) {
-        modbus_rtu.WriteFrame(resp.value());
+      if (resp != nullptr) {
+        modbus_rtu.WriteFrame(resp);
       }
     }
 

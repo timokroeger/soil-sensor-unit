@@ -4,6 +4,7 @@
 #include "modbus/rtu_protocol.h"
 
 using ::testing::_;
+using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
 
 namespace modbus {
@@ -25,16 +26,17 @@ class RtuProtocolTest : public ::testing::Test {
     ASSERT_FALSE(rtu_.FrameAvailable());
   }
 
-  void RxFrame(etl::const_array_view<uint8_t> data) {
-    for (uint8_t b : data) {
-      rtu_.Notify(SerialInterfaceEvents::RxByte{b, true});
+  void RxFrame(const uint8_t *data, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+      rtu_.Notify(SerialInterfaceEvents::RxByte{data[i], true});
       EXPECT_EQ(rtu_.FrameAvailable(), false);
     }
     rtu_.Notify(SerialInterfaceEvents::BusIdle{});
   }
 
-  void TxFrame(etl::const_array_view<uint8_t> data) {
-    rtu_.WriteFrame(data);
+  void TxFrame(const uint8_t *data, size_t length) {
+    Buffer b(data, data + length);
+    rtu_.WriteFrame(&b);
     rtu_.Notify(SerialInterfaceEvents::TxDone{});
   }
 
@@ -51,24 +53,25 @@ TEST_F(RtuProtocolTest, IdleWithoutData) {
 
 TEST_F(RtuProtocolTest, ReceiveFrameTooShort) {
   const uint8_t data[] = {0xFF};
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, ReceiveFrameOnlyCrc) {
   const uint8_t data[] = {0xFF, 0xFF};
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_FALSE(rtu_.FrameAvailable());
 }
 
 TEST_F(RtuProtocolTest, ReceiveFrame) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
 
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_TRUE(rtu_.FrameAvailable());
 
-  etl::const_array_view<uint8_t> out(data, 1);
-  ASSERT_EQ(rtu_.ReadFrame(), out);
+  Buffer *frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAre(data[0]));
 }
 
 TEST_F(RtuProtocolTest, ReceiveLongFrame) {
@@ -76,10 +79,12 @@ TEST_F(RtuProtocolTest, ReceiveLongFrame) {
   data[254] = 0x17;
   data[255] = 0x6B;
 
-  RxFrame(etl::array_view<uint8_t>{data});
-  etl::array_view<uint8_t> out(data, 254);
+  RxFrame(data, sizeof(data));
   ASSERT_TRUE(rtu_.FrameAvailable());
-  ASSERT_EQ(rtu_.ReadFrame(), out);
+
+  Buffer *frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAreArray(data, 254));
 }
 
 TEST_F(RtuProtocolTest, ReceiveParityError) {
@@ -95,7 +100,7 @@ TEST_F(RtuProtocolTest, ReceiveParityError) {
 TEST_F(RtuProtocolTest, SendFrame) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
-  TxFrame(etl::const_array_view<uint8_t>{data, 1});
+  TxFrame(data, 1);
 }
 
 TEST_F(RtuProtocolTest, SendLongFrame) {
@@ -104,31 +109,31 @@ TEST_F(RtuProtocolTest, SendLongFrame) {
   data[255] = 0x6B;
 
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
-  TxFrame(etl::array_view<uint8_t>{data, 254});
-}
-
-TEST_F(RtuProtocolTest, SendTooLongFrame) {
-  const uint8_t data[257] = {0x12, 0x34};
-  ASSERT_DEATH(rtu_.WriteFrame(etl::const_array_view<uint8_t>{data}), "");
+  TxFrame(data, 254);
 }
 
 TEST_F(RtuProtocolTest, TransmissionSequence) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
-  etl::const_array_view<uint8_t> data_recv{data, 1};
 
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_TRUE(rtu_.FrameAvailable());
-  ASSERT_EQ(rtu_.ReadFrame(), data_recv);
+
+  Buffer *frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAre(data[0]));
 
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
-  TxFrame(etl::const_array_view<uint8_t>{data, 1});
+  TxFrame(data, 1);
 
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_TRUE(rtu_.FrameAvailable());
-  ASSERT_EQ(rtu_.ReadFrame(), data_recv);
+
+  frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAre(data[0]));
 
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
-  TxFrame(etl::const_array_view<uint8_t>{data, 1});
+  TxFrame(data, 1);
 }
 
 TEST_F(RtuProtocolTest, SendDuringReceive) {
@@ -140,8 +145,9 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
 
   // Ignore write operation
   const uint8_t data_send[] = {0x56, 0x3F, 0x7E};
+  Buffer b(data_send, data_send + sizeof(data_send));
   EXPECT_CALL(serial_, Send(_, _)).Times(0);
-  rtu_.WriteFrame(etl::const_array_view<uint8_t>{data_send, 1});
+  rtu_.WriteFrame(&b);
 
   // Receive second byte and third.
   rtu_.Notify(SerialInterfaceEvents::RxByte{data_recv[1], true});
@@ -153,18 +159,20 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
   rtu_.Notify(SerialInterfaceEvents::BusIdle{});
   ASSERT_TRUE(rtu_.FrameAvailable());
 
-  etl::const_array_view<uint8_t> out(data_recv, 1);
-  ASSERT_EQ(rtu_.ReadFrame(), out);
+  Buffer *frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAre(data_recv[0]));
 }
 
 TEST_F(RtuProtocolTest, ReceiveDuringSend) {
   const uint8_t data_send[] = {0x12, 0x3F, 0x4D};
+  Buffer b(data_send, data_send + 1);
   EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data_send));
-  rtu_.WriteFrame(etl::const_array_view<uint8_t>{data_send, 1});
+  rtu_.WriteFrame(&b);
 
   // Ignore received data.
   const uint8_t data_recv[] = {0x56, 0x3F, 0x7E};
-  RxFrame(etl::const_array_view<uint8_t>{data_recv});
+  RxFrame(data_recv, sizeof(data_recv));
   ASSERT_FALSE(rtu_.FrameAvailable());
 
   // Finish send operation.
@@ -174,7 +182,8 @@ TEST_F(RtuProtocolTest, ReceiveDuringSend) {
 TEST_F(RtuProtocolTest, DisabledBehaviour) {
   // Do some normal stuff to change internal state.
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  Buffer b(data, data + sizeof(data));
+  RxFrame(data, sizeof(data));
 
   EXPECT_CALL(serial_, Disable());
   rtu_.Disable();
@@ -184,12 +193,12 @@ TEST_F(RtuProtocolTest, DisabledBehaviour) {
   rtu_.ReadFrame();
 
   // No further frames can be read when disabled.
-  RxFrame(etl::const_array_view<uint8_t>{data});
+  RxFrame(data, sizeof(data));
   ASSERT_FALSE(rtu_.FrameAvailable());
 
   // No data can be sent when disabled.
   EXPECT_CALL(serial_, Send(_, _)).Times(0);
-  rtu_.WriteFrame(etl::const_array_view<uint8_t>{data});
+  rtu_.WriteFrame(&b);
 }
 
 }  // namespace modbus

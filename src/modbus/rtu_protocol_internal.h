@@ -6,10 +6,9 @@
 #include "assert.h"
 
 #include "boost/sml.hpp"
-#include "etl/array_view.h"
 #include "etl/crc16_modbus.h"
-#include "etl/vector.h"
 
+#include "modbus.h"
 #include "modbus/serial_interface.h"
 
 namespace modbus {
@@ -17,11 +16,9 @@ namespace internal {
 
 namespace sml = boost::sml;
 
-using RtuBuffer = etl::vector<uint8_t, 256>;
-
 // Events (externel events are inherited from SerialInterfaceEvents)
 struct TxStart {
-  etl::const_array_view<uint8_t> data;
+  Buffer* buf;
 };
 struct Enable {};
 struct Disable {};
@@ -42,14 +39,12 @@ struct RtuProtocol : public SerialInterfaceEvents {
 
       // Guards
       auto parity_ok = [](const RxByte& e) { return e.parity_ok; };
-      auto buffer_full = [](const RtuBuffer& b) { return b.full(); };
+      auto buffer_full = [](const Buffer& b) { return b.full(); };
 
       // Actions
-      auto clear_buffer = [](RtuBuffer& b) { return b.clear(); };
-      auto add_byte = [](RtuBuffer& b, const RxByte& e) {
-        b.push_back(e.byte);
-      };
-      auto check_frame = [](RtuBuffer& b, bool& frame_available) {
+      auto clear_buffer = [](Buffer& b) { return b.clear(); };
+      auto add_byte = [](Buffer& b, const RxByte& e) { b.push_back(e.byte); };
+      auto check_frame = [](Buffer& b, bool& frame_available) {
         if (b.size() > 2) {
           uint16_t crc_recv = b[b.size() - 2] | b[b.size() - 1] << 8;
           uint16_t crc_calc = etl::crc16_modbus(b.begin(), b.end() - 2).value();
@@ -63,15 +58,14 @@ struct RtuProtocol : public SerialInterfaceEvents {
         }
       };
       auto invalidate = [](bool& frame_available) { frame_available = false; };
-      auto send_frame = [](RtuBuffer& b, const TxStart& txs,
-                           SerialInterface& s) {
-        assert(txs.data.size() + 2 <= b.capacity());
-        uint16_t crc =
-            etl::crc16_modbus(txs.data.begin(), txs.data.end()).value();
-        b.assign(txs.data.begin(), txs.data.end());
-        b.push_back(crc & 0xFF);
-        b.push_back(crc >> 8);
-        s.Send(b.data(), b.size());
+      auto send_frame = [](Buffer& b, const TxStart& txs, SerialInterface& s) {
+        Buffer* buf = txs.buf;
+        assert(buf->capacity() >= buf->size() + 2);
+
+        uint16_t crc = etl::crc16_modbus(buf->begin(), buf->end()).value();
+        txs.buf->push_back(crc & 0xFF);
+        txs.buf->push_back(crc >> 8);
+        s.Send(txs.buf->data(), txs.buf->size());
       };
 
       // clang-format off
