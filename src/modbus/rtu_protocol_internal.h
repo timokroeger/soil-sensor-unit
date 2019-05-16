@@ -63,7 +63,7 @@ struct RtuProtocol {
               (crc == etl::crc16_modbus(b.begin(), b.end()).value());
         }
       };
-      auto send_frame = [](Buffer& b, const TxStart& txs, SerialInterface& s) {
+      auto send_frame = [](const TxStart& txs, SerialInterface& s) {
         Buffer* buf = txs.buf;
         assert(buf->capacity() >= buf->size() + 2);
 

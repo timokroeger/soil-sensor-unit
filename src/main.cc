@@ -14,12 +14,12 @@ namespace {
 void UpdateModbus(modbus::RtuProtocol &rtu, modbus::Slave &slave) {
   BspInterruptFree _;
 
-  modbus::Buffer *req = rtu.ReadFrame();
+  auto req = rtu.ReadFrame();
   if (req == nullptr) {
     return;
   }
 
-  modbus::Buffer *resp = slave.Execute(req);
+  modbus::Buffer *resp = slave.Execute(req.get());
   if (resp == nullptr) {
     return;
   }

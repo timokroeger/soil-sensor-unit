@@ -3,11 +3,18 @@
 #ifndef MODBUS_MODBUS_H_
 #define MODBUS_MODBUS_H_
 
+#include <memory>
+
 #include "etl/vector.h"
 
 namespace modbus {
 
 using Buffer = etl::vector<uint8_t, 256>;
+
+struct BufferClearer {
+  void operator()(Buffer *b) { b->clear(); }
+};
+using UniqueBuffer = std::unique_ptr<Buffer, BufferClearer>;
 
 enum class FunctionCode {
   kReadInputRegister = 4,

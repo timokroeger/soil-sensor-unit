@@ -13,7 +13,7 @@ class SerialMock : public SerialInterface {
  public:
   MOCK_METHOD0(Enable, void());
   MOCK_METHOD0(Disable, void());
-  MOCK_METHOD2(Send, void(const uint8_t*, size_t));
+  MOCK_METHOD2(Send, void(const uint8_t *, size_t));
 };
 
 class RtuProtocolTest : public ::testing::Test {
@@ -67,7 +67,7 @@ TEST_F(RtuProtocolTest, ReceiveFrame) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
 
   RxFrame(data, sizeof(data));
-  Buffer *frame = rtu_.ReadFrame();
+  auto frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data[0]));
 }
@@ -78,7 +78,7 @@ TEST_F(RtuProtocolTest, ReceiveLongFrame) {
   data[255] = 0x6B;
 
   RxFrame(data, sizeof(data));
-  Buffer *frame = rtu_.ReadFrame();
+  auto frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAreArray(data, 254));
 }
@@ -111,16 +111,18 @@ TEST_F(RtuProtocolTest, SendLongFrame) {
 TEST_F(RtuProtocolTest, TransmissionSequence) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
 
-  RxFrame(data, sizeof(data));
-  Buffer *frame = rtu_.ReadFrame();
-  ASSERT_NE(frame, nullptr);
-  ASSERT_THAT(*frame, ElementsAre(data[0]));
+  {
+    RxFrame(data, sizeof(data));
+    auto frame = rtu_.ReadFrame();
+    ASSERT_NE(frame, nullptr);
+    ASSERT_THAT(*frame, ElementsAre(data[0]));
 
-  EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
-  TxFrame(data, 1);
+    EXPECT_CALL(serial_, Send(_, _)).With(ElementsAreArray(data));
+    TxFrame(data, 1);
+  }
 
   RxFrame(data, sizeof(data));
-  frame = rtu_.ReadFrame();
+  auto frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data[0]));
 
@@ -149,7 +151,7 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
 
   // Check received data
   rtu_.BusIdle();
-  Buffer *frame = rtu_.ReadFrame();
+  UniqueBuffer frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data_recv[0]));
 }

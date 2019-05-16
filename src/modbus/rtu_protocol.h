@@ -16,7 +16,7 @@ namespace sml = boost::sml;
 
 class RtuProtocol {
  public:
-  explicit RtuProtocol(SerialInterface& serial)
+  explicit RtuProtocol(SerialInterface &serial)
       : impl_(serial, rx_buffer_, frame_available_) {}
 
   void Enable() { impl_.process_event(internal::Enable{}); }
@@ -41,13 +41,13 @@ class RtuProtocol {
     impl_.process_event(internal::TxDone{});
   }
 
-  Buffer *ReadFrame() {
+  UniqueBuffer ReadFrame() {
     if (!frame_available_) {
       return nullptr;
     }
 
     frame_available_ = false;
-    return &rx_buffer_;
+    return UniqueBuffer(&rx_buffer_);
   };
 
   void WriteFrame(Buffer *buffer) {
