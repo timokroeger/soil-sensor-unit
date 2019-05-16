@@ -180,10 +180,13 @@ uint16_t BspMeasureRaw() {
   return std::max(high - low, 0);
 }
 
+BspInterruptFree::BspInterruptFree() { __disable_irq(); }
+BspInterruptFree::~BspInterruptFree() { __enable_irq(); }
+
 // Implementaion for newlib assert()
 extern "C" void __assert_func(const char *, int, const char *, const char *) {
+  BspInterruptFree _;
   // TODO: Disable LED.
-  __disable_irq();
   for (;;)
     ;
 }

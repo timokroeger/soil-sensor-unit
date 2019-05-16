@@ -18,4 +18,10 @@ void BspReset();
 // Measures the differential sampling capacitor voltage.
 uint16_t BspMeasureRaw();
 
+class BspInterruptFree {
+ public:
+  BspInterruptFree();
+  ~BspInterruptFree();
+};
+
 #endif  // BSP_BSP_H_
