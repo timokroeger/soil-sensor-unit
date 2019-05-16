@@ -31,7 +31,7 @@ class ModbusSerial final : public modbus::SerialInterface {
 
   modbus::RtuProtocol *rtu_ = nullptr;
 
-  bool tx_active_ = false;
+  volatile bool tx_active_ = false;
   const uint8_t *tx_data_ = nullptr;
   const uint8_t *tx_data_end_ = nullptr;
 };
