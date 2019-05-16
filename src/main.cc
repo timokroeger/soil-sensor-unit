@@ -28,9 +28,9 @@ int main() {
 
   // Main loop.
   for (;;) {
-    if (modbus_rtu.FrameAvailable()) {
-      auto req = modbus_rtu.ReadFrame();
-      auto resp = modbus_slave.Execute(req);
+    modbus::Buffer *req = modbus_rtu.ReadFrame();
+    if (req != nullptr) {
+      modbus::Buffer *resp = modbus_slave.Execute(req);
       if (resp != nullptr) {
         modbus_rtu.WriteFrame(resp);
       }

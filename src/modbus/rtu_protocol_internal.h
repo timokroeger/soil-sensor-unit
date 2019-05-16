@@ -57,7 +57,6 @@ struct RtuProtocol : public SerialInterfaceEvents {
           }
         }
       };
-      auto invalidate = [](bool& frame_available) { frame_available = false; };
       auto send_frame = [](Buffer& b, const TxStart& txs, SerialInterface& s) {
         Buffer* buf = txs.buf;
         assert(buf->capacity() >= buf->size() + 2);
@@ -75,7 +74,7 @@ struct RtuProtocol : public SerialInterfaceEvents {
         // Receiving a valid frame
         ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
         ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
-        ,state<Receiving>  + on_entry<RxByte>                / (invalidate, add_byte)
+        ,state<Receiving>  + on_entry<RxByte>                / add_byte
         ,state<Receiving>  + event<BusIdle>                  / check_frame  = state<Idle>
 
         // Receiving an invalid frame

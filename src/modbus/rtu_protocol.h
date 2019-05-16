@@ -27,9 +27,11 @@ class RtuProtocol {
     impl_.process_event(std::forward<Args>(args)...);
   }
 
-  bool FrameAvailable() { return frame_available_; };
-
   Buffer *ReadFrame() {
+    if (!frame_available_) {
+      return nullptr;
+    }
+
     frame_available_ = false;
     return &rx_buffer_;
   };
