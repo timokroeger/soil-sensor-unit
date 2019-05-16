@@ -46,15 +46,10 @@ struct RtuProtocol : public SerialInterfaceEvents {
       auto add_byte = [](Buffer& b, const RxByte& e) { b.push_back(e.byte); };
       auto check_frame = [](Buffer& b, bool& frame_available) {
         if (b.size() > 2) {
-          uint16_t crc_recv = b[b.size() - 2] | b[b.size() - 1] << 8;
-          uint16_t crc_calc = etl::crc16_modbus(b.begin(), b.end() - 2).value();
-
-          if (crc_recv == crc_calc) {
-            // Remove valid CRC from frame data.
-            b.pop_back();
-            b.pop_back();
-            frame_available = true;
-          }
+          // Extract CRC from frame data.
+          uint16_t crc = b[b.size() - 2] | b[b.size() - 1] << 8;
+          b.resize(b.size() - 2);
+          frame_available = (crc == etl::crc16_modbus(b.begin(), b.end()).value());
         }
       };
       auto send_frame = [](Buffer& b, const TxStart& txs, SerialInterface& s) {
