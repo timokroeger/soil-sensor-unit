@@ -9,6 +9,26 @@
 #include "modbus_data.h"
 #include "modbus_data_fw_update.h"
 
+namespace {
+
+void UpdateModbus(modbus::RtuProtocol &rtu, modbus::Slave &slave) {
+  BspInterruptFree _;
+
+  modbus::Buffer *req = rtu.ReadFrame();
+  if (req == nullptr) {
+    return;
+  }
+
+  modbus::Buffer *resp = slave.Execute(req);
+  if (resp == nullptr) {
+    return;
+  }
+
+  rtu.WriteFrame(resp);
+}
+
+}  // namespace
+
 int main() {
   BspSetup();
 
@@ -28,13 +48,7 @@ int main() {
 
   // Main loop.
   for (;;) {
-    modbus::Buffer *req = modbus_rtu.ReadFrame();
-    if (req != nullptr) {
-      modbus::Buffer *resp = modbus_slave.Execute(req);
-      if (resp != nullptr) {
-        modbus_rtu.WriteFrame(resp);
-      }
-    }
+    UpdateModbus(modbus_rtu, modbus_slave);
 
     if (modbus_data.reset() && !modbus_serial.tx_active()) {
       BspReset();
