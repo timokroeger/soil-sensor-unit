@@ -22,9 +22,23 @@ class RtuProtocol {
   void Enable() { impl_.process_event(internal::Enable{}); }
   void Disable() { impl_.process_event(internal::Disable{}); }
 
-  template <typename... Args>
-  void Notify(Args&&... args) {
-    impl_.process_event(std::forward<Args>(args)...);
+  // A MODBUS inter frame timeout occurred (= bus was idle for some time)
+  //
+  // The inter-frame delay (IFD) is the minimum time between two frames measured
+  // between the end of the stop bit and the beginning of the start bit.
+  // IFD = MAX(3.5 * 11 / baudrate, 1750us)
+  void BusIdle() {
+    impl_.process_event(internal::BusIdle{});
+  }
+
+  // A byte was received on the serial interface.
+  void RxByte(uint8_t byte, bool parity_ok) {
+    impl_.process_event(internal::RxByte{byte, parity_ok});
+  }
+
+  // A transfer started by the SerialInterface::Send() method has finished.
+  void TxDone() {
+    impl_.process_event(internal::TxDone{});
   }
 
   Buffer *ReadFrame() {

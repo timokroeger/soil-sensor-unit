@@ -16,18 +16,25 @@ namespace internal {
 
 namespace sml = boost::sml;
 
-// Events (externel events are inherited from SerialInterfaceEvents)
+// Events
+struct Enable {};
+struct Disable {};
+struct BusIdle {};
+struct RxByte {
+  uint8_t byte;
+  bool parity_ok;
+};
 struct TxStart {
   Buffer* buf;
 };
-struct Enable {};
-struct Disable {};
+struct TxDone {};
 
-struct RtuProtocol : public SerialInterfaceEvents {
+// State machine
+struct RtuProtocol {
   // States
   struct Disabled;
   struct Enabled {
-    // States
+    // Sub-States
     struct Init;
     struct Idle;
     struct Receiving;

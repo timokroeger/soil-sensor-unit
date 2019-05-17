@@ -22,22 +22,22 @@ class RtuProtocolTest : public ::testing::Test {
     EXPECT_CALL(serial_, Enable());
     rtu_.Enable();
 
-    rtu_.Notify(SerialInterfaceEvents::BusIdle{});
+    rtu_.BusIdle();
     ASSERT_EQ(rtu_.ReadFrame(), nullptr);
   }
 
   void RxFrame(const uint8_t *data, size_t length) {
     for (size_t i = 0; i < length; i++) {
-      rtu_.Notify(SerialInterfaceEvents::RxByte{data[i], true});
+      rtu_.RxByte(data[i], true);
       EXPECT_EQ(rtu_.ReadFrame(), nullptr);
     }
-    rtu_.Notify(SerialInterfaceEvents::BusIdle{});
+    rtu_.BusIdle();
   }
 
   void TxFrame(const uint8_t *data, size_t length) {
     Buffer b(data, data + length);
     rtu_.WriteFrame(&b);
-    rtu_.Notify(SerialInterfaceEvents::TxDone{});
+    rtu_.TxDone();
   }
 
   SerialMock serial_;
@@ -47,7 +47,7 @@ class RtuProtocolTest : public ::testing::Test {
 TEST_F(RtuProtocolTest, IdleWithoutData) {
   // The interface implementor wrongly sends a timeout notification despite not
   // receiving any data beforehand.
-  rtu_.Notify(SerialInterfaceEvents::BusIdle{});
+  rtu_.BusIdle();
   ASSERT_EQ(rtu_.ReadFrame(), nullptr);
 }
 
@@ -87,9 +87,9 @@ TEST_F(RtuProtocolTest, ReceiveParityError) {
   const uint8_t data[] = {0x12, 0x3F, 0x4D};
 
   // Parity error in second byte.
-  rtu_.Notify(SerialInterfaceEvents::RxByte{data[0], true});
-  rtu_.Notify(SerialInterfaceEvents::RxByte{data[1], false});
-  rtu_.Notify(SerialInterfaceEvents::BusIdle{});
+  rtu_.RxByte(data[0], true);
+  rtu_.RxByte(data[1], false);
+  rtu_.BusIdle();
   ASSERT_EQ(rtu_.ReadFrame(), nullptr);
 }
 
@@ -132,7 +132,7 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
   const uint8_t data_recv[] = {0x12, 0x3F, 0x4D};
 
   // Receive first byte.
-  rtu_.Notify(SerialInterfaceEvents::RxByte{data_recv[0], true});
+  rtu_.RxByte(data_recv[0], true);
   EXPECT_EQ(rtu_.ReadFrame(), nullptr);
 
   // Ignore write operation
@@ -142,13 +142,13 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
   rtu_.WriteFrame(&b);
 
   // Receive second byte and third.
-  rtu_.Notify(SerialInterfaceEvents::RxByte{data_recv[1], true});
+  rtu_.RxByte(data_recv[1], true);
   EXPECT_EQ(rtu_.ReadFrame(), nullptr);
-  rtu_.Notify(SerialInterfaceEvents::RxByte{data_recv[2], true});
+  rtu_.RxByte(data_recv[2], true);
   EXPECT_EQ(rtu_.ReadFrame(), nullptr);
 
   // Check received data
-  rtu_.Notify(SerialInterfaceEvents::BusIdle{});
+  rtu_.BusIdle();
   Buffer *frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data_recv[0]));
@@ -166,7 +166,7 @@ TEST_F(RtuProtocolTest, ReceiveDuringSend) {
   ASSERT_EQ(rtu_.ReadFrame(), nullptr);
 
   // Finish send operation.
-  rtu_.Notify(SerialInterfaceEvents::TxDone{});
+  rtu_.TxDone();
 }
 
 TEST_F(RtuProtocolTest, DisabledBehaviour) {

@@ -65,7 +65,7 @@ void ModbusSerial::Send(const uint8_t* data, size_t length) {
 void ModbusSerial::TimerIsr() {
   if (Chip_MRT_IntPending(mrt_ch_)) {
     Chip_MRT_IntClear(mrt_ch_);
-    rtu_->Notify(BusIdle{});
+    rtu_->BusIdle();
   }
 }
 
@@ -84,7 +84,7 @@ void ModbusSerial::UartIsr() {
         ((Chip_Clock_GetSystemClockRate() / 1000000) * 1750) | MRT_INTVAL_LOAD);
 
     uint8_t rxdata = Chip_UART_ReadByte(usart_);
-    rtu_->Notify(RxByte{rxdata, !(uart_ints & UART_STAT_PAR_ERRINT)});
+    rtu_->RxByte(rxdata, !(uart_ints & UART_STAT_PAR_ERRINT));
 
     Chip_UART_ClearStatus(usart_, UART_STAT_PAR_ERRINT);
   }
@@ -101,7 +101,7 @@ void ModbusSerial::UartIsr() {
 
   if (uart_ints & UART_STAT_TXIDLE) {
     tx_active_ = false;
-    rtu_->Notify(TxDone{});
+    rtu_->TxDone();
     Chip_UART_IntDisable(usart_, UART_STAT_TXIDLE);
   }
 }
