@@ -45,7 +45,7 @@ struct RtuProtocol {
       using namespace sml;
 
       // Guards
-      auto parity_ok = [](const RxByte& e) { return e.parity_ok; };
+      auto parity_ok = [](const RxByte &e) { return e.parity_ok; };
       auto buffer_full = [](const Buffer& b) { return b.full(); };
 
       // Actions
@@ -59,7 +59,8 @@ struct RtuProtocol {
           // Extract CRC from frame data.
           uint16_t crc = b[b.size() - 2] | b[b.size() - 1] << 8;
           b.resize(b.size() - 2);
-          frame_available = (crc == etl::crc16_modbus(b.begin(), b.end()).value());
+          frame_available =
+              (crc == etl::crc16_modbus(b.begin(), b.end()).value());
         }
       };
       auto send_frame = [](Buffer& b, const TxStart& txs, SerialInterface& s) {
@@ -74,22 +75,21 @@ struct RtuProtocol {
 
       // clang-format off
       return make_transition_table(
-        *state<Init>       + event<BusIdle>                                 = state<Idle>
+        *state<Init>       + event<BusIdle>                                                       = state<Idle>
 
         // Receiving a valid frame
-        ,state<Idle>       + event<RxByte> [parity_ok]       / clear_buffer = state<Receiving>
-        ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full]      = state<Receiving>
-        ,state<Receiving>  + on_entry<RxByte>                / add_byte
-        ,state<Receiving>  + event<BusIdle>                  / check_frame  = state<Idle>
+        ,state<Idle>       + event<RxByte> [parity_ok]                 / (clear_buffer, add_byte) = state<Receiving>
+        ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full] / add_byte                 = state<Receiving>
+        ,state<Receiving>  + event<BusIdle>                            / check_frame              = state<Idle>
 
         // Receiving an invalid frame
-        ,state<Idle>       + event<RxByte> [!parity_ok]                     = state<Ignoring>
-        ,state<Receiving>  + event<RxByte> [!parity_ok || buffer_full]      = state<Ignoring>
-        ,state<Ignoring>   + event<BusIdle>                                 = state<Idle>
+        ,state<Idle>       + event<RxByte> [!parity_ok]                                           = state<Ignoring>
+        ,state<Receiving>  + event<RxByte> [!parity_ok || buffer_full]                            = state<Ignoring>
+        ,state<Ignoring>   + event<BusIdle>                                                       = state<Idle>
 
         // Sending a frame
-        ,state<Idle>       + event<TxStart>                  / send_frame   = state<Sending>
-        ,state<Sending>    + event<TxDone>                                  = state<Idle>
+        ,state<Idle>       + event<TxStart>                            / send_frame               = state<Sending>
+        ,state<Sending>    + event<TxDone>                                                        = state<Idle>
       );
       // clang-format on
     }
