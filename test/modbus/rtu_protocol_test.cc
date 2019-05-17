@@ -169,6 +169,20 @@ TEST_F(RtuProtocolTest, ReceiveDuringSend) {
   rtu_.TxDone();
 }
 
+TEST_F(RtuProtocolTest, ReadDuringReceive) {
+  const uint8_t data[] = {0x12, 0x3F, 0x4D};
+
+  // First receive a normal frame.
+  RxFrame(data, sizeof(data));
+
+  // Then start receiving a second frame.
+  rtu_.RxByte(data[0], true);
+  rtu_.RxByte(data[1], true);
+
+  // No frame should be available to read because reception is still in progress.
+  ASSERT_EQ(rtu_.ReadFrame(), nullptr);
+}
+
 TEST_F(RtuProtocolTest, DisabledBehaviour) {
   // Do some normal stuff to change internal state.
   const uint8_t data[] = {0x12, 0x3F, 0x4D};

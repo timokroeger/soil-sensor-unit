@@ -49,7 +49,10 @@ struct RtuProtocol {
       auto buffer_full = [](const Buffer& b) { return b.full(); };
 
       // Actions
-      auto clear_buffer = [](Buffer& b) { return b.clear(); };
+      auto clear_buffer = [](Buffer& b, bool& frame_available) {
+        b.clear();
+        frame_available = false;
+      };
       auto add_byte = [](Buffer& b, const RxByte& e) { b.push_back(e.byte); };
       auto check_frame = [](Buffer& b, bool& frame_available) {
         if (b.size() > 2) {
