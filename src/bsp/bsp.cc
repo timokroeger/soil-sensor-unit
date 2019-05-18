@@ -21,16 +21,21 @@ namespace {
 
 // Configures system clock to 30MHz with the PLL fed by the internal oscillator.
 void SetupClock() {
-  const uint32_t kMainFrequency = 60000000;
-  const uint32_t kSystemFrequency = 30000000;
+  // Cannot use vendor provided routine in ROM memory to setup the system clock.
+  // It does not support setting 30MHz as output frequency.
 
-  // Use vendor provided routine in ROM memory to setup the system clock.
-  // It uses alsmost 1kb less flash compared to the version Chip_IRC_SetFreq()
-  // shipped in the lpc_chip_82x libraries.
-  Chip_IRC_SetFreq(kMainFrequency, kSystemFrequency);
+  // System clock frequency: 12MHz * 4 / 1 = 60MHz
+  Chip_Clock_SetupSystemPLL(4, 1);
+  Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
+  while (!Chip_Clock_IsSystemPLLLocked())
+    ;
+
+  // Main clock frequency: 60MHz / 2 = 30Mhz
+  Chip_Clock_SetSysClockDiv(2);
+  Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLOUT);
 
   // Update CMSIS clock frequency variable which is used in iap.c
-  SystemCoreClock = kSystemFrequency;
+  SystemCoreClock = 30000000;
 }
 
 // Enables LED output and sets ADC pins to analog mode.
