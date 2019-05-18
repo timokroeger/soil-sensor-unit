@@ -15,7 +15,7 @@ static uint16_t AverageMeasurement() {
   return acc >> 10;
 }
 
-bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
+modbus::ExceptionCode ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
     *data_out = AverageMeasurement();
   } else if (address == 0x80) {
@@ -23,21 +23,21 @@ bool ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   } else if (address == 0x100) {
     *data_out = reset_;
   } else {
-    return false;
+    return modbus::ExceptionCode::kIllegalDataAddress;
   }
 
-  return true;
+  return modbus::ExceptionCode::kOk;
 }
 
-bool ModbusData::WriteRegister(uint16_t address, uint16_t data) {
+modbus::ExceptionCode ModbusData::WriteRegister(uint16_t address, uint16_t data) {
   // Firmware update is mapped to the second half of the address range.
   if (address >= 0x8000) {
-    fw_update_.WriteRegister(address - 0x8000, data);
+    return fw_update_.WriteRegister(address - 0x8000, data);
   } else if (address == 0x100) {
     reset_ = data;
   } else {
-    return false;
+    return modbus::ExceptionCode::kIllegalDataAddress;
   }
 
-  return true;
+  return modbus::ExceptionCode::kOk;
 }

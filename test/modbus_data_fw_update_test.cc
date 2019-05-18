@@ -51,14 +51,14 @@ TEST(ModbusDataFwUpdateTest, good_update_sequence) {
 
   EXPECT_EQ(fw_update.WriteRegister(ModbusDataFwUpdate::kCommandRegister,
                                     ModbusDataFwUpdate::Command::kPrepare),
-            true);
+            modbus::ExceptionCode::kOk);
   for (size_t i = 0; i < image_data.size(); i += 2) {
     uint16_t data = image_data[i] << 8 | image_data[i + 1];
-    EXPECT_EQ(fw_update.WriteRegister(i / 2, data), true);
+    EXPECT_EQ(fw_update.WriteRegister(i / 2, data), modbus::ExceptionCode::kOk);
   }
   EXPECT_EQ(fw_update.WriteRegister(ModbusDataFwUpdate::kCommandRegister,
                                     ModbusDataFwUpdate::Command::kSetPending),
-            true);
+            modbus::ExceptionCode::kOk);
 
   EXPECT_EQ(bl.prepared, true);
   EXPECT_EQ(bl.update_memory, image_data);

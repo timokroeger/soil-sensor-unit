@@ -23,8 +23,9 @@ class ModbusDataFwUpdate final : public modbus::DataInterface {
   explicit ModbusDataFwUpdate(BootloaderInterface& bootloader)
       : bootloader_(bootloader) {}
 
-  bool ReadRegister(uint16_t address, uint16_t* data_out) override;
-  bool WriteRegister(uint16_t address, uint16_t data) override;
+  modbus::ExceptionCode ReadRegister(uint16_t address,
+                                     uint16_t* data_out) override;
+  modbus::ExceptionCode WriteRegister(uint16_t address, uint16_t data) override;
 
  private:
   static constexpr size_t kBufferSize = 1024;

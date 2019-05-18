@@ -15,15 +15,19 @@ namespace modbus {
 
 class DataMock : public DataInterface {
  public:
-  MOCK_METHOD2(ReadRegister, bool(uint16_t address, uint16_t* data_out));
-  MOCK_METHOD2(WriteRegister, bool(uint16_t address, uint16_t data));
+  MOCK_METHOD2(ReadRegister,
+               modbus::ExceptionCode(uint16_t address, uint16_t* data_out));
+  MOCK_METHOD2(WriteRegister,
+               modbus::ExceptionCode(uint16_t address, uint16_t data));
 };
 
 class ModbusTest : public ::testing::Test {
  protected:
   ModbusTest() : data_(), modbus_(data_) {
-    ON_CALL(data_, ReadRegister(_, _)).WillByDefault(Return(true));
-    ON_CALL(data_, WriteRegister(_, _)).WillByDefault(Return(true));
+    ON_CALL(data_, ReadRegister(_, _))
+        .WillByDefault(Return(modbus::ExceptionCode::kOk));
+    ON_CALL(data_, WriteRegister(_, _))
+        .WillByDefault(Return(modbus::ExceptionCode::kOk));
   }
 
   void SetUp() override { modbus_.set_address(1); }
@@ -67,7 +71,8 @@ TEST_F(ModbusTest, ReadInputRegister) {
   };
 
   EXPECT_CALL(data_, ReadRegister(0x4567, _))
-      .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+      .WillOnce(
+          DoAll(SetArgPointee<1>(0xABCD), Return(modbus::ExceptionCode::kOk)));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -89,11 +94,14 @@ TEST_F(ModbusTest, ReadInputRegisterMultiple) {
   };
 
   EXPECT_CALL(data_, ReadRegister(0x4567, _))
-      .WillOnce(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+      .WillOnce(
+          DoAll(SetArgPointee<1>(0xABCD), Return(modbus::ExceptionCode::kOk)));
   EXPECT_CALL(data_, ReadRegister(0x4568, _))
-      .WillOnce(DoAll(SetArgPointee<1>(0xDEAD), Return(true)));
+      .WillOnce(
+          DoAll(SetArgPointee<1>(0xDEAD), Return(modbus::ExceptionCode::kOk)));
   EXPECT_CALL(data_, ReadRegister(0x4569, _))
-      .WillOnce(DoAll(SetArgPointee<1>(0xBEAF), Return(true)));
+      .WillOnce(
+          DoAll(SetArgPointee<1>(0xBEAF), Return(modbus::ExceptionCode::kOk)));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -114,7 +122,8 @@ TEST_F(ModbusTest, ReadInputRegisterMaximum) {
 
   EXPECT_CALL(data_, ReadRegister(_, _))
       .Times(125)
-      .WillRepeatedly(DoAll(SetArgPointee<1>(0x0000), Return(true)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(0x0000), Return(modbus::ExceptionCode::kOk)));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -157,7 +166,8 @@ TEST_F(ModbusTest, ReadInputRegisterInvalidAddress) {
       0x02,  // Exception code
   };
 
-  EXPECT_CALL(data_, ReadRegister(0x4567, _)).WillOnce(Return(false));
+  EXPECT_CALL(data_, ReadRegister(0x4567, _))
+      .WillOnce(Return(modbus::ExceptionCode::kIllegalDataAddress));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -197,7 +207,8 @@ TEST_F(ModbusTest, WriteSingleRegister) {
       0xAB, 0xCD,  // Register Value
   };
 
-  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(true));
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD))
+      .WillOnce(Return(modbus::ExceptionCode::kOk));
   RequestResponse(request_response, sizeof(request_response), request_response,
                   sizeof(request_response));
 }
@@ -216,7 +227,8 @@ TEST_F(ModbusTest, WriteSingleRegisterInvalidAddress) {
       0x02,  // Exception code
   };
 
-  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD)).WillOnce(Return(false));
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xABCD))
+      .WillOnce(Return(modbus::ExceptionCode::kIllegalDataAddress));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -258,8 +270,10 @@ TEST_F(ModbusTest, WriteMultipleRegisters) {
       0x00, 0x02,  // Quantity of Registers
   };
 
-  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(true));
-  EXPECT_CALL(data_, WriteRegister(0x4568, 0xBEEF)).WillOnce(Return(true));
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD))
+      .WillOnce(Return(modbus::ExceptionCode::kOk));
+  EXPECT_CALL(data_, WriteRegister(0x4568, 0xBEEF))
+      .WillOnce(Return(modbus::ExceptionCode::kOk));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -282,7 +296,7 @@ TEST_F(ModbusTest, WriteMultipleRegistersMaximum) {
 
   EXPECT_CALL(data_, WriteRegister(_, 0x0000))
       .Times(123)
-      .WillRepeatedly(Return(true));
+      .WillRepeatedly(Return(modbus::ExceptionCode::kOk));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -303,7 +317,8 @@ TEST_F(ModbusTest, WriteMultipleRegistersInvalidAddress) {
       0x02,  // Exception code
   };
 
-  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD)).WillOnce(Return(false));
+  EXPECT_CALL(data_, WriteRegister(0x4567, 0xDEAD))
+      .WillOnce(Return(modbus::ExceptionCode::kIllegalDataAddress));
   RequestResponse(request, sizeof(request), response, sizeof(response));
 }
 
@@ -391,7 +406,8 @@ TEST_F(ModbusTest, MultipleRequests) {
 
   EXPECT_CALL(data_, ReadRegister(0x4567, _))
       .Times(3)
-      .WillRepeatedly(DoAll(SetArgPointee<1>(0xABCD), Return(true)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(0xABCD), Return(modbus::ExceptionCode::kOk)));
   for (int i = 0; i < 3; i++) {
     RequestResponse(request, sizeof(request), response, sizeof(response));
   }

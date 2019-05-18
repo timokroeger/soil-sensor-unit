@@ -89,8 +89,8 @@ ExceptionCode Slave::ReadInputRegister(etl::bit_stream& data) {
   for (int i = 0; i < quantity_regs; i++) {
     uint16_t reg_content = 0;
     uint16_t addr = starting_addr + i;
-    bool ok = data_.ReadRegister(addr, &reg_content);
-    if (!ok) {
+    ExceptionCode exception = data_.ReadRegister(addr, &reg_content);
+    if (exception != ExceptionCode::kOk) {
       return ExceptionCode::kIllegalDataAddress;
     }
 
@@ -111,8 +111,8 @@ ExceptionCode Slave::WriteSingleRegister(etl::bit_stream& data) {
     return ExceptionCode::kInvalidFrame;
   }
 
-  bool ok = data_.WriteRegister(wr_addr, wr_data);
-  if (!ok) {
+  ExceptionCode exception = data_.WriteRegister(wr_addr, wr_data);
+  if (exception != ExceptionCode::kOk) {
     return ExceptionCode::kIllegalDataAddress;
   }
 
@@ -150,8 +150,8 @@ ExceptionCode Slave::WriteMultipleRegisters(etl::bit_stream& data) {
       return ExceptionCode::kInvalidFrame;
     }
 
-    bool ok = data_.WriteRegister(addr, reg_value);
-    if (!ok) {
+    ExceptionCode exception = data_.WriteRegister(addr, reg_value);
+    if (exception != ExceptionCode::kOk) {
       return ExceptionCode::kIllegalDataAddress;
     }
   }

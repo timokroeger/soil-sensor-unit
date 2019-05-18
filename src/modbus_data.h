@@ -7,10 +7,11 @@
 
 class ModbusData final : public modbus::DataInterface {
  public:
-  ModbusData(modbus::DataInterface& fw_update) : fw_update_(fw_update) {}
+  ModbusData(modbus::DataInterface &fw_update) : fw_update_(fw_update) {}
 
-  bool ReadRegister(uint16_t address, uint16_t *data_out) override;
-  bool WriteRegister(uint16_t address, uint16_t data) override;
+  modbus::ExceptionCode ReadRegister(uint16_t address,
+                                     uint16_t *data_out) override;
+  modbus::ExceptionCode WriteRegister(uint16_t address, uint16_t data) override;
 
   bool reset() const { return reset_; }
 

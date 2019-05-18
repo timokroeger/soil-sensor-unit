@@ -5,19 +5,23 @@
 
 #include <stdint.h>
 
+#include "modbus.h"
+
 namespace modbus {
 
 class DataInterface {
  public:
   virtual ~DataInterface() = default;
 
-    // Reads the contents of a register at address and writes it to data_out.
-  // Returns true on success or false when the register is not available.
-  virtual bool ReadRegister(uint16_t address, uint16_t *data_out) = 0;
+  // Reads the contents of a register at address and writes it to data_out.
+  // Returns ExceptionCode::kOk on success or any other (positive) exception
+  // code in case of failure.
+  virtual ExceptionCode ReadRegister(uint16_t address, uint16_t *data_out) = 0;
 
   // Write data to a register.
-  // Returns true on success or false when the register is not available.
-  virtual bool WriteRegister(uint16_t address, uint16_t data) = 0;
+  // Returns ExceptionCode::kOk on success or any other (positive) exception
+  // code in case of failure.
+  virtual ExceptionCode WriteRegister(uint16_t address, uint16_t data) = 0;
 };
 
 }  // namespace modbus

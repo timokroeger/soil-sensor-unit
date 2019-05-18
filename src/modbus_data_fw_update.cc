@@ -2,18 +2,20 @@
 
 #include "modbus_data_fw_update.h"
 
-bool ModbusDataFwUpdate::ReadRegister(uint16_t address,
-                                      uint16_t* data_out) {
+modbus::ExceptionCode ModbusDataFwUpdate::ReadRegister(uint16_t address,
+                                                       uint16_t* data_out) {
   // All fw update registers are write-only.
-  return false;
+  return modbus::ExceptionCode::kIllegalDataAddress;
 };
 
-bool ModbusDataFwUpdate::WriteRegister(uint16_t address,
-                                       uint16_t data) {
+modbus::ExceptionCode ModbusDataFwUpdate::WriteRegister(uint16_t address,
+                                                        uint16_t data) {
   if (address == kCommandRegister) {
+    bool ok = false;
+
     switch (data) {
       case Command::kPrepare:
-        bootloader_.PrepareUpdate();
+        ok = bootloader_.PrepareUpdate();
         write_buffer_.clear();
         write_offset_ = 0;
         break;
@@ -25,18 +27,16 @@ bool ModbusDataFwUpdate::WriteRegister(uint16_t address,
           write_buffer_.resize(write_buffer_.capacity(), 0xFF);
           WriteBuffer();
         }
-        bootloader_.SetUpdatePending();
+        ok = bootloader_.SetUpdatePending();
         break;
 
       case Command::kConfirm:
-        bootloader_.SetUpdateConfirmed();
+        ok = bootloader_.SetUpdateConfirmed();
         break;
-
-      default:
-        return false;
     }
 
-    return true;
+    return ok ? modbus::ExceptionCode::kOk
+              : modbus::ExceptionCode::kIllegalDataValue;
   }
 
   // Assume that the client sends the firmware image data in sequence. If not
@@ -47,7 +47,7 @@ bool ModbusDataFwUpdate::WriteRegister(uint16_t address,
     WriteBuffer();
   }
 
-  return true;
+  return modbus::ExceptionCode::kOk;
 }
 
 void ModbusDataFwUpdate::WriteBuffer() {
