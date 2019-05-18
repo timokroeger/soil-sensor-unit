@@ -13,20 +13,6 @@
 
 namespace modbus {
 
-enum class FunctionCode {
-  kReadInputRegister = 4,
-  kWriteSingleRegister = 6,
-  kWriteMultipleRegisters = 16,
-};
-
-enum class ExceptionCode {
-  kInvalidFrame = -1,
-  kOk = 0,
-  kIllegalFunction,
-  kIllegalDataAddress,
-  kIllegalDataValue,
-};
-
 // Parses modbus requests and passes data on to the used defined
 // data interface.
 class Slave {
