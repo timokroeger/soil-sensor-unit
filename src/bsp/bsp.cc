@@ -17,6 +17,8 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 Bootloader bootloader;
 ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
 
+constexpr int kMeasurementStartDelayMs = 1;
+
 namespace {
 
 // Configures system clock to 30MHz with the PLL fed by the internal oscillator.
@@ -131,9 +133,6 @@ void SetupPwm() {
 
   // Restart counter on event 0 and 1 (match occurred)
   LPC_SCT->LIMIT_L = (1 << 0) | (1 << 1);
-
-  // Start the timer
-  LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 }
 
 // Use the multirate timer for various timing related like delays.
@@ -161,6 +160,23 @@ void BspSetup() {
 }
 
 void BspReset() { NVIC_SystemReset(); }
+
+void BspMeasurementEnable() {
+  // Start the PWM timer
+  LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
+
+  // Wait for 1ms
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_WKT);
+  Chip_WKT_Start(LPC_WKT, WKT_CLKSRC_DIVIRC, kMeasurementStartDelayMs * 7500000 / 1000);
+  while (!Chip_WKT_GetIntStatus(LPC_WKT))
+    ;
+  Chip_WKT_ClearIntStatus(LPC_WKT);
+  Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_WKT);
+}
+
+void BspMeasurementDisable() {
+  LPC_SCT->CTRL_L |= (uint16_t)SCT_CTRL_HALT_L;
+}
 
 uint16_t BspMeasureRaw() {
   Chip_ADC_StartSequencer(LPC_ADC, ADC_SEQA_IDX);

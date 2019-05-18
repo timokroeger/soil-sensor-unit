@@ -10,7 +10,7 @@ class ModbusData final : public modbus::DataInterface {
   ModbusData(modbus::DataInterface &fw_update) : fw_update_(fw_update) {}
 
   void Start(modbus::FunctionCode fn_code) override {}
-  void Complete() override {}
+  void Complete() override;
 
   modbus::ExceptionCode ReadRegister(uint16_t address,
                                      uint16_t *data_out) override;
@@ -21,6 +21,7 @@ class ModbusData final : public modbus::DataInterface {
  private:
   modbus::DataInterface &fw_update_;
   bool reset_ = false;
+  bool meas_enabled_ = false;
 };
 
 #endif  // MODBUS_DATA_H_

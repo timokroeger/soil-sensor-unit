@@ -15,8 +15,18 @@ static uint16_t AverageMeasurement() {
   return acc >> 10;
 }
 
+void ModbusData::Complete() {
+    meas_enabled_ = false;
+    BspMeasurementDisable();
+}
+
 modbus::ExceptionCode ModbusData::ReadRegister(uint16_t address, uint16_t *data_out) {
   if (address == 0) {
+    if (!meas_enabled_) {
+      BspMeasurementEnable();
+      meas_enabled_ = true;
+    }
+
     *data_out = AverageMeasurement();
   } else if (address == 0x80) {
     *data_out = (VERSION_MAJOR << 8) | VERSION_MINOR;
