@@ -15,6 +15,8 @@ namespace modbus {
 
 class DataMock : public DataInterface {
  public:
+  MOCK_METHOD1(Start, void(modbus::FunctionCode fn_code));
+  MOCK_METHOD0(Complete, void());
   MOCK_METHOD2(ReadRegister,
                modbus::ExceptionCode(uint16_t address, uint16_t* data_out));
   MOCK_METHOD2(WriteRegister,

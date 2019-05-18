@@ -26,7 +26,9 @@ Buffer* Slave::Execute(const Buffer* req_buffer) {
   response_.put(fn_code);
 
   ExceptionCode exception = ExceptionCode::kOk;
-  switch (static_cast<FunctionCode>(fn_code)) {
+  FunctionCode fnc = static_cast<FunctionCode>(fn_code);
+  data_.Start(fnc);
+  switch (fnc) {
     case FunctionCode::kReadInputRegister:
       exception = ReadInputRegister(request);
       break;
@@ -44,6 +46,8 @@ Buffer* Slave::Execute(const Buffer* req_buffer) {
       exception = ExceptionCode::kIllegalFunction;
       break;
   }
+
+  data_.Complete();
 
   if (exception == ExceptionCode::kOk) {
     if (!request.at_end()) {

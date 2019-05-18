@@ -23,6 +23,9 @@ class ModbusDataFwUpdate final : public modbus::DataInterface {
   explicit ModbusDataFwUpdate(BootloaderInterface& bootloader)
       : bootloader_(bootloader) {}
 
+  void Start(modbus::FunctionCode fn_code) override {}
+  void Complete() override {}
+
   modbus::ExceptionCode ReadRegister(uint16_t address,
                                      uint16_t* data_out) override;
   modbus::ExceptionCode WriteRegister(uint16_t address, uint16_t data) override;

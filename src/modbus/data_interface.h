@@ -13,6 +13,12 @@ class DataInterface {
  public:
   virtual ~DataInterface() = default;
 
+  // Called when starting to process modbus data.
+  virtual void Start(FunctionCode fn_code) = 0;
+
+  // Called when modbus data processing is finishd.
+  virtual void Complete() = 0;
+
   // Reads the contents of a register at address and writes it to data_out.
   // Returns ExceptionCode::kOk on success or any other (positive) exception
   // code in case of failure.
