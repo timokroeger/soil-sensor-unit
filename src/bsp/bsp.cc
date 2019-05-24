@@ -21,8 +21,27 @@ constexpr int kMeasurementStartDelayMs = 1;
 
 namespace {
 
+void UseIrc() {
+  Chip_Clock_SetSysClockDiv(1);
+  Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_IRC);
+
+  // Update CMSIS clock frequency variable which is used in iap.c
+  SystemCoreClock = 12000000;
+}
+
+void UsePll() {
+  // Main clock frequency: 60MHz / 2 = 30Mhz
+  Chip_Clock_SetSysClockDiv(2);
+  Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLOUT);
+
+  // Update CMSIS clock frequency variable which is used in iap.c
+  SystemCoreClock = 30000000;
+}
+
 // Configures system clock to 30MHz with the PLL fed by the internal oscillator.
 void SetupClock() {
+  UseIrc();
+
   // Cannot use vendor provided routine in ROM memory to setup the system clock.
   // It does not support setting 30MHz as output frequency.
 
@@ -34,13 +53,6 @@ void SetupClock() {
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
   while (!Chip_Clock_IsSystemPLLLocked())
     ;
-
-  // System clock frequency: 60MHz / 2 = 30Mhz
-  Chip_Clock_SetSysClockDiv(2);
-  Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLOUT);
-
-  // Update CMSIS clock frequency variable which is used in iap.c
-  SystemCoreClock = 30000000;
 }
 
 // Enables LED output and sets ADC pins to analog mode.
@@ -165,12 +177,16 @@ void BspSetup() {
 void BspReset() { NVIC_SystemReset(); }
 
 void BspMeasurementEnable() {
+  // Switch to faster clock.
+  UsePll();
+
   // Start the PWM timer
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 
   // Wait for 1ms
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_WKT);
-  Chip_WKT_Start(LPC_WKT, WKT_CLKSRC_DIVIRC, kMeasurementStartDelayMs * 7500000 / 1000);
+  Chip_WKT_Start(LPC_WKT, WKT_CLKSRC_DIVIRC,
+                 kMeasurementStartDelayMs * 7500000 / 1000);
   while (!Chip_WKT_GetIntStatus(LPC_WKT))
     ;
   Chip_WKT_ClearIntStatus(LPC_WKT);
@@ -179,6 +195,9 @@ void BspMeasurementEnable() {
 
 void BspMeasurementDisable() {
   LPC_SCT->CTRL_L |= (uint16_t)SCT_CTRL_HALT_L;
+
+  // Go back no normal clock rate to save power.
+  UseIrc();
 }
 
 uint16_t BspMeasureRaw() {
