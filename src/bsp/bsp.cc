@@ -26,13 +26,16 @@ void SetupClock() {
   // Cannot use vendor provided routine in ROM memory to setup the system clock.
   // It does not support setting 30MHz as output frequency.
 
-  // System clock frequency: 12MHz * 4 / 1 = 60MHz
+  // PLL input FCLKIN (10-25MHz): IRC = 12MHz
+  // PLL output FCLKOUT (<100MHz): 5 * 12MHz = 60MHz
+  // PLL intrenal FCCO (156-320MHz): 2 * 2 * 60MHz = 240Mhz
+  Chip_Clock_SetSystemPLLSource(SYSCTL_PLLCLKSRC_IRC);
   Chip_Clock_SetupSystemPLL(4, 1);
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
   while (!Chip_Clock_IsSystemPLLLocked())
     ;
 
-  // Main clock frequency: 60MHz / 2 = 30Mhz
+  // System clock frequency: 60MHz / 2 = 30Mhz
   Chip_Clock_SetSysClockDiv(2);
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLOUT);
 
