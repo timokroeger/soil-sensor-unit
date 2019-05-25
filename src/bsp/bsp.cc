@@ -102,10 +102,12 @@ void SetupAdc() {
 
   // Wait for ADC to be calibrated.
   Chip_ADC_StartCalibration(LPC_ADC);
-  while (!Chip_ADC_IsCalibrationDone(LPC_ADC)) continue;
+  while (!Chip_ADC_IsCalibrationDone(LPC_ADC))
+    ;
 
   // Set ADC clock: A value of 0 divides the system clock by 1.
   Chip_ADC_SetDivider(LPC_ADC, 0);
+  LPC_ADC->CTRL |= ADC_CR_LPWRMODEBIT;
 
   Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
                           ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
