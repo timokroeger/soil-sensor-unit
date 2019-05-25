@@ -19,12 +19,10 @@ class Slave {
  public:
   explicit Slave(DataInterface& data)
       : address_(-1),
-        data_(data),
-        response_(resp_buffer_.data(),
-                  resp_buffer_.data() + resp_buffer_.capacity()) {}
+        data_(data) {}
 
   // Processes a request and creates a response.
-  Buffer* Execute(const Buffer* req_buffer);
+  bool Execute(const Buffer* req_buffer, Buffer *resp_buffer);
 
   // Valid range 1-247 inclusive.
   int address() const { return address_; }
@@ -40,7 +38,6 @@ class Slave {
 
   int address_;
   DataInterface& data_;
-  Buffer resp_buffer_;
   etl::bit_stream response_;
 };
 

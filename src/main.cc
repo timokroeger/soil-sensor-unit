@@ -19,12 +19,13 @@ void UpdateModbus(modbus::RtuProtocol &rtu, modbus::Slave &slave) {
     return;
   }
 
-  modbus::Buffer *resp = slave.Execute(req.get());
-  if (resp == nullptr) {
+  modbus::Buffer resp;
+  bool ok = slave.Execute(req.get(), &resp);
+  if (!ok) {
     return;
   }
 
-  rtu.WriteFrame(resp);
+  rtu.WriteFrame(&resp);
 }
 
 }  // namespace

@@ -2,26 +2,26 @@
 
 namespace modbus {
 
-Buffer* Slave::Execute(const Buffer* req_buffer) {
+bool Slave::Execute(const Buffer* req_buffer, Buffer *resp_buffer) {
   // const_cast: No modifying methods like bit_stream.put() can be used.
   etl::bit_stream request(const_cast<uint8_t*>(req_buffer->begin()),
                           req_buffer->size());
 
   // Set vector to the largest possible size to that the resize() call at the
   // end of the method does not overwrite the data inserted by the bit_stream.
-  resp_buffer_.resize(resp_buffer_.capacity());
-  response_.restart();
+  resp_buffer->resize(resp_buffer->capacity());
+  response_.set_stream(resp_buffer->data(), resp_buffer->size());
 
   // TODO: Allow broadcasts (addr = 0)
   uint8_t addr;
   if (!request.get<uint8_t>(addr) || addr != address_) {
-    return nullptr;
+    return false;
   }
   response_.put(addr);
 
   uint8_t fn_code;
   if (!request.get<uint8_t>(fn_code)) {
-    return nullptr;
+    return false;
   }
   response_.put(fn_code);
 
@@ -52,11 +52,11 @@ Buffer* Slave::Execute(const Buffer* req_buffer) {
   if (exception == ExceptionCode::kOk) {
     if (!request.at_end()) {
       // Additional bytes at the end make a frame invalid.
-      return nullptr;
+      return false;
     }
   } else {
     if (exception == ExceptionCode::kInvalidFrame) {
-      return nullptr;
+      return false;
     }
 
     // Forge exception response.
@@ -66,8 +66,8 @@ Buffer* Slave::Execute(const Buffer* req_buffer) {
     response_.put<uint8_t>(static_cast<uint8_t>(exception));
   }
 
-  resp_buffer_.resize(response_.size());
-  return &resp_buffer_;
+  resp_buffer->resize(response_.size());
+  return true;
 }
 
 ExceptionCode Slave::ReadInputRegister(etl::bit_stream& data) {

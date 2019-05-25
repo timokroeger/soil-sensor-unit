@@ -37,14 +37,15 @@ class ModbusTest : public ::testing::Test {
   void RequestResponse(const uint8_t* req, size_t req_len, const uint8_t* resp,
                        size_t resp_len) {
     const Buffer req_buf{req, req + req_len};
-    auto resp_data = modbus_.Execute(&req_buf);
-    ASSERT_NE(resp_data, nullptr);
-    ASSERT_THAT(*resp_data, ElementsAreArray(resp, resp_len));
+    Buffer resp_buf;
+    ASSERT_TRUE(modbus_.Execute(&req_buf, &resp_buf));
+    ASSERT_THAT(resp_buf, ElementsAreArray(resp, resp_len));
   }
 
   void RequestNoResponse(const uint8_t* req, size_t req_len) {
     const Buffer req_buf{req, req + req_len};
-    ASSERT_EQ(modbus_.Execute(&req_buf), nullptr);
+    Buffer resp_buf;
+    ASSERT_FALSE(modbus_.Execute(&req_buf, &resp_buf));
   }
 
   DataMock data_;
@@ -52,9 +53,8 @@ class ModbusTest : public ::testing::Test {
 };
 
 TEST_F(ModbusTest, Empty) {
-  Buffer req;
-  auto resp_data = modbus_.Execute(&req);
-  ASSERT_FALSE(resp_data);
+  Buffer req, resp;
+  ASSERT_FALSE(modbus_.Execute(&req, &resp));
 }
 
 TEST_F(ModbusTest, ReadInputRegister) {
