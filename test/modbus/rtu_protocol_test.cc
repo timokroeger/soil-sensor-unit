@@ -11,17 +11,12 @@ namespace modbus {
 
 class SerialMock : public SerialInterface {
  public:
-  MOCK_METHOD0(Enable, void());
-  MOCK_METHOD0(Disable, void());
   MOCK_METHOD2(Send, void(const uint8_t *, size_t));
 };
 
 class RtuProtocolTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    EXPECT_CALL(serial_, Enable());
-    rtu_.Enable();
-
     rtu_.BusIdle();
     ASSERT_EQ(rtu_.ReadFrame(), nullptr);
   }
@@ -183,27 +178,6 @@ TEST_F(RtuProtocolTest, ReadDuringReceive) {
 
   // No frame should be available to read because reception is still in progress.
   ASSERT_EQ(rtu_.ReadFrame(), nullptr);
-}
-
-TEST_F(RtuProtocolTest, DisabledBehaviour) {
-  // Do some normal stuff to change internal state.
-  const uint8_t data[] = {0x12, 0x3F, 0x4D};
-  Buffer b(data, data + sizeof(data));
-  RxFrame(data, sizeof(data));
-
-  EXPECT_CALL(serial_, Disable());
-  rtu_.Disable();
-
-  // Frame received during enabled state is still availble.
-  ASSERT_NE(rtu_.ReadFrame(), nullptr);
-
-  // No further frames can be read when disabled.
-  RxFrame(data, sizeof(data));
-  ASSERT_EQ(rtu_.ReadFrame(), nullptr);
-
-  // No data can be sent when disabled.
-  EXPECT_CALL(serial_, Send(_, _)).Times(0);
-  rtu_.WriteFrame(&b);
 }
 
 }  // namespace modbus

@@ -37,14 +37,13 @@ int main() {
   // Link global serial interface implementation to protocol.
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
+  modbus_serial.Enable();
 
   ModbusDataFwUpdate fw_update(bootloader);
   ModbusData modbus_data(fw_update);
 
   modbus::Slave modbus_slave(modbus_data);
   modbus_slave.set_address(CONFIG_SENSOR_ID);
-
-  modbus_rtu.Enable();
 
   // Main loop.
   for (;;) {

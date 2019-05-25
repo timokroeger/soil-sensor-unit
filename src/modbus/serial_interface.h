@@ -10,21 +10,15 @@ namespace modbus {
 
 // Interface class for that must be implemented by the target platform code for
 // the Modbus RTU or ASCII protocols.
+//
+// The user must configure the serial interface with the desired baudrate,
+// parity and stop bits. For RTU devices a timer must be setup to notify
+// inter-frame delays to the protocol stack with the BusIdle() method.
+// The BusIdle event should notfied right as soon as the bus is idle after
+// enabling the peripheral.
 class SerialInterface {
  public:
   virtual ~SerialInterface() {}
-
-  // Initializes the serial device and the timer required by the modbus stack.
-  //
-  // The user must configure the serial interface with the desired baudrate,
-  // parity and stop bits. For RTU devices a timer must be setup to notify
-  // inter-frame delays to the protocol stack with the BusIdle() method.
-  // The BusIdle event should notfied right as soon as the bus is idle after
-  // enabling the peripheral.
-  virtual void Enable() = 0;
-
-  // Disables the serial device and stops the timer.
-  virtual void Disable() = 0;
 
   // Sends a modbus frame via the serial interface.
   // The data is valid and won’t be changed by the modbus stack until the

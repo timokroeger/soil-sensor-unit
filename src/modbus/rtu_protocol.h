@@ -19,9 +19,6 @@ class RtuProtocol {
   explicit RtuProtocol(SerialInterface &serial)
       : impl_(serial, rx_buffer_, frame_available_) {}
 
-  void Enable() { impl_.process_event(internal::Enable{}); }
-  void Disable() { impl_.process_event(internal::Disable{}); }
-
   // A MODBUS inter frame timeout occurred (= bus was idle for some time)
   //
   // The inter-frame delay (IFD) is the minimum time between two frames measured

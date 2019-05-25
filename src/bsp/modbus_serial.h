@@ -15,8 +15,9 @@ class ModbusSerial final : public modbus::SerialInterface {
 
   void Init(uint32_t baudrate);
 
-  void Enable() override;
-  void Disable() override;
+  void Enable();
+  void Disable();
+
   void Send(const uint8_t *data, size_t length) override;
 
   void TimerIsr();
