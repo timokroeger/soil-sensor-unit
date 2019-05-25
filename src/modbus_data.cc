@@ -5,16 +5,6 @@
 #include "bsp/bsp.h"
 #include "version.h"
 
-static uint16_t AverageMeasurement() {
-  uint32_t acc = 0;
-
-  for (int i = 0; i < (1 << 10); i++) {
-    acc += BspMeasureRaw();
-  }
-
-  return acc >> 10;
-}
-
 void ModbusData::Complete() {
     meas_enabled_ = false;
     BspMeasurementDisable();
@@ -27,7 +17,7 @@ modbus::ExceptionCode ModbusData::ReadRegister(uint16_t address, uint16_t *data_
       meas_enabled_ = true;
     }
 
-    *data_out = AverageMeasurement();
+    *data_out = BspMeasureRaw();
   } else if (address == 0x80) {
     *data_out = (VERSION_MAJOR << 8) | VERSION_MINOR;
   } else if (address == 0x100) {
