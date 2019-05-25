@@ -24,6 +24,7 @@ namespace {
 void UseIrc() {
   Chip_Clock_SetSysClockDiv(1);
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_IRC);
+  Chip_FMC_SetFLASHAccess(FLASHTIM_20MHZ_CPU);
 
   // Update CMSIS clock frequency variable which is used in iap.c
   SystemCoreClock = 12000000;
@@ -31,6 +32,7 @@ void UseIrc() {
 
 void UsePll() {
   // Main clock frequency: 60MHz / 2 = 30Mhz
+  Chip_FMC_SetFLASHAccess(FLASHTIM_30MHZ_CPU);
   Chip_Clock_SetSysClockDiv(2);
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_PLLOUT);
 
