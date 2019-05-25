@@ -13,6 +13,8 @@ extern ModbusSerial modbus_serial;
 
 void BspSetup();
 
+void BspSleep();
+
 void BspReset();
 
 void BspMeasurementEnable();

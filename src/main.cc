@@ -53,5 +53,7 @@ int main() {
     if (modbus_data.reset() && !modbus_serial.tx_active()) {
       BspReset();
     }
+
+    BspSleep();
   }
 }

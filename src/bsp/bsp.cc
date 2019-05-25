@@ -178,6 +178,8 @@ void BspSetup() {
   SetupNVIC();
 }
 
+void BspSleep() { __WFI(); }
+
 void BspReset() { NVIC_SystemReset(); }
 
 void BspMeasurementEnable() {
