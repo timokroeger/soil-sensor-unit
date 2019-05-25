@@ -176,8 +176,10 @@ TEST_F(RtuProtocolTest, ReadDuringReceive) {
   rtu_.RxByte(data[0], true);
   rtu_.RxByte(data[1], true);
 
-  // No frame should be available to read because reception is still in progress.
-  ASSERT_EQ(rtu_.ReadFrame(), nullptr);
+  // First frame is valid, second one gets ignored.
+  UniqueBuffer frame = rtu_.ReadFrame();
+  ASSERT_NE(frame, nullptr);
+  ASSERT_THAT(*frame, ElementsAre(data[0]));
 }
 
 }  // namespace modbus

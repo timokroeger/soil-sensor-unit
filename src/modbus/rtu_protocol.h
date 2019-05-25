@@ -17,7 +17,7 @@ namespace sml = boost::sml;
 class RtuProtocol {
  public:
   explicit RtuProtocol(SerialInterface &serial)
-      : impl_(serial, rx_buffer_, frame_available_) {}
+      : impl_(serial, rx_buffer_) {}
 
   // A MODBUS inter frame timeout occurred (= bus was idle for some time)
   //
@@ -39,11 +39,11 @@ class RtuProtocol {
   }
 
   UniqueBuffer ReadFrame() {
-    if (!frame_available_) {
+    if (!impl_.is(sml::state<internal::RtuProtocol::Available>)) {
       return nullptr;
     }
 
-    frame_available_ = false;
+    impl_.process_event(internal::FrameRead{});
     return UniqueBuffer(&rx_buffer_);
   };
 
@@ -53,7 +53,6 @@ class RtuProtocol {
 
  private:
   Buffer rx_buffer_;
-  bool frame_available_ = false;
   sml::sm<internal::RtuProtocol> impl_;
 };
 

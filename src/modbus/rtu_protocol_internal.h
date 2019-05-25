@@ -22,6 +22,7 @@ struct RxByte {
   uint8_t byte;
   bool parity_ok;
 };
+struct FrameRead {};
 struct TxStart {
   Buffer* buf;
 };
@@ -33,6 +34,7 @@ struct RtuProtocol {
   struct Init;
   struct Idle;
   struct Receiving;
+  struct Available;
   struct Ignoring;
   struct Sending;
 
@@ -42,22 +44,19 @@ struct RtuProtocol {
     // Guards
     auto parity_ok = [](const RxByte& e) { return e.parity_ok; };
     auto buffer_full = [](const Buffer& b) { return b.full(); };
+    auto crc_ok = [](Buffer& b) {
+      if (b.size() <= 2) {
+        return false;
+      }
+      // Extract CRC from frame data.
+      uint16_t crc = b[b.size() - 2] | b[b.size() - 1] << 8;
+      b.resize(b.size() - 2);
+      return (crc == etl::crc16_modbus(b.begin(), b.end()).value());
+    };
 
     // Actions
-    auto clear_buffer = [](Buffer& b, bool& frame_available) {
-      b.clear();
-      frame_available = false;
-    };
+    auto clear_buffer = [](Buffer& b) { b.clear(); };
     auto add_byte = [](Buffer& b, const RxByte& e) { b.push_back(e.byte); };
-    auto check_frame = [](Buffer& b, bool& frame_available) {
-      if (b.size() > 2) {
-        // Extract CRC from frame data.
-        uint16_t crc = b[b.size() - 2] | b[b.size() - 1] << 8;
-        b.resize(b.size() - 2);
-        frame_available =
-            (crc == etl::crc16_modbus(b.begin(), b.end()).value());
-      }
-    };
     auto send_frame = [](const TxStart& txs, SerialInterface& s) {
       Buffer* buf = txs.buf;
       assert(buf->capacity() >= buf->size() + 2);
@@ -70,21 +69,23 @@ struct RtuProtocol {
 
     // clang-format off
     return make_transition_table(
-      *state<Init>       + event<BusIdle>                                                       = state<Idle>
+      *state<Init>      + event<BusIdle>                                                        = state<Idle>
 
       // Receiving a valid frame
-      ,state<Idle>       + event<RxByte> [parity_ok]                 / (clear_buffer, add_byte) = state<Receiving>
-      ,state<Receiving>  + event<RxByte> [parity_ok && !buffer_full] / add_byte                 = state<Receiving>
-      ,state<Receiving>  + event<BusIdle>                            / check_frame              = state<Idle>
+      ,state<Idle>      + event<RxByte>  [parity_ok]                 / (clear_buffer, add_byte) = state<Receiving>
+      ,state<Receiving> + event<RxByte>  [parity_ok && !buffer_full] / add_byte                 = state<Receiving>
+      ,state<Receiving> + event<BusIdle> [crc_ok]                                               = state<Available>
+      ,state<Receiving> + event<BusIdle> [!crc_ok]                                              = state<Idle>
+      ,state<Available> + event<FrameRead>                                                      = state<Idle>
 
       // Receiving an invalid frame
-      ,state<Idle>       + event<RxByte> [!parity_ok]                                           = state<Ignoring>
-      ,state<Receiving>  + event<RxByte> [!parity_ok || buffer_full]                            = state<Ignoring>
-      ,state<Ignoring>   + event<BusIdle>                                                       = state<Idle>
+      ,state<Idle>      + event<RxByte>  [!parity_ok]                                           = state<Ignoring>
+      ,state<Receiving> + event<RxByte>  [!parity_ok || buffer_full]                            = state<Ignoring>
+      ,state<Ignoring>  + event<BusIdle>                                                        = state<Idle>
 
       // Sending a frame
-      ,state<Idle>       + event<TxStart>                            / send_frame               = state<Sending>
-      ,state<Sending>    + event<TxDone>                                                        = state<Idle>
+      ,state<Idle>      + event<TxStart>                             / send_frame               = state<Sending>
+      ,state<Sending>   + event<TxDone>                                                         = state<Idle>
     );
     // clang-format on
   }
