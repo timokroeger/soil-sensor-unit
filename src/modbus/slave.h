@@ -17,12 +17,10 @@ namespace modbus {
 // data interface.
 class Slave {
  public:
-  explicit Slave(DataInterface& data)
-      : address_(-1),
-        data_(data) {}
+  explicit Slave(DataInterface& data) : address_(-1), data_(data) {}
 
   // Processes a request and creates a response.
-  bool Execute(const Buffer* req_buffer, Buffer *resp_buffer);
+  bool Execute(const Buffer* req_buffer, Buffer* resp_buffer);
 
   // Valid range 1-247 inclusive.
   int address() const { return address_; }
@@ -32,13 +30,14 @@ class Slave {
   }
 
  private:
-  ExceptionCode ReadInputRegister(etl::bit_stream& data);
-  ExceptionCode WriteSingleRegister(etl::bit_stream& data);
-  ExceptionCode WriteMultipleRegisters(etl::bit_stream& data);
+  ExceptionCode ReadInputRegister(etl::bit_stream& req, etl::bit_stream& resp);
+  ExceptionCode WriteSingleRegister(etl::bit_stream& req,
+                                    etl::bit_stream& resp);
+  ExceptionCode WriteMultipleRegisters(etl::bit_stream& req,
+                                       etl::bit_stream& resp);
 
   int address_;
   DataInterface& data_;
-  etl::bit_stream response_;
 };
 
 }  // namespace modbus
