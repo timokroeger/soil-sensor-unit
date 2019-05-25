@@ -22,15 +22,20 @@ constexpr int kMeasurementStartDelayMs = 1;
 namespace {
 
 void UseIrc() {
-  Chip_Clock_SetSysClockDiv(1);
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_IRC);
+  Chip_Clock_SetSysClockDiv(1);
   Chip_FMC_SetFLASHAccess(FLASHTIM_20MHZ_CPU);
+  Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_SYSPLL_PD);
 
   // Update CMSIS clock frequency variable which is used in iap.c
   SystemCoreClock = 12000000;
 }
 
 void UsePll() {
+  Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
+  while (!Chip_Clock_IsSystemPLLLocked())
+    ;
+
   // Main clock frequency: 60MHz / 2 = 30Mhz
   Chip_FMC_SetFLASHAccess(FLASHTIM_30MHZ_CPU);
   Chip_Clock_SetSysClockDiv(2);
@@ -52,9 +57,6 @@ void SetupClock() {
   // PLL intrenal FCCO (156-320MHz): 2 * 2 * 60MHz = 240Mhz
   Chip_Clock_SetSystemPLLSource(SYSCTL_PLLCLKSRC_IRC);
   Chip_Clock_SetupSystemPLL(4, 1);
-  Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
-  while (!Chip_Clock_IsSystemPLLLocked())
-    ;
 }
 
 // Enables LED output and sets ADC pins to analog mode.
