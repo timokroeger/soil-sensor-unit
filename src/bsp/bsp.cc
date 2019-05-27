@@ -21,6 +21,14 @@ constexpr int kMeasurementStartDelayMs = 5;
 
 namespace {
 
+void SetPower(uint32_t mode) {
+  uint32_t clk_mhz = SystemCoreClock / 1'000'000;
+  uint32_t param[] = { clk_mhz, mode, clk_mhz };
+  uint32_t result;
+  LPC_ROM_API->pPWRD->set_power(param, &result);
+  assert(result == PWR_CMD_SUCCESS);
+}
+
 void UseIrc() {
   Chip_Clock_SetMainClockSource(SYSCTL_MAINCLKSRC_IRC);
   Chip_Clock_SetSysClockDiv(1);
@@ -28,10 +36,14 @@ void UseIrc() {
   Chip_SYSCTL_PowerDown(SYSCTL_SLPWAKE_SYSPLL_PD);
 
   // Update CMSIS clock frequency variable which is used in iap.c
-  SystemCoreClock = 12000000;
+  SystemCoreClock = 12'000'000;
+
+  SetPower(PWR_LOW_CURRENT);
 }
 
 void UsePll() {
+  SetPower(PWR_DEFAULT);
+
   Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
   while (!Chip_Clock_IsSystemPLLLocked())
     ;
