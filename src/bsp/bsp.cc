@@ -61,13 +61,31 @@ void SetupClock() {
 
 // Enables LED output and sets ADC pins to analog mode.
 void SetupGpio() {
-  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_GPIO);
 
   // Set open drain pins as output and pull them low. Also turns on the LED.
-  LPC_GPIO_PORT->DIRSET[0] = (1 << 11) | (1 << 10);
-  LPC_GPIO_PORT->CLR[0] = (1 << 11) | (1 << 10);
+  // Also set all unused pins as output.
+  LPC_GPIO_PORT->DIRSET[0] = (1 << 11) | (1 << 10) | (1 << 8) | (1 << 4);
 
-  // Analog mode for ADC input pin.
+  Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_GPIO);
+
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
+
+  // Disable pull-up on DE for the RS485 transceiver.
+  // An external pull-down resistor is used instead.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO1, PIN_MODE_INACTIVE);
+
+  // Disable pull-ups for PWM output.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO0, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO14, PIN_MODE_INACTIVE);
+
+  // Disable pull-ups on outputs to save power.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO4, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO8, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO10, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO11, PIN_MODE_INACTIVE);
+
+  // Disable pull-ups for the analog inputs.
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO17, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
 
@@ -93,7 +111,7 @@ void SetupSwichMatrix() {
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC9);
 
   // Switch matrix clock is not needed anymore after configuration.
-  Chip_SWM_Deinit();
+  //Chip_SWM_Deinit();
 }
 
 // Calibrates the ADC and sets up a measurement sequence.
