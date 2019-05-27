@@ -17,7 +17,7 @@ const uint32_t ExtRateIn = 0;  // External clock input not used.
 Bootloader bootloader;
 ModbusSerial modbus_serial(LPC_USART0, LPC_MRT_CH0);
 
-constexpr int kMeasurementStartDelayUs = 1000;
+constexpr int kMeasurementStartDelayMs = 5;
 
 namespace {
 
@@ -216,7 +216,7 @@ void BspMeasurementEnable() {
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_WKT);
   Chip_WKT_ClearIntStatus(LPC_WKT);
   Chip_WKT_Start(LPC_WKT, WKT_CLKSRC_DIVIRC,
-                 kMeasurementStartDelayUs * 750'000 / 1'000'000);
+                 kMeasurementStartDelayMs * 750'000 / 1'000);
   while (!Chip_WKT_GetIntStatus(LPC_WKT))
     ;
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_WKT);
