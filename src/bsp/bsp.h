@@ -12,6 +12,7 @@ extern Bootloader bootloader;
 extern ModbusSerial modbus_serial;
 
 void BspSetup();
+void BspSetupPins();
 
 void BspSleep();
 

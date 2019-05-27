@@ -190,12 +190,15 @@ void SetupNVIC() {
 
 void BspSetup() {
   SetupClock();
-  SetupGpio();
   SetupAdc();
   SetupPwm();
   SetupTimers();
-  SetupSwichMatrix();
   SetupNVIC();
+}
+
+void BspSetupPins() {
+  SetupGpio();
+  SetupSwichMatrix();
 }
 
 void BspSleep() { __WFI(); }

@@ -35,6 +35,10 @@ int main() {
 
   modbus_serial.Init(CONFIG_BAUDRATE);
 
+  // Must be called after uart init to prevent glitches on the DE pin
+  // for the RS485 transceiver.
+  BspSetupPins();
+
   // Link global serial interface implementation to protocol.
   modbus::RtuProtocol modbus_rtu(modbus_serial);
   modbus_serial.set_modbus_rtu(&modbus_rtu);
