@@ -23,7 +23,7 @@ namespace {
 
 void SetPower(uint32_t mode) {
   uint32_t clk_mhz = SystemCoreClock / 1'000'000;
-  uint32_t param[] = { clk_mhz, mode, clk_mhz };
+  uint32_t param[] = {clk_mhz, mode, clk_mhz};
   uint32_t result;
   LPC_ROM_API->pPWRD->set_power(param, &result);
   assert(result == PWR_CMD_SUCCESS);
@@ -123,7 +123,7 @@ void SetupSwichMatrix() {
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC9);
 
   // Switch matrix clock is not needed anymore after configuration.
-  //Chip_SWM_Deinit();
+  Chip_SWM_Deinit();
 }
 
 // Calibrates the ADC and sets up a measurement sequence.
@@ -135,14 +135,23 @@ void SetupAdc() {
   while (!Chip_ADC_IsCalibrationDone(LPC_ADC))
     ;
 
+  // Discard calibration samples.
+  while (Chip_ADC_GetSequencerDataReg(LPC_ADC, ADC_SEQA_IDX) &
+         ADC_SEQ_GDAT_DATAVALID)
+    ;
+
+  // Revert changes that were done by the calibration routine.
   // Set ADC clock: A value of 0 divides the system clock by 1.
   Chip_ADC_SetDivider(LPC_ADC, 0);
   LPC_ADC->CTRL |= ADC_CR_LPWRMODEBIT;
 
   Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
                           ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
+                              ADC_SEQ_CTRL_MODE_EOS |
                               ADC_SEQ_CTRL_HWTRIG_POLPOS);
   Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
+
+  Chip_ADC_EnableInt(LPC_ADC, ADC_INTEN_SEQA_ENABLE);
 }
 
 // Sets up a PWM output with 50% duty cycle used as excitation signal for the
@@ -242,19 +251,15 @@ void BspMeasurementDisable() {
 }
 
 uint16_t BspMeasureRaw() {
+  Chip_ADC_ClearFlags(LPC_ADC, ADC_FLAGS_SEQA_INT_MASK);
   Chip_ADC_StartSequencer(LPC_ADC, ADC_SEQA_IDX);
 
-  uint32_t raw_high;
-  do {
-    raw_high = Chip_ADC_GetDataReg(LPC_ADC, 3);
-  } while ((raw_high & ADC_SEQ_GDAT_DATAVALID) == 0);
-  int high = ADC_DR_RESULT(raw_high);
+  // Wait for conversion to be finished
+  while ((Chip_ADC_GetFlags(LPC_ADC) & ADC_FLAGS_SEQA_INT_MASK) == 0)
+    ;
 
-  uint32_t raw_low;
-  do {
-    raw_low = Chip_ADC_GetDataReg(LPC_ADC, 9);
-  } while ((raw_low & ADC_SEQ_GDAT_DATAVALID) == 0);
-  int low = ADC_DR_RESULT(raw_low);
+  int high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
+  int low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
 
   return std::max(high - low, 0);
 }
