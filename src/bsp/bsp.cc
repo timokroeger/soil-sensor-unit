@@ -73,35 +73,40 @@ void SetupClock() {
 
 // Enables LED output and sets ADC pins to analog mode.
 void SetupGpio() {
-  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_GPIO);
-
-  // Set open drain pins as output and pull them low. Also turns on the LED.
-  // Also set all unused pins as output.
-  LPC_GPIO_PORT->DIRSET[0] = (1 << 11) | (1 << 10) | (1 << 8) | (1 << 4);
-
-  Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_GPIO);
-
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_IOCON);
 
   // Disable pull-up on DE for the RS485 transceiver.
   // An external pull-down resistor is used instead.
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO1, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO0, PIN_MODE_INACTIVE);
 
   // Disable pull-ups for PWM output.
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO0, PIN_MODE_INACTIVE);
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO14, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO4, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO12, PIN_MODE_INACTIVE);
 
   // Disable pull-ups on outputs to save power.
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO4, PIN_MODE_INACTIVE);
-  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO8, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO1, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO9, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO10, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO11, PIN_MODE_INACTIVE);
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO15, PIN_MODE_INACTIVE);
 
   // Disable pull-ups for the analog inputs.
+  Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO13, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO17, PIN_MODE_INACTIVE);
   Chip_IOCON_PinSetMode(LPC_IOCON, IOCON_PIO23, PIN_MODE_INACTIVE);
 
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_IOCON);
+
+  Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_GPIO);
+
+  // Set LED pin and all unused pins as output.
+  LPC_GPIO_PORT->DIRSET[0] =
+      (1 << 15) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 1);
+
+  // Turn on LED.
+  //LPC_GPIO_PORT->SET[0] = (1 << 9);
+
+  Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_GPIO);
 }
 
 // Assigns peripherals to pins.
@@ -110,17 +115,18 @@ void SetupSwichMatrix() {
   Chip_SWM_Init();
 
   // UART0
-  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 15);
-  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 9);
-  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 1);
+  Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, 8);
+  Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, 14);
+  Chip_SWM_MovablePinAssign(SWM_U0_RTS_O, 0);
 
   // PWM output
-  Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 0);   // FREQ_LO
-  Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 14);  // FREQ_HI
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT0_O, 4);   // FREQ_LO
+  Chip_SWM_MovablePinAssign(SWM_SCT_OUT1_O, 12);  // FREQ_HI
 
   // ADC input
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC3);
   Chip_SWM_EnableFixedPin(SWM_FIXED_ADC9);
+  Chip_SWM_EnableFixedPin(SWM_FIXED_ADC10);
 
   // Switch matrix clock is not needed anymore after configuration.
   Chip_SWM_Deinit();
@@ -147,7 +153,7 @@ void SetupAdc() {
 
   Chip_ADC_SetupSequencer(LPC_ADC, ADC_SEQA_IDX,
                           ADC_SEQ_CTRL_CHANSEL(3) | ADC_SEQ_CTRL_CHANSEL(9) |
-                              ADC_SEQ_CTRL_MODE_EOS |
+                              ADC_SEQ_CTRL_CHANSEL(10) | ADC_SEQ_CTRL_MODE_EOS |
                               ADC_SEQ_CTRL_HWTRIG_POLPOS);
   Chip_ADC_EnableSequencer(LPC_ADC, ADC_SEQA_IDX);
 
@@ -258,10 +264,11 @@ uint16_t BspMeasureRaw() {
   while ((Chip_ADC_GetFlags(LPC_ADC) & ADC_FLAGS_SEQA_INT_MASK) == 0)
     ;
 
-  int high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
-  int low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
+  uint16_t low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
+  uint16_t high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
+  uint16_t diode = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 10));
 
-  return std::max(high - low, 0);
+  return high - low + diode;
 }
 
 BspInterruptFree::BspInterruptFree() { __disable_irq(); }
