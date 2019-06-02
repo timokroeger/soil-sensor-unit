@@ -8,6 +8,12 @@
 #include "bsp/bootloader.h"
 #include "bsp/modbus_serial.h"
 
+struct RawMeasurement {
+  uint16_t low;
+  uint16_t high;
+  uint16_t diodes;
+};
+
 extern Bootloader bootloader;
 extern ModbusSerial modbus_serial;
 
@@ -18,7 +24,7 @@ void BspSleep();
 
 void BspReset();
 
-uint16_t BspMeasureRaw();
+RawMeasurement BspMeasureRaw();
 
 class BspInterruptFree {
  public:

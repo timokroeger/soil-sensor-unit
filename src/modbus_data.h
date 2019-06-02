@@ -3,6 +3,7 @@
 #ifndef MODBUS_DATA_H_
 #define MODBUS_DATA_H_
 
+#include "bsp/bsp.h"
 #include "modbus/data_interface.h"
 
 class ModbusData final : public modbus::DataInterface {
@@ -21,7 +22,7 @@ class ModbusData final : public modbus::DataInterface {
  private:
   modbus::DataInterface &fw_update_;
 
-  uint16_t measumerent_;
+  RawMeasurement measurement_;
   bool measurement_available_ = false;
 
   bool reset_ = false;

@@ -232,7 +232,7 @@ void BspSleep() { __WFI(); }
 
 void BspReset() { NVIC_SystemReset(); }
 
-uint16_t BspMeasureRaw() {
+RawMeasurement BspMeasureRaw() {
   // Switch to faster clock.
   UsePll();
 
@@ -256,17 +256,17 @@ uint16_t BspMeasureRaw() {
   while ((Chip_ADC_GetFlags(LPC_ADC) & ADC_FLAGS_SEQA_INT_MASK) == 0)
     ;
 
-  uint16_t low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
-  uint16_t high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
-  uint16_t diode = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 10));
-
   // Stop the PWM timer.
   LPC_SCT->CTRL_L |= (uint16_t)SCT_CTRL_HALT_L;
 
   // Go back no normal clock rate to save power.
   UseIrc();
 
-  return high - low + diode;
+  RawMeasurement rm;
+  rm.low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
+  rm.high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
+  rm.diodes = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 10));
+  return rm;
 }
 
 BspInterruptFree::BspInterruptFree() { __disable_irq(); }
