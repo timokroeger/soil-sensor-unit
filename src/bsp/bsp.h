@@ -18,10 +18,6 @@ void BspSleep();
 
 void BspReset();
 
-void BspMeasurementEnable();
-void BspMeasurementDisable();
-
-// Measures the differential sampling capacitor voltage.
 uint16_t BspMeasureRaw();
 
 class BspInterruptFree {

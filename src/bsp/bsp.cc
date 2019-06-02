@@ -104,7 +104,7 @@ void SetupGpio() {
       (1 << 15) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 1);
 
   // Turn on LED.
-  //LPC_GPIO_PORT->SET[0] = (1 << 9);
+  // LPC_GPIO_PORT->SET[0] = (1 << 9);
 
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_GPIO);
 }
@@ -232,14 +232,14 @@ void BspSleep() { __WFI(); }
 
 void BspReset() { NVIC_SystemReset(); }
 
-void BspMeasurementEnable() {
+uint16_t BspMeasureRaw() {
   // Switch to faster clock.
   UsePll();
 
-  // Start the PWM timer
+  // Start the PWM timer.
   LPC_SCT->CTRL_L &= (uint16_t)~SCT_CTRL_HALT_L;
 
-  // Wait until capacitor is charged
+  // Wait until capacitor is charged.
   Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_WKT);
   Chip_WKT_ClearIntStatus(LPC_WKT);
   Chip_WKT_Start(LPC_WKT, WKT_CLKSRC_DIVIRC,
@@ -247,26 +247,24 @@ void BspMeasurementEnable() {
   while (!Chip_WKT_GetIntStatus(LPC_WKT))
     ;
   Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_WKT);
-}
 
-void BspMeasurementDisable() {
-  LPC_SCT->CTRL_L |= (uint16_t)SCT_CTRL_HALT_L;
-
-  // Go back no normal clock rate to save power.
-  UseIrc();
-}
-
-uint16_t BspMeasureRaw() {
+  // Start and wait for ADC conversion to finish.
   Chip_ADC_ClearFlags(LPC_ADC, ADC_FLAGS_SEQA_INT_MASK);
   Chip_ADC_StartSequencer(LPC_ADC, ADC_SEQA_IDX);
 
-  // Wait for conversion to be finished
+  // Wait for conversion to be finished.
   while ((Chip_ADC_GetFlags(LPC_ADC) & ADC_FLAGS_SEQA_INT_MASK) == 0)
     ;
 
   uint16_t low = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 3));
   uint16_t high = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 9));
   uint16_t diode = ADC_DR_RESULT(Chip_ADC_GetDataReg(LPC_ADC, 10));
+
+  // Stop the PWM timer.
+  LPC_SCT->CTRL_L |= (uint16_t)SCT_CTRL_HALT_L;
+
+  // Go back no normal clock rate to save power.
+  UseIrc();
 
   return high - low + diode;
 }

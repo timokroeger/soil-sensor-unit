@@ -20,8 +20,11 @@ class ModbusData final : public modbus::DataInterface {
 
  private:
   modbus::DataInterface &fw_update_;
+
+  uint16_t measumerent_;
+  bool measurement_available_ = false;
+
   bool reset_ = false;
-  bool meas_enabled_ = false;
 };
 
 #endif  // MODBUS_DATA_H_
