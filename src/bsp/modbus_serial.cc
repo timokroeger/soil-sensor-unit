@@ -7,12 +7,7 @@ void ModbusSerial::Init(uint32_t baudrate) {
   assert(mrt_ch_ != nullptr);
 
   // Enable global UART clock. Divide clock down as much as possible.
-  // HACKME: CLock precision could be improved by properly rounding.
-  //         When rounding up Chip_UART_SetBaud() misbehaves though,
-  //         because does not expect the input clock to be minimally
-  //         slower than 16 times the baudrate.
-  Chip_Clock_SetUARTClockDiv(Chip_Clock_GetMainClockRate() / (16 * baudrate) -
-                             1);
+  Chip_Clock_SetUARTClockDiv(Chip_Clock_GetMainClockRate() / (16 * baudrate));
 
   // Configure peripheral.
   Chip_UART_Init(usart_);
