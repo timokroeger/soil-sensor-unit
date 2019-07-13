@@ -4,7 +4,7 @@ set(CMAKE_TOOLCHAIN_FILE cmake/arm-cmake-toolchains/arm-gcc-toolchain.cmake)
 include(cmake/arm-cmake-toolchains/utils.cmake)
 include(cmake/mcuboot.cmake)
 
-project(GaMoSy-SSU VERSION 0.3 LANGUAGES C CXX)
+project(GaMoSy-SSU VERSION 0.4 LANGUAGES C CXX)
 
 # Global compiler and linker configuration ------------------------------------------------------ #
 
