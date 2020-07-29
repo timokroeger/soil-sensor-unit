@@ -1,6 +1,9 @@
 Soil Sensor Unit
 ================
 
+Firmware for a capacitive soil moisture sensor based on a NXP LPC824 microcontroller.
+Acts as a MODBUS RTU slave device and includes a MODBUS bootloader for FW updates in the field.
+
 Build Instructions
 ------------------
 
