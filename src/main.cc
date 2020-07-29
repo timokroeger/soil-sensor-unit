@@ -20,7 +20,7 @@ void UpdateModbus(modbus::RtuProtocol &rtu, modbus::Slave &slave) {
   }
 
   modbus::Buffer resp;
-  bool ok = slave.Execute(req.get(), &resp);
+  bool ok = slave.Execute(req, &resp);
   if (!ok) {
     return;
   }

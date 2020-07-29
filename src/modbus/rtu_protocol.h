@@ -38,13 +38,13 @@ class RtuProtocol {
     impl_.process_event(internal::TxDone{});
   }
 
-  UniqueBuffer ReadFrame() {
+  const Buffer* ReadFrame() {
     if (!impl_.is(sml::state<internal::RtuProtocol::Available>)) {
       return nullptr;
     }
 
     impl_.process_event(internal::FrameRead{});
-    return UniqueBuffer(&rx_buffer_);
+    return &rx_buffer_;
   };
 
   void WriteFrame(Buffer *buffer) {

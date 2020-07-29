@@ -1,7 +1,7 @@
+#include "modbus/rtu_protocol.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include "modbus/rtu_protocol.h"
 
 using ::testing::_;
 using ::testing::ElementsAre;
@@ -146,7 +146,7 @@ TEST_F(RtuProtocolTest, SendDuringReceive) {
 
   // Check received data
   rtu_.BusIdle();
-  UniqueBuffer frame = rtu_.ReadFrame();
+  const Buffer *frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data_recv[0]));
 }
@@ -177,7 +177,7 @@ TEST_F(RtuProtocolTest, ReadDuringReceive) {
   rtu_.RxByte(data[1], true);
 
   // First frame is valid, second one gets ignored.
-  UniqueBuffer frame = rtu_.ReadFrame();
+  const Buffer *frame = rtu_.ReadFrame();
   ASSERT_NE(frame, nullptr);
   ASSERT_THAT(*frame, ElementsAre(data[0]));
 }
