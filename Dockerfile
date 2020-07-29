@@ -1,4 +1,4 @@
-FROM ubuntu:disco
+FROM ubuntu:bionic
 
 COPY lib/mcuboot/scripts/requirements.txt requirements.txt
 
